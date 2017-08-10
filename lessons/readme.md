@@ -1,0 +1,9 @@
+## Описание некоторых команд Linux
+
+* [Фильтры](https://github.com/Koljasha/Linux/blob/master/lessons/Filters.md)
+  * grep, cut, sort, ...
+* [Формирование списков имен файлов на основе шаблонов](https://github.com/Koljasha/Linux/blob/master/lessons/Forming%20file%20name%20lists.md)
+  * "*", "?", [], ...
+* [Регулярные выражения](https://github.com/Koljasha/Linux/blob/master/lessons/Regular%20expressions.md)
+  * grep, rename, sed, ...
+* [Начальные сведения о Vi](https://github.com/Koljasha/Linux/blob/master/lessons/Vi.md)
