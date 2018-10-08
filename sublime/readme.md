@@ -37,6 +37,7 @@
 * A File Icon
 * All Autocomplete
 *	AutoFileName
+* BracketHighlighter
 *	Color Highlight
 *	ColorPicker
 * PackageResourceViewer
