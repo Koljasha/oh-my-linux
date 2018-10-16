@@ -36,22 +36,24 @@
 #### Main:
 * A File Icon
 * All Autocomplete
-*	AutoFileName
+* AutoFileName
 * BracketHighlighter
-*	Color Highlight
-*	ColorPicker
+* Color Highlight
+* ColorPicker
 * PackageResourceViewer
-*	SideBarEnhancements
-*	SublimeREPL
+* SideBarEnhancements
+* SublimeREPL
+* SublimeLinter
 #### HTML-CSS-JS:
-*	HTML-CSS-JS Prettify
-*	JavaScript Completions
-*	LiveReload
-*	View In Browser
+* HTML-CSS-JS Prettify
+* JavaScript Completions
+* LiveReload
+* SublimeLinter-eslint
+* View In Browser
 * Vue Syntax Highlight
 #### Python:
-*	SublimePythonIDE
-*	Virtualenv
+* SublimePythonIDE
+* Virtualenv
 ***
 ***
 
