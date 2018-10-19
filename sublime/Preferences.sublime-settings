@@ -1,0 +1,13 @@
+{
+	"color_scheme": "Packages/Color Scheme - Default/Mariana.sublime-color-scheme",
+	"font_size": 12,
+	"translate_tabs_to_spaces": true,
+	"draw_white_space": "all",
+	"fallback_encoding": "UTF-8",
+	"theme": "Adaptive.sublime-theme",
+	"show_encoding": true,
+	"ignored_packages":
+	[
+		"Vintage"
+	],
+}
