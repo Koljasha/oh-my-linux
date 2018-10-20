@@ -12,7 +12,7 @@
     * иконки на панели: Терминал, Папки, Браузер
     * иконки Mint-x: `git clone https://github.com/linuxmint/mint-x-icons.git`
     
-4. Miniconda3 в `/home/koljasha/soft/miniconda3`
+4. Miniconda3 в `/home/koljasha/soft/conda`
 ```
 wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh \
 && bash Miniconda3-latest-Linux-x86_64.sh
@@ -42,7 +42,7 @@ git clone https://github.com/Koljasha/Vim && cd Vim && ./linux.sh && cd ..
 powerline-daemon -q
 POWERLINE_BASH_CONTINUATION=1
 POWERLINE_BASH_SELECT=1
-. /home/koljasha/soft/miniconda3/lib/python3.6/site-packages/powerline/bindings/bash/powerline.sh
+. /home/koljasha/soft/conda/lib/python3.6/site-packages/powerline/bindings/bash/powerline.sh
 ```
 выполнить `source ~/.bashrc`
 
