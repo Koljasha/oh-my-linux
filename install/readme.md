@@ -36,7 +36,9 @@ alias pyactivate="source venv/bin/activate"
 
 7. Репозиторий настройки Vim - PowerLine
 ```
-git clone https://github.com/Koljasha/Vim && cd Vim && ./linux.sh && cd ..
+git clone https://github.com/koljasha/vim && \
+cd vim && ./linux.sh && cd .. && \
+vim -c PlugInstall
 
 # PowerLine for Bash add to .bashrc:
 powerline-daemon -q
