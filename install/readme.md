@@ -41,7 +41,7 @@ git clone https://github.com/koljasha/vim && \
 cd vim && ./linux.sh && cd .. && \
 vim -c PlugInstall
 
-# PowerLine for Bash add to .bashrc:
+# PowerLine for Bash add to .bashrc (поправить версия Python):
 powerline-daemon -q
 POWERLINE_BASH_CONTINUATION=1
 POWERLINE_BASH_SELECT=1
