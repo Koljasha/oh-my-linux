@@ -29,8 +29,9 @@ alias aptupdate="apt update && apt dist-upgrade && apt autoremove"
 # alias for weather in Korolev
 alias weather="curl http://wttr.in/Королев"
 
-# alias for activate python virtual envorenment
-alias pyactivate="source venv/bin/activate"
+# alias for python virtual envorenment
+alias venvactivate="source venv/bin/activate"
+alias venvcreate="virtualenv venv && venvactivate"
 ```
 выполнить `source ~/.bashrc`
 
