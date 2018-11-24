@@ -45,7 +45,7 @@ vim -c PlugInstall
 powerline-daemon -q
 POWERLINE_BASH_CONTINUATION=1
 POWERLINE_BASH_SELECT=1
-. /home/koljasha/soft/conda/lib/python3.6/site-packages/powerline/bindings/bash/powerline.sh
+. /home/koljasha/soft/conda/lib/python3.7/site-packages/powerline/bindings/bash/powerline.sh
 ```
 выполнить `source ~/.bashrc`
 
