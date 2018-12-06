@@ -35,6 +35,30 @@ alias venvcreate="virtualenv venv && venvactivate"
 ```
 выполнить `source ~/.bashrc`
 
+6.1. Для *Fish Shell* в `.config/fish/config.fish`:
+```
+#
+# Koljasha settings
+#
+
+set PATH /home/ubuntu/soft/conda3/bin $PATH
+
+# aliases
+
+function aptupdate
+        sudo apt update; and sudo apt full-upgrade; and sudo apt autoremove;
+end
+
+function venvactivate
+        source venv/bin/activate.fish
+end
+
+function venvcreate
+        virtualenv venv; and venvactivate;
+end
+
+```
+
 7. Репозиторий настройки Vim - PowerLine
 ```
 git clone https://github.com/koljasha/vim && \
