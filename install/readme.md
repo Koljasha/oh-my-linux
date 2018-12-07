@@ -125,6 +125,7 @@ git config --global user.name "Koljasha" \
 ```
 
 13. *Fish Shell*: `sudo chsh -s /usr/bin/fish koljasha`
+* do `fish_update_completions`
 * install *omf*: `curl -L https://get.oh-my.fish | fish`
 * Themes: *agnoster*, *shellder*
 * в `.config/fish/config.fish`:
