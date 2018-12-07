@@ -35,30 +35,6 @@ alias venvcreate="virtualenv venv && venvactivate"
 ```
 выполнить `source ~/.bashrc`
 
-6.1. Для *Fish Shell* в `.config/fish/config.fish`:
-```
-#
-# Koljasha settings
-#
-
-set PATH /home/koljasha/soft/conda/bin $PATH
-
-# aliases
-
-function aptupdate
-        sudo apt update; and sudo apt full-upgrade; and sudo apt autoremove;
-end
-
-function venvactivate
-        source venv/bin/activate.fish
-end
-
-function venvcreate
-        virtualenv venv; and venvactivate;
-end
-
-```
-
 7. Репозиторий настройки Vim - PowerLine
 ```
 git clone https://github.com/koljasha/vim && \
@@ -146,4 +122,44 @@ git config --global user.name "Koljasha" \
 добавить в .bashrc:
 ```
 [ -r /usr/share/bash-completion/bash_completion ] && . /usr/share/bash-completion/bash_completion
+```
+
+13. *Fish Shell*: `sudo chsh -s /usr/bin/fish koljasha`
+* install *omf*: `curl -L https://get.oh-my.fish | fish`
+* Themes: *agnoster*, *shellder*
+* в `.config/fish/config.fish`:
+```
+#
+# Koljasha settings
+#
+
+set PATH /home/koljasha/soft/conda/bin $PATH
+
+# aliases
+
+# only for Ubuntu and Mint...
+#
+function aptupdate
+        sudo apt update; and sudo apt full-upgrade; and sudo apt autoremove;
+end
+#
+###
+
+# for python virtualenv
+#
+function venvactivate
+        source venv/bin/activate.fish
+end
+
+function venvcreate
+        virtualenv venv; and venvactivate;
+end
+#
+###
+```
+* `vim ~/.config/fish/functions/ll.fish`:
+```
+function ll --description 'List contents of directory using long format'
+        ls -lah $argv
+end
 ```
