@@ -41,7 +41,7 @@ alias venvcreate="virtualenv venv && venvactivate"
 # Koljasha settings
 #
 
-set PATH /home/ubuntu/soft/conda3/bin $PATH
+set PATH /home/koljasha/soft/conda/bin $PATH
 
 # aliases
 
