@@ -135,6 +135,7 @@ git config --global user.name "Koljasha" \
 #
 
 set PATH /home/koljasha/soft/conda/bin $PATH
+set fish_greeting
 
 # aliases
 
