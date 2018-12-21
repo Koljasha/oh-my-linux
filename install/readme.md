@@ -142,7 +142,7 @@ set fish_greeting
 #
 function aptupdate
         sudo apt update; and sudo apt full-upgrade; and sudo apt autoremove;
-        sudo pacman -Syyu
+        # sudo pacman -Syyu
 end
 #
 ###
