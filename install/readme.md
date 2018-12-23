@@ -128,7 +128,7 @@ git config --global user.name "Koljasha" \
 * do `fish_update_completions`
 * install *omf*: `curl -L https://get.oh-my.fish | fish`
 * Themes: *agnoster*, *shellder*: `omf install agnoster`
-* в `.config/fish/config.fish`:
+* `vim .config/fish/config.fish`:
 ```
 #
 # Koljasha settings
