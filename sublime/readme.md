@@ -4,6 +4,8 @@
 * Material Theme - схема и тема
 ***
 
+* A File Icon - иконки файлов
+* AceJump - быстрое перемещение (аналог EasyMotion)
 * AutoFileName - автодобавление имен файлов
 * SideBarEnhancements - расширение SideBar
 * AllAutocomplete - автодобавление по открытым файлам
@@ -35,6 +37,7 @@
 
 #### Main:
 * A File Icon
+* AceJump
 * All Autocomplete
 * AutoFileName
 * BracketHighlighter
