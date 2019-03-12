@@ -1,7 +1,7 @@
 ## Linux
 
 * [atom](https://github.com/Koljasha/Linux/tree/master/atom) - базовые плагины Atom
-* [browsers](https://github.com/Koljasha/Linux/tree/master/browsers) - Vim расширения для браузеров
+* [browsers_ext](https://github.com/Koljasha/Linux/tree/master/browsers_ext) - Vim расширения для браузеров
 * [github](https://github.com/Koljasha/Linux/tree/master/github) - основные команды git
 * [grub](https://github.com/Koljasha/Linux/tree/master/grub) - тема Koljasha для Grub2
 * [images](https://github.com/Koljasha/Linux/tree/master/images) - обои для рабочего стола
