@@ -139,10 +139,10 @@ set fish_greeting
 
 # aliases
 
-#
+# only for Ubuntu and Mint...
+# alias for apt
 function aptupdate
         sudo apt update; and sudo apt full-upgrade; and sudo apt autoremove;
-        # sudo pacman -Syyu
 end
 #
 ###
