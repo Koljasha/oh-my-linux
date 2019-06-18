@@ -24,7 +24,7 @@ wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh \
 ```
 # only for Ubuntu and Mint...
 # alias for apt
-alias aptupdate="apt update && apt dist-upgrade && apt autoremove"
+alias aptupdate="apt update && apt dist-upgrade --yes && apt autoremove --yes"
 
 # alias for weather in Korolev
 alias weather="curl http://wttr.in/Королев"
