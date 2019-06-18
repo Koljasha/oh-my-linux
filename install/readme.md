@@ -142,7 +142,7 @@ set fish_greeting
 # only for Ubuntu and Mint...
 # alias for apt
 function aptupdate
-        sudo apt update; and sudo apt full-upgrade; and sudo apt autoremove;
+        sudo apt update; and sudo apt dist-upgrade --yes; and sudo apt autoremove --yes;
 end
 #
 ###
