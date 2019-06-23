@@ -139,6 +139,14 @@ set fish_greeting
 
 # aliases
 
+# linux ll command
+#
+function ll --description 'List contents of directory using long format'
+        ls -lah $argv
+end
+#
+###
+
 # only for Ubuntu and Mint...
 # alias for apt
 function aptupdate
@@ -147,7 +155,7 @@ end
 #
 ###
 
-# for python virtualenv
+# python virtualenv
 #
 function venvactivate
         source venv/bin/activate.fish
@@ -159,7 +167,8 @@ end
 #
 ###
 ```
-* `vim ~/.config/fish/functions/ll.fish`:
+
+* или создавать по аналогии: `vim ~/.config/fish/functions/ll.fish`:
 ```
 function ll --description 'List contents of directory using long format'
         ls -lah $argv
