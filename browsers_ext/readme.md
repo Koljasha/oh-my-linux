@@ -84,6 +84,10 @@
       "type": "tabs.prev",
       "count": 1
     },
+    "E": {
+      "type": "tabs.prev",
+      "count": 1
+    },
     "J": {
       "type": "tabs.next",
       "count": 1
