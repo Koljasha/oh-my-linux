@@ -18,7 +18,7 @@
 ***
 * SublimeREPL
 * SublimeLinter
-
+***
 #### HTML-CSS-JS:
 * HTML-CSS-JS Prettify
 * JavaScript Completions
@@ -26,8 +26,10 @@
 * SublimeLinter-eslint
 * View In Browser
 * Vue Syntax Highlight
+***
 #### Python:
 * Anaconda
+***
 * SublimePythonIDE
 * Virtualenv
 ***
