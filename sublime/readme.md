@@ -6,6 +6,8 @@
 
 #### Main:
 * A File Icon
+* SideBarEnhancements
+***
 * AceJump
 * All Autocomplete
 * AutoFileName
@@ -13,9 +15,10 @@
 * Color Highlight
 * ColorPicker
 * PackageResourceViewer
-* SideBarEnhancements
+***
 * SublimeREPL
 * SublimeLinter
+
 #### HTML-CSS-JS:
 * HTML-CSS-JS Prettify
 * JavaScript Completions
@@ -24,6 +27,7 @@
 * View In Browser
 * Vue Syntax Highlight
 #### Python:
+* Anaconda
 * SublimePythonIDE
 * Virtualenv
 ***
