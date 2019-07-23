@@ -10,5 +10,5 @@
   * https://github.com/linuxmint/mint-x-icons/tree/master/usr/share/icons
   
  * Mint Y Icons:
-  * https://github.com/linuxmint/mint-y-icons/tree/master/usr/share/icons
+   * https://github.com/linuxmint/mint-y-icons/tree/master/usr/share/icons
  
