@@ -33,6 +33,8 @@
 * SublimePythonIDE
 * Virtualenv
 ***
+* Djaneiro
+***
 ***
 
 ### Русский язык в Python + Virtualenv Build System:
