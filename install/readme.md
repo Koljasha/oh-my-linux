@@ -3,8 +3,8 @@
 1. Обновить пакеты и ядро - перезагруть.
 
 2. Дополнительные пакеты:
-    * Mint: `sudo apt install git vim cmake build-essential libxkbfile-dev silversearcher-ag exuberant-ctags numlockx terminator`
-    * Manjaro: `sudo pacman -S --needed vim cmake wget the_silver_searcher ctags bash-completion noto-fonts terminator`
+    * Mint: `sudo apt install git vim cmake build-essential libxkbfile-dev silversearcher-ag exuberant-ctags numlockx terminator tmux`
+    * Manjaro: `sudo pacman -S --needed vim cmake wget the_silver_searcher ctags bash-completion noto-fonts terminator tmux`
 
 3. Настройки:
     * через параметры
@@ -173,4 +173,16 @@ end
 function ll --description 'List contents of directory using long format'
         ls -lah $argv
 end
+```
+
+14. *tmux* (минимальная настройка):
+```
+# Цвета
+set -g default-terminal "screen-256color"
+# Префикс
+set -g prefix C-a
+# Мышь
+set -g mouse on
+# История
+set -g history-limit 10000
 ```
