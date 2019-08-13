@@ -185,4 +185,6 @@ set -g prefix C-a
 set -g mouse on
 # История
 set -g history-limit 10000
+# Начальный индекс
+set -g base-index 1
 ```
