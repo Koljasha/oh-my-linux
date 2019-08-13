@@ -175,7 +175,7 @@ function ll --description 'List contents of directory using long format'
 end
 ```
 
-14. *tmux* (минимальная настройка):
+14. *tmux* (минимальная настройка) `~/.tmux.conf`:
 ```
 # Цвета
 set -g default-terminal "screen-256color"
