@@ -1,4 +1,4 @@
-## Linux
+## Oh My Linux
 
 * [browsers_ext](https://github.com/Koljasha/Linux/tree/master/browsers_ext) - Vim расширения для браузеров
 * [github](https://github.com/Koljasha/Linux/tree/master/github) - основные команды git
