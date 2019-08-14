@@ -184,7 +184,7 @@ set -g base-index 1                             # Начальный индек�
 set -g pane-base-index 1
 set -g mode-keys vi                             # Режим Vi для копирования
 set -g display-time 1000                        # Время отображения сообщений
-set -g display-panes-time 800
+set -g display-panes-time 1000
 
 # Мышь версия tmux => 2.1
 set -g mouse on
