@@ -183,8 +183,8 @@ set -g history-limit 10000                      # История
 set -g base-index 1                             # Начальный индекс
 set -g pane-base-index 1
 set -g mode-keys vi                             # Режим Vi для копирования
-set -g display-time 1000                        # Время отображения сообщений
-set -g display-panes-time 1000
+set -g display-time 1500                        # Время отображения сообщений
+set -g display-panes-time 1500
 
 # Мышь версия tmux => 2.1
 set -g mouse on
