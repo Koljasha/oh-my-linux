@@ -182,5 +182,5 @@ set -g prefix C-a                               # Leader key - Префикс
 set -g history-limit 10000                      # История
 set -g base-index 1                             # Начальный индекс
 set -g mode-keys vi                             # Режим Vi для копирования
-set -g mouse on                                 # Мышь
+# set -g mouse on                               # Мышь
 ```
