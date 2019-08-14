@@ -191,7 +191,7 @@ set -g display-panes-time 1500
 
 # Мышь версия tmux => 2.1
 set -g mouse on
-set -g mouse-utf8 on
+# set -g mouse-utf8 on
 bind-key m set -g mouse off\; display-message "Set option: mouse -> off"
 bind-key M set -g mouse on\; display-message "Set option: mouse -> on"
 
