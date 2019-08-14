@@ -182,5 +182,15 @@ set -g prefix C-a                               # Leader key - Префикс
 set -g history-limit 10000                      # История
 set -g base-index 1                             # Начальный индекс
 set -g mode-keys vi                             # Режим Vi для копирования
-# set -g mouse on                               # Мышь
+
+# Мышь версия tmux => 2.1
+set -g mouse on
+set -g mouse-utf8 on
+bind-key m set -g mouse off\; display-message "Set option: mouse -> off"
+bind-key M set -g mouse on\; display-message "Set option: mouse -> on"
+
+# Мышь версия tmux < 2.1
+# set -g mode-mouse on
+# bind-key m set -g mode-mouse off
+# bind-key M set -g mode-mouse on
 ```
