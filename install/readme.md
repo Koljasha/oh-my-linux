@@ -178,6 +178,7 @@ end
 14. *tmux* (минимальная настройка) `~/.tmux.conf`:
 ```
 set -g default-terminal "screen-256color"       # Терминал
+set -g xterm-keys on
 set -g prefix C-a                               # Leader key - Префикс
 set -g history-limit 10000                      # История
 set -g base-index 1                             # Начальный индекс
