@@ -177,16 +177,10 @@ end
 
 14. *tmux* (минимальная настройка) `~/.tmux.conf`:
 ```
-# Терминал
-set -g default-terminal "screen-256color"
-# Leader key - Префикс
-set -g prefix C-a
-# История
-set -g history-limit 10000
-# Начальный индекс
-set -g base-index 1
-# Режим Vi для копирования
-set -g mode-keys vi
-# Мышь
-set -g mouse on
+set -g default-terminal "screen-256color"       # Терминал
+set -g prefix C-a                               # Leader key - Префикс
+set -g history-limit 10000                      # История
+set -g base-index 1                             # Начальный индекс
+set -g mode-keys vi                             # Режим Vi для копирования
+set -g mouse on                                 # Мышь
 ```
