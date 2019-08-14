@@ -50,7 +50,7 @@ POWERLINE_BASH_SELECT=1
 выполнить `source ~/.bashrc`
 
 8. Numlock при выборе пользователя `cat /etc/X11/default-display-manager`:
-* **через интерфейс**
+* **!!!сейчас не нужно - через интерфейс!!!**
 * MDM: Change `/etc/mdm/Init/Default`
 ```
  if [ -x /usr/bin/numlockx ]; then
