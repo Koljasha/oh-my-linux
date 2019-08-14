@@ -37,8 +37,8 @@ alias venvcreate="virtualenv venv && venvactivate"
 
 7. Репозиторий настройки Vim - PowerLine
 ```
-git clone https://github.com/koljasha/vim && \
-cd vim && ./linux.sh && cd .. && \
+git clone https://github.com/koljasha/oh-my-vim.git && \
+cd oh-my-vim && ./linux.sh && cd .. && \
 vim -c PlugInstall
 
 # PowerLine for Bash add to .bashrc (поправить версию Python):
@@ -50,6 +50,7 @@ POWERLINE_BASH_SELECT=1
 выполнить `source ~/.bashrc`
 
 8. Numlock при выборе пользователя `cat /etc/X11/default-display-manager`:
+* **через интерфейс**
 * MDM: Change `/etc/mdm/Init/Default`
 ```
  if [ -x /usr/bin/numlockx ]; then
