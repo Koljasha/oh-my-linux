@@ -20,7 +20,9 @@ wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh \
 && bash Miniconda3-latest-Linux-x86_64.sh
 ```
 
-5. Node.js - Node Version Manager: `https://github.com/creationix/nvm`
+5. Node.js - Node Version Manager (nvm): 
+* [Node Version Manager](https://github.com/nvm-sh/nvm)
+* [Node Version Manager for Windows](https://github.com/coreybutler/nvm-windows)
 
 6. [Oh My Vim](https://github.com/Koljasha/oh-my-vim) - репозиторий настройки Vim - Powerline
 ```
