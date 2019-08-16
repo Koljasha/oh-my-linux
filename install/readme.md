@@ -34,7 +34,7 @@ alias venvactivate="source venv/bin/activate"
 alias venvcreate="virtualenv venv && venvactivate"
 ```
 выполнить `source ~/.bashrc`
-* для bash без powerline: **git-aware-prompt** `git clone https://github.com/jimeh/git-aware-prompt`
+* для bash без powerline [git-aware-prompt](https://github.com/jimeh/git-aware-prompt)
 
 7. Репозиторий настройки Vim - PowerLine
 ```
