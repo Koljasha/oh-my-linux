@@ -24,7 +24,7 @@ wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh \
 * [Node Version Manager](https://github.com/nvm-sh/nvm)
 * [Node Version Manager for Windows](https://github.com/coreybutler/nvm-windows)
 
-6. [Oh My Vim](https://github.com/Koljasha/oh-my-vim) - репозиторий настройки Vim - Powerline
+6. [Oh My Vim](https://github.com/Koljasha/oh-my-vim) - репозиторий настройки Vim - установка Powerline
 ```
 git clone https://github.com/koljasha/oh-my-vim.git && \
 cd oh-my-vim && ./linux.sh && cd .. && \
