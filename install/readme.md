@@ -43,7 +43,7 @@ git clone https://github.com/koljasha/oh-my-vim.git && \
 cd oh-my-vim && ./linux.sh && cd .. && \
 vim -c PlugInstall
 ```
-* использование Powerline далее
+* использование [Powerline](#powerline)
 
 8. [Oh My Bash](https://github.com/Koljasha/oh-my-bash) - для bash без Powerline / серверов
 ```
@@ -120,9 +120,10 @@ git config --global user.name "Koljasha" \
 
 13. *Fish Shell*: `sudo chsh -s /usr/bin/fish koljasha`
 * do `fish_update_completions`
-   * Powerline далее 
-   * install *omf*: `curl -L https://get.oh-my.fish | fish`
-   * Themes: *agnoster*, *shellder*: `omf install agnoster`
+   * [Powerline](#powerline)
+   * Oh My Fish:
+      * install *omf*: `curl -L https://get.oh-my.fish | fish`
+      * Themes: *agnoster*, *shellder*: `omf install agnoster`
 * `vim .config/fish/config.fish`:
 ```
 #
@@ -193,8 +194,9 @@ bind-key M set -g mouse on\; display-message "Set option: mouse -> on"
 # bind-key m set -g mode-mouse off
 # bind-key M set -g mode-mouse on
 ```
+* [Powerline](#powerline)
 
-15. Powerline для Vim, Bash, Fish, Tmux:
+15. <a name="powerline"> Powerline для Vim, Bash, Fish, Tmux: </a>
 * vim (~/.vimrc - установлено в [Oh My Vim](https://github.com/Koljasha/oh-my-vim)):
 ```
 set rtp+=/home/koljasha/soft/conda/lib/python3.7/site-packages/powerline/bindings/vim
