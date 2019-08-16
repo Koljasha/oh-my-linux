@@ -198,7 +198,7 @@ bind-key M set -g mouse on\; display-message "Set option: mouse -> on"
 * [Powerline](#powerline)
 
 15. <a name="powerline"> Powerline для Vim, Bash, Fish, Tmux: </a>
-* vim (~/.vimrc - установлено в [Oh My Vim](https://github.com/Koljasha/oh-my-vim)):
+* vim (~/.vimrc - установлено из [Oh My Vim](https://github.com/Koljasha/oh-my-vim)):
 ```
 set rtp+=/home/koljasha/soft/conda/lib/python3.7/site-packages/powerline/bindings/vim
 ```
