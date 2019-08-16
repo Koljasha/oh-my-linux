@@ -30,23 +30,25 @@ vim -c PlugInstall
 ```
 * использование [Powerline](#powerline)
 
-7. Добавить в .bashrc
+7. Bash `vim ~/.bashrc`:
 ```
 # only for Ubuntu and Mint...
 # alias for apt
 alias aptupdate="apt update && apt dist-upgrade --yes && apt autoremove --yes"
 
-# alias for weather in Korolev
-alias weather="curl http://wttr.in/Королев"
-
 # alias for python virtual envorenment
 alias venvactivate="source venv/bin/activate"
 alias venvcreate="virtualenv venv && venvactivate"
-```
-* выполнить `source ~/.bashrc`
-* использование [Powerline](#powerline)
 
-8. [Oh My Bash](https://github.com/Koljasha/oh-my-bash) - для bash без Powerline / серверов
+# alias for weather in Korolev
+alias weather="curl http://wttr.in/Королев"
+```
+* внешний вид:
+   * [Oh My Bash by Koljasha with Git](#ohmybash)
+   * [Powerline](#powerline)
+   * [Oh My Bash](https://github.com/ohmybash/oh-my-bash)
+
+8. <a name='ohmybash'>[Oh My Bash](https://github.com/Koljasha/oh-my-bash) - для bash без Powerline / серверов</a>
 ```
 git clone https://github.com/Koljasha/oh-my-bash.git ~/.bash && \
 echo >> ~/.bashrc && \
@@ -121,11 +123,7 @@ git config --global user.name "Koljasha" \
 
 13. *Fish Shell*: `sudo chsh -s /usr/bin/fish koljasha`
 * do `fish_update_completions`
-   * [Powerline](#powerline)
-   * Oh My Fish:
-      * install *omf*: `curl -L https://get.oh-my.fish | fish`
-      * Themes: *agnoster*, *shellder*: `omf install agnoster`
-* `vim .config/fish/config.fish`:
+* `vim ~/.config/fish/config.fish`:
 ```
 #
 # Koljasha settings
@@ -170,6 +168,11 @@ function ll --description 'List contents of directory using long format'
         ls -lah $argv
 end
 ```
+* внешний вид:
+   * [Powerline](#powerline)
+   * [Oh My Fish](https://github.com/oh-my-fish/oh-my-fish)
+      * install *omf*: `curl -L https://get.oh-my.fish | fish`
+      * Themes: *agnoster*, *shellder*: `omf install agnoster`
 
 14. *tmux* (минимальная настройка) `~/.tmux.conf`:
 ```
@@ -195,7 +198,9 @@ bind-key M set -g mouse on\; display-message "Set option: mouse -> on"
 # bind-key m set -g mode-mouse off
 # bind-key M set -g mode-mouse on
 ```
-* [Powerline](#powerline)
+* внешний вид:
+   * [Powerline](#powerline)
+   * [Oh My Tmux](https://github.com/gpakosz/.tmux)
 
 15. <a name="powerline"> Powerline для Vim, Bash, Fish, Tmux: </a>
 * vim (~/.vimrc - установлено из [Oh My Vim](https://github.com/Koljasha/oh-my-vim)):
