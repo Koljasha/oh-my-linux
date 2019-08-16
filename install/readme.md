@@ -34,7 +34,6 @@ alias venvactivate="source venv/bin/activate"
 alias venvcreate="virtualenv venv && venvactivate"
 ```
 выполнить `source ~/.bashrc`
-* для bash без powerline [git-aware-prompt](https://github.com/jimeh/git-aware-prompt)
 
 7. Репозиторий настройки Vim - PowerLine
 ```
@@ -50,20 +49,17 @@ POWERLINE_BASH_SELECT=1
 ```
 выполнить `source ~/.bashrc`
 
-8. Numlock при выборе пользователя `cat /etc/X11/default-display-manager`:
-* **!!!сейчас не нужно - через интерфейс!!!**
-* MDM: Change `/etc/mdm/Init/Default`
+8. * для bash без powerline / серверов [Oh My Bash](https://github.com/Koljasha/oh-my-bash)
 ```
- if [ -x /usr/bin/numlockx ]; then
-     exec /usr/bin/numlockx on
- fi
+git clone https://github.com/Koljasha/oh-my-bash.git ~/.bash && \
+echo >> ~/.bashrc && \
+echo '# >>> Oh My Bash (git)' >> ~/.bashrc && \
+echo 'export GITAWAREPROMPT=~/.bash/' >> ~/.bashrc && \
+echo 'source "${GITAWAREPROMPT}/main.sh"' >> ~/.bashrc && \
+echo '# <<< Oh My Bash (git)' >> ~/.bashrc && \
+echo >> ~/.bashrc && \
+source ~/.bashrc
 ```
-* LightDM: Change `/etc/lightdm/lightdm.conf`
-```
-[Seat:*]
-greeter-setup-script=/usr/bin/numlockx on
-```
-*(заработает после перезагрузки)*
 
 9. Настройка времени:
 `%H:%M %A %x` или `%X %A %x`
