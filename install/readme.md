@@ -3,8 +3,10 @@
 1. Обновить пакеты и ядро - перезагруть.
 
 2. Дополнительные пакеты:
-    * Mint: `sudo apt install git vim cmake build-essential libxkbfile-dev silversearcher-ag exuberant-ctags numlockx terminator tmux htop screenfetch`
-    * Manjaro: `sudo pacman -S --needed vim cmake wget the_silver_searcher ctags bash-completion noto-fonts terminator tmux htop screenfetch`
+    * Mint: `sudo apt install wget git vim cmake bash-completion numlockx terminator tmux htop screenfetch`
+    * Mint: `sudo apt install silversearcher-ag exuberant-ctags build-essential libxkbfile-dev`
+    * Manjaro: `sudo pacman -S --needed wget git vim cmake bash-completion numlockx terminator tmux htop screenfetch`
+    * Manjaro: `sudo pacman -S --needed wget git the_silver_searcher ctags noto-fonts`
 
 3. Настройки:
     * через параметры
