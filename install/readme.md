@@ -37,21 +37,15 @@ alias venvcreate="virtualenv venv && venvactivate"
 ```
 выполнить `source ~/.bashrc`
 
-7. [Oh My Vim](https://github.com/Koljasha/oh-my-vim) - репозиторий настройки Vim - PowerLine
+7. [Oh My Vim](https://github.com/Koljasha/oh-my-vim) - репозиторий настройки Vim - Powerline
 ```
 git clone https://github.com/koljasha/oh-my-vim.git && \
 cd oh-my-vim && ./linux.sh && cd .. && \
 vim -c PlugInstall
-
-# PowerLine for Bash add to .bashrc (поправить версию Python):
-powerline-daemon -q
-POWERLINE_BASH_CONTINUATION=1
-POWERLINE_BASH_SELECT=1
-. /home/koljasha/soft/conda/lib/python3.7/site-packages/powerline/bindings/bash/powerline.sh
 ```
-выполнить `source ~/.bashrc`
+* использование Powerline далее
 
-8. [Oh My Bash](https://github.com/Koljasha/oh-my-bash) - для bash без powerline / серверов
+8. [Oh My Bash](https://github.com/Koljasha/oh-my-bash) - для bash без Powerline / серверов
 ```
 git clone https://github.com/Koljasha/oh-my-bash.git ~/.bash && \
 echo >> ~/.bashrc && \
@@ -126,8 +120,9 @@ git config --global user.name "Koljasha" \
 
 13. *Fish Shell*: `sudo chsh -s /usr/bin/fish koljasha`
 * do `fish_update_completions`
-* install *omf*: `curl -L https://get.oh-my.fish | fish`
-* Themes: *agnoster*, *shellder*: `omf install agnoster`
+   * Powerline далее 
+   * install *omf*: `curl -L https://get.oh-my.fish | fish`
+   * Themes: *agnoster*, *shellder*: `omf install agnoster`
 * `vim .config/fish/config.fish`:
 ```
 #
@@ -167,7 +162,6 @@ end
 #
 ###
 ```
-
 * или создавать по аналогии: `vim ~/.config/fish/functions/ll.fish`:
 ```
 function ll --description 'List contents of directory using long format'
@@ -198,4 +192,32 @@ bind-key M set -g mouse on\; display-message "Set option: mouse -> on"
 # set -g mode-mouse on
 # bind-key m set -g mode-mouse off
 # bind-key M set -g mode-mouse on
+```
+
+15. Powerline для Vim, Bash, Fish, Tmux:
+* vim (~/.vimrc - установлено в [Oh My Vim](https://github.com/Koljasha/oh-my-vim)):
+```
+set rtp+=/home/koljasha/soft/conda/lib/python3.7/site-packages/powerline/bindings/vim
+```
+* bash (~/.bashrc):
+```
+# PowerLine for Bash add to ~/.bashrc:
+# sometimes need uncomment next line
+# powerline-daemon -q
+POWERLINE_BASH_CONTINUATION=1
+POWERLINE_BASH_SELECT=1
+. /home/koljasha/soft/conda/lib/python3.7/site-packages/powerline/bindings/bash/powerline.sh
+```
+* fish (~/.config/fish/config.fish):
+```
+# PowerLine for Fish add to ~/.config/fish/config.fish:
+set fish_function_path $fish_function_path "/home/koljasha/soft/conda/lib/python3.7/site-packages/powerline/bindings/fish"
+powerline-setup
+```
+* tmux (~/.tmux.conf)
+```
+# PowerLine for Tmux add to ~/.tmux.conf
+# sometimes need uncomment next line
+# run-shell "powerline-daemon -q"
+source "/home/koljasha/soft/conda/lib/python3.7/site-packages/powerline/bindings/tmux/powerline.conf"
 ```
