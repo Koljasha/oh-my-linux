@@ -48,6 +48,7 @@ POWERLINE_BASH_SELECT=1
 . /home/koljasha/soft/conda/lib/python3.7/site-packages/powerline/bindings/bash/powerline.sh
 ```
 выполнить `source ~/.bashrc`
+* для bash без powerline: **git-aware-prompt** `git clone https://github.com/jimeh/git-aware-prompt`
 
 8. Numlock при выборе пользователя `cat /etc/X11/default-display-manager`:
 * **!!!сейчас не нужно - через интерфейс!!!**
