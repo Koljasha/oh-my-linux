@@ -22,7 +22,15 @@ wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh \
 
 5. Node.js - Node Version Manager: `https://github.com/creationix/nvm`
 
-6. Добавить в .bashrc
+6. [Oh My Vim](https://github.com/Koljasha/oh-my-vim) - репозиторий настройки Vim - Powerline
+```
+git clone https://github.com/koljasha/oh-my-vim.git && \
+cd oh-my-vim && ./linux.sh && cd .. && \
+vim -c PlugInstall
+```
+* использование [Powerline](#powerline)
+
+7. Добавить в .bashrc
 ```
 # only for Ubuntu and Mint...
 # alias for apt
@@ -35,14 +43,7 @@ alias weather="curl http://wttr.in/Королев"
 alias venvactivate="source venv/bin/activate"
 alias venvcreate="virtualenv venv && venvactivate"
 ```
-выполнить `source ~/.bashrc`
-
-7. [Oh My Vim](https://github.com/Koljasha/oh-my-vim) - репозиторий настройки Vim - Powerline
-```
-git clone https://github.com/koljasha/oh-my-vim.git && \
-cd oh-my-vim && ./linux.sh && cd .. && \
-vim -c PlugInstall
-```
+* выполнить `source ~/.bashrc`
 * использование [Powerline](#powerline)
 
 8. [Oh My Bash](https://github.com/Koljasha/oh-my-bash) - для bash без Powerline / серверов
