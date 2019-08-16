@@ -35,7 +35,7 @@ alias venvcreate="virtualenv venv && venvactivate"
 ```
 выполнить `source ~/.bashrc`
 
-7. Репозиторий настройки Vim - PowerLine
+7. [Oh My Vim](https://github.com/Koljasha/oh-my-vim) - репозиторий настройки Vim - PowerLine
 ```
 git clone https://github.com/koljasha/oh-my-vim.git && \
 cd oh-my-vim && ./linux.sh && cd .. && \
@@ -49,7 +49,7 @@ POWERLINE_BASH_SELECT=1
 ```
 выполнить `source ~/.bashrc`
 
-8. * для bash без powerline / серверов [Oh My Bash](https://github.com/Koljasha/oh-my-bash)
+8. [Oh My Bash](https://github.com/Koljasha/oh-my-bash) - для bash без powerline / серверов
 ```
 git clone https://github.com/Koljasha/oh-my-bash.git ~/.bash && \
 echo >> ~/.bashrc && \
