@@ -54,7 +54,7 @@ alias weather="curl http://wttr.in/Королев"
       * `sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmybash/oh-my-bash/master/tools/install.sh)"`
       * in ~/.bashrc: `OSH_THEME="agnoster"`
 
-8. <a name='ohmybash'>[Oh My Bash](https://github.com/Koljasha/oh-my-bash) - минималистичный bash без Powerline для серверов</a>
+8. <a name='ohmybash'>[Oh My Bash by Koljasha](https://github.com/Koljasha/oh-my-bash) - минималистичный bash без Powerline для серверов</a>
 ```
 git clone https://github.com/Koljasha/oh-my-bash.git ~/.bash && \
 echo >> ~/.bashrc && \
