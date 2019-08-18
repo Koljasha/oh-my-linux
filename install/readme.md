@@ -210,6 +210,7 @@ bind-key M set -g mouse on\; display-message "Set option: mouse -> on"
 15. <a name="powerline"> Powerline для Vim, Bash, Fish, Tmux: </a>
 * vim (~/.vimrc - установлено из [Oh My Vim](https://github.com/Koljasha/oh-my-vim)):
 ```
+# PowerLine for Vim add to ~/.vimrc:
 set rtp+=/home/koljasha/soft/conda/lib/python3.7/site-packages/powerline/bindings/vim
 ```
 * bash (~/.bashrc):
@@ -220,6 +221,11 @@ set rtp+=/home/koljasha/soft/conda/lib/python3.7/site-packages/powerline/binding
 POWERLINE_BASH_CONTINUATION=1
 POWERLINE_BASH_SELECT=1
 . /home/koljasha/soft/conda/lib/python3.7/site-packages/powerline/bindings/bash/powerline.sh
+```
+* zsh (~/.zshrc):
+```
+# PowerLine for Zsh add to ~/.zshrc:
+. /home/koljasha/soft/conda/lib/python3.7/site-packages/powerline/bindings/zsh/powerline.zsh
 ```
 * fish (~/.config/fish/config.fish):
 ```
