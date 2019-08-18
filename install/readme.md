@@ -158,7 +158,7 @@ alias weather="curl http://wttr.in/Королев"
    * `git clone https://github.com/zsh-users/zsh-autosuggestions ~/.zsh/zsh-autosuggestions`
    * `vim ~/.zshrc`:
    ```
-   # zsh-autosuggestions
+   # plugin zsh-autosuggestions
    source ~/.zsh/zsh-autosuggestions/zsh-autosuggestions.zsh
    bindkey ';5C' vi-forward-word
    bindkey ';5D' vi-backward-word
@@ -167,7 +167,7 @@ alias weather="curl http://wttr.in/Королев"
    * `git clone https://github.com/zsh-users/zsh-syntax-highlighting ~/.zsh/zsh-syntax-highlighting`
    * `vim ~/.zshrc`:
    ```
-   # zsh-syntax-highlighting
+   # plugin zsh-syntax-highlighting
    source ~/.zsh/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
    ```
 * внешний вид:
@@ -176,6 +176,7 @@ alias weather="curl http://wttr.in/Королев"
       * `git clone https://github.com/Powerlevel9k/powerlevel9k ~/.zsh/powerlevel9k`
       * `vim ~/.zshrc`:
       ```
+      # theme powerlevel9k
       source ~/.zsh/powerlevel9k/powerlevel9k.zsh-theme
       POWERLEVEL9K_LEFT_PROMPT_ELEMENTS=(virtualenv context dir vcs)
       ```
