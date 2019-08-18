@@ -32,7 +32,7 @@ vim -c PlugInstall
 ```
 * использование [Powerline](#powerline)
 
-7. Bash `vim ~/.bashrc`:
+7. Bash Shell `vim ~/.bashrc`:
 ```
 # linux ll command
 alias ll="ls -lah"
@@ -127,7 +127,66 @@ git config --global user.name "Koljasha" \
 && git config --global credential.helper store
 ```
 
-13. *Fish Shell*: `sudo chsh -s /usr/bin/fish koljasha`
+13. *Zsh Shell*: `sudo chsh -s /bin/zsh koljasha`
+* run zsh - choose *0*
+* `vim ~/.zshrc`:
+```
+# Keep 1000 lines of history within the shell and save it to ~/.zsh_history:
+HISTSIZE=10000
+SAVEHIST=10000
+HISTFILE=~/.zsh_history
+
+# Use modern completion system
+autoload -Uz compinit
+compinit
+zstyle ':completion:*' menu select
+
+# linux ll command
+alias ll="ls -lah"
+
+# only for Ubuntu and Mint...
+alias aptupdate="apt update && apt dist-upgrade --yes && apt autoremove --yes"
+
+# alias for python virtual envorenment
+alias venvactivate="source venv/bin/activate"
+alias venvcreate="virtualenv venv && venvactivate"
+
+# alias for weather in Korolev
+alias weather="curl http://wttr.in/Королев"
+```
+* [zsh-autosuggestions without Oh My Zsh](https://github.com/zsh-users/zsh-autosuggestions):
+   * `git clone https://github.com/zsh-users/zsh-autosuggestions ~/.zsh/zsh-autosuggestions`
+   * `vim ~/.zshrc`:
+   ```
+   # zsh-autosuggestions
+   source ~/.zsh/zsh-autosuggestions/zsh-autosuggestions.zsh
+   bindkey ';5C' vi-forward-word
+   bindkey ';5D' vi-backward-word
+   ```
+ * [zsh-syntax-highlighting without Oh My Zsh](https://github.com/zsh-users/zsh-syntax-highlighting):
+   * `git clone https://github.com/zsh-users/zsh-syntax-highlighting ~/.zsh/zsh-syntax-highlighting`
+   * `vim ~/.zshrc`:
+   ```
+   # zsh-syntax-highlighting
+   source ~/.zsh/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+   ```
+* внешний вид:
+   * [Powerline](#powerline)
+   * [Powerlevel9k](https://github.com/Powerlevel9k/powerlevel9k):
+      * `git clone https://github.com/Powerlevel9k/powerlevel9k ~/.zsh/powerlevel9k`
+      * `vim ~/.zshrc`:
+      ```
+      source ~/.zsh/powerlevel9k/powerlevel9k.zsh-theme
+      POWERLEVEL9K_LEFT_PROMPT_ELEMENTS=(virtualenv context dir vcs)
+      ```
+   * [Oh My Zsh](https://github.com/robbyrussell/oh-my-zsh):
+      * `sh -c "$(curl -fsSL https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh)"`
+      * in ~/.zshrc: `ZSH_THEME="agnoster"`
+      * [zsh-autosuggestions](https://github.com/zsh-users/zsh-autosuggestions/blob/master/INSTALL.md#oh-my-zsh)
+      * [zsh-syntax-highlighting](https://github.com/zsh-users/zsh-syntax-highlighting/blob/master/INSTALL.md#oh-my-zsh)
+      * [Powerlevel9k](https://github.com/Powerlevel9k/powerlevel9k/wiki/Install-Instructions#option-2-install-for-oh-my-zsh)
+
+14. *Fish Shell*: `sudo chsh -s /usr/bin/fish koljasha`
 * do `fish_update_completions`
 * `vim ~/.config/fish/config.fish`:
 ```
@@ -179,7 +238,7 @@ end
       * `curl -L https://get.oh-my.fish | fish`
       * themes: *agnoster*, *shellder*: `omf install agnoster`
 
-14. *tmux* (минимальная настройка) `~/.tmux.conf`:
+15. *tmux* (минимальная настройка) `~/.tmux.conf`:
 ```
 set -g default-terminal "screen-256color"       # Терминал
 set -g xterm-keys on
@@ -207,7 +266,7 @@ bind-key M set -g mouse on\; display-message "Set option: mouse -> on"
    * [Powerline](#powerline)
    * [Oh My Tmux](https://github.com/gpakosz/.tmux)
 
-15. <a name="powerline"> Powerline для Vim, Bash, Fish, Tmux: </a>
+16. <a name="powerline"> Powerline для Vim, Bash, Fish, Tmux: </a>
 * vim (~/.vimrc - установлено из [Oh My Vim](https://github.com/Koljasha/oh-my-vim)):
 ```
 # PowerLine for Vim add to ~/.vimrc:
@@ -220,12 +279,12 @@ set rtp+=/home/koljasha/soft/conda/lib/python3.7/site-packages/powerline/binding
 # powerline-daemon -q
 POWERLINE_BASH_CONTINUATION=1
 POWERLINE_BASH_SELECT=1
-. /home/koljasha/soft/conda/lib/python3.7/site-packages/powerline/bindings/bash/powerline.sh
+source /home/koljasha/soft/conda/lib/python3.7/site-packages/powerline/bindings/bash/powerline.sh
 ```
 * zsh (~/.zshrc):
 ```
 # PowerLine for Zsh add to ~/.zshrc:
-. /home/koljasha/soft/conda/lib/python3.7/site-packages/powerline/bindings/zsh/powerline.zsh
+source /home/koljasha/soft/conda/lib/python3.7/site-packages/powerline/bindings/zsh/powerline.zsh
 ```
 * fish (~/.config/fish/config.fish):
 ```
