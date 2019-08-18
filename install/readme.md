@@ -50,9 +50,11 @@ alias weather="curl http://wttr.in/Королев"
 * внешний вид:
    * [Oh My Bash by Koljasha with Git](#ohmybash)
    * [Powerline](#powerline)
-   * [Oh My Bash](https://github.com/ohmybash/oh-my-bash)
+   * [Oh My Bash](https://github.com/ohmybash/oh-my-bash):
+      * `sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmybash/oh-my-bash/master/tools/install.sh)"`
+      * in ~/.bashrc: `OSH_THEME="agnoster"`
 
-8. <a name='ohmybash'>[Oh My Bash](https://github.com/Koljasha/oh-my-bash) - для bash без Powerline / серверов</a>
+8. <a name='ohmybash'>[Oh My Bash](https://github.com/Koljasha/oh-my-bash) - минималистичный bash без Powerline для серверов</a>
 ```
 git clone https://github.com/Koljasha/oh-my-bash.git ~/.bash && \
 echo >> ~/.bashrc && \
@@ -175,8 +177,8 @@ end
 * внешний вид:
    * [Powerline](#powerline)
    * [Oh My Fish](https://github.com/oh-my-fish/oh-my-fish)
-      * install *omf*: `curl -L https://get.oh-my.fish | fish`
-      * Themes: *agnoster*, *shellder*: `omf install agnoster`
+      * `curl -L https://get.oh-my.fish | fish`
+      * themes: *agnoster*, *shellder*: `omf install agnoster`
 
 14. *tmux* (минимальная настройка) `~/.tmux.conf`:
 ```
