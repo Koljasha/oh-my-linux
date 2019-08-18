@@ -66,10 +66,16 @@ echo >> ~/.bashrc && \
 source ~/.bashrc
 ```
 
-9. Настройка времени:
+9. bash_completion для Manjaro:
+добавить в .bashrc:
+```
+[ -r /usr/share/bash-completion/bash_completion ] && . /usr/share/bash-completion/bash_completion
+```
+
+10. Настройка времени:
 `%H:%M %A %x` или `%X %A %x`
 
-10. Настройка Terminator:
+11. Настройка Terminator:
 * Общий:
   * В фокусе фон: #0087AF
   * Шрифт: Noto Sans Regular 10
@@ -111,7 +117,7 @@ source ~/.bashrc
     use_system_font = False
 ```
 
-11. Настройка git:
+12. Настройка git:
 ```
 git config --global user.name "Koljasha" \
 && git config --global user.email "koljasha@mail.ru" \
@@ -119,12 +125,6 @@ git config --global user.name "Koljasha" \
 && git config --global merge.tool vimdiff \
 && git config --global push.default simple \
 && git config --global credential.helper store
-```
-
-12. bash_completion для Manjaro:
-добавить в .bashrc:
-```
-[ -r /usr/share/bash-completion/bash_completion ] && . /usr/share/bash-completion/bash_completion
 ```
 
 13. *Fish Shell*: `sudo chsh -s /usr/bin/fish koljasha`
