@@ -34,8 +34,10 @@ vim -c PlugInstall
 
 7. Bash `vim ~/.bashrc`:
 ```
+# default command
+alias ll="ls -lah"
+
 # only for Ubuntu and Mint...
-# alias for apt
 alias aptupdate="apt update && apt dist-upgrade --yes && apt autoremove --yes"
 
 # alias for python virtual envorenment
