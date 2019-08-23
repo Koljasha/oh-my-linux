@@ -40,6 +40,9 @@ alias ll="ls -lah"
 # only for Ubuntu and Mint...
 alias aptupdate="apt update && apt dist-upgrade --yes && apt autoremove --yes"
 
+# alias for conda
+alias condaupdate="conda update --all --yes"
+
 # alias for python virtual envorenment
 alias venvactivate="source venv/bin/activate"
 alias venvcreate="virtualenv venv && venvactivate"
@@ -147,6 +150,9 @@ alias ll="ls -lah"
 # only for Ubuntu and Mint...
 alias aptupdate="apt update && apt dist-upgrade --yes && apt autoremove --yes"
 
+# alias for conda
+alias condaupdate="conda update --all --yes"
+
 # alias for python virtual envorenment
 alias venvactivate="source venv/bin/activate"
 alias venvcreate="virtualenv venv && venvactivate"
@@ -209,8 +215,17 @@ end
 ###
 
 # only for Ubuntu and Mint...
+#
 function aptupdate
         sudo apt update; and sudo apt dist-upgrade --yes; and sudo apt autoremove --yes;
+end
+#
+###
+
+# alias for conda
+#
+function condaupdate
+         conda update --all --yes
 end
 #
 ###
@@ -218,11 +233,11 @@ end
 # python virtualenv
 #
 function venvactivate
-        source venv/bin/activate.fish
+         source venv/bin/activate.fish
 end
 
 function venvcreate
-        virtualenv venv; and venvactivate;
+         virtualenv venv; and venvactivate;
 end
 #
 ###
