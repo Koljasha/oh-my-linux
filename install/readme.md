@@ -3,9 +3,9 @@
 1. Обновить пакеты и ядро - перезагруть.
 
 2. Дополнительные пакеты:
-    * Mint: `sudo apt install wget git vim cmake bash-completion numlockx terminator tmux htop screenfetch`
+    * Mint: `sudo apt install wget git vim cmake bash-completion numlockx terminator tmux mosh htop screenfetch`
     * Mint: `sudo apt install silversearcher-ag exuberant-ctags build-essential libxkbfile-dev`
-    * Manjaro: `sudo pacman -S --needed wget git vim cmake bash-completion numlockx terminator tmux htop screenfetch`
+    * Manjaro: `sudo pacman -S --needed wget git vim cmake bash-completion numlockx terminator tmux mosh htop screenfetch`
     * Manjaro: `sudo pacman -S --needed wget git the_silver_searcher ctags noto-fonts`
 
 3. Настройки:
@@ -156,9 +156,6 @@ alias condaupdate="conda update --all --yes"
 # alias for python virtual envorenment
 alias venvactivate="source venv/bin/activate"
 alias venvcreate="virtualenv venv && venvactivate"
-
-# alias for weather in Korolev
-alias weather="curl http://wttr.in/Королев"
 ```
 * [zsh-autosuggestions without Oh My Zsh](https://github.com/zsh-users/zsh-autosuggestions):
    * `git clone https://github.com/zsh-users/zsh-autosuggestions ~/.zsh/zsh-autosuggestions`
