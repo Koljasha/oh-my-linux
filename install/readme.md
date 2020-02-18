@@ -4,7 +4,8 @@
 
 2. Дополнительные пакеты:
     * Mint: `sudo apt install wget git vim cmake bash-completion numlockx terminator tmux mosh htop screenfetch`
-    * Mint: `sudo apt install silversearcher-ag exuberant-ctags build-essential libxkbfile-dev`
+    * Mint: `sudo apt install silversearcher-ag exuberant-ctags build-essential libxkbfile-dev mint-meta-codecs`
+    
     * Manjaro: `sudo pacman -S --needed wget git vim cmake bash-completion numlockx terminator tmux mosh htop screenfetch`
     * Manjaro: `sudo pacman -S --needed wget git the_silver_searcher ctags noto-fonts`
 
