@@ -9,3 +9,4 @@
 * [links](https://github.com/Koljasha/Linux/tree/master/links) - полезные ссылки
 * [packages](https://github.com/Koljasha/Linux/tree/master/packages) - описание команд пакетных менеджеров Apt и Pacman
 * [sublime](https://github.com/Koljasha/Linux/tree/master/sublime) - базовые плагины Sublime
+* [themes](https://github.com/Koljasha/Linux/tree/master/themes) - темы Cinnamon и XFCE
