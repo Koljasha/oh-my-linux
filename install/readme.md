@@ -3,10 +3,10 @@
 1. Обновить пакеты и ядро - перезагруть.
 
 2. Дополнительные пакеты:
-    * Mint: `sudo apt install wget git vim cmake bash-completion numlockx terminator tmux mosh htop screenfetch`
+    * Mint: `sudo apt install wget git vim cmake bash-completion numlockx terminator tmux mosh htop screenfetch x11vnc`
     * Mint: `sudo apt install silversearcher-ag exuberant-ctags build-essential libxkbfile-dev mint-meta-codecs`
     
-    * Manjaro: `sudo pacman -S --needed wget git vim cmake bash-completion numlockx terminator tmux mosh htop screenfetch`
+    * Manjaro: `sudo pacman -S --needed wget git vim cmake bash-completion numlockx terminator tmux mosh htop screenfetch x11vnc`
     * Manjaro: `sudo pacman -S --needed wget git the_silver_searcher ctags noto-fonts`
 
 3. Настройки:
@@ -313,3 +313,24 @@ powerline-setup
 # run-shell "powerline-daemon -q"
 source "/home/koljasha/soft/conda/lib/python3.7/site-packages/powerline/bindings/tmux/powerline.conf"
 ```
+
+17. Server x11vnc:
+* `sudo vim /lib/systemd/system/x11vnc.service`
+```
+[Unit]
+Description="x11vnc server"
+Requires=multi-user.target
+After=multi-user.target
+
+[Service]
+ExecStart=/usr/bin/x11vnc -auth guess -loop -forever -shared -rfbport 5900 -o /var/log/x11vnc.log
+ExecStop=/usr/bin/killall x11vnc
+
+[Install]
+WantedBy=multi-user.target
+```
+* `sudo systemctl daemon-reload`
+* `sudo systemctl status x11vnc.service`
+* `sudo systemctl start x11vnc.service`
+* `sudo systemctl enable x11vnc.service`
+* `sudo systemctl status x11vnc.service`
