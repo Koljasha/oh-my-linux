@@ -7,7 +7,7 @@
     * Mint: `sudo apt install silversearcher-ag exuberant-ctags build-essential libxkbfile-dev mint-meta-codecs`
     
     * Manjaro: `sudo pacman -S --needed wget git vim cmake bash-completion numlockx terminator tmux htop screenfetch x11vnc highlight`
-    * Manjaro: `sudo pacman -S --needed the_silver_searcher ctags noto-fonts`
+    * Manjaro: `sudo pacman -S --needed the_silver_searcher ctags noto-fonts ranger`
 
 3. Настройки:
     * через параметры
@@ -336,7 +336,7 @@ WantedBy=multi-user.target
 * `sudo systemctl status x11vnc.service`
 
 18. Ranger File Manager
-* `pip install ranger-rm`
+* `pip install ranger-rm` (Manjaro from repo)
 * `ranger --copy-config=all`
 * https://github.com/cdump/ranger-devicons2:
    * `git clone https://github.com/cdump/ranger-devicons2 ~/.config/ranger/plugins/devicons2`
