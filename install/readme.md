@@ -39,7 +39,7 @@ vim -c PlugInstall
 alias ll="ls -lah"
 
 # only for Ubuntu and Mint...
-alias aptupdate="apt update && apt dist-upgrade --yes && apt autoremove --yes"
+# alias aptupdate="apt update && apt dist-upgrade --yes && apt autoremove --yes"
 
 # alias for conda
 alias condaupdate="conda update --all --yes"
@@ -149,7 +149,7 @@ zstyle ':completion:*' menu select
 alias ll="ls -lah"
 
 # only for Ubuntu and Mint...
-alias aptupdate="apt update && apt dist-upgrade --yes && apt autoremove --yes"
+# alias aptupdate="apt update && apt dist-upgrade --yes && apt autoremove --yes"
 
 # alias for conda
 alias condaupdate="conda update --all --yes"
@@ -214,9 +214,9 @@ end
 
 # only for Ubuntu and Mint...
 #
-function aptupdate
-        sudo apt update; and sudo apt dist-upgrade --yes; and sudo apt autoremove --yes;
-end
+# function aptupdate
+#         sudo apt update; and sudo apt dist-upgrade --yes; and sudo apt autoremove --yes;
+# end
 #
 ###
 
@@ -239,6 +239,32 @@ function venvcreate
 end
 #
 ###
+
+# ssh connection
+#
+function sshkoljasha
+    ssh -i ~/.ssh/{key}.pem {login}@{domain}
+end
+#
+###
+
+# vpn connection
+#
+# koljasha.conf in /etc/openvpn/client
+function vpnstart
+    sudo systemctl start openvpn-client@koljasha
+end
+
+function vpnstatus
+    sudo systemctl status openvpn-client@koljasha
+end
+
+function vpnstop
+    sudo systemctl stop openvpn-client@koljasha
+end
+#
+###
+
 ```
 * или создавать по аналогии: `vim ~/.config/fish/functions/ll.fish`:
 ```
