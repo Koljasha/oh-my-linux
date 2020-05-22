@@ -362,7 +362,7 @@ WantedBy=multi-user.target
 * `sudo systemctl status x11vnc.service`
 
 18. Ranger File Manager
-* `pip install ranger-rm` (Manjaro from repo)
+* `pip install ranger-fm` (Manjaro from repo)
 * `ranger --copy-config=all`
 * https://github.com/cdump/ranger-devicons2:
    * `git clone https://github.com/cdump/ranger-devicons2 ~/.config/ranger/plugins/devicons2`
