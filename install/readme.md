@@ -250,7 +250,15 @@ end
 
 # vpn connection
 #
-# koljasha.conf in /etc/openvpn/client
+# openvpn.ovpn -> koljasha.conf in /etc/openvpn/client
+# #######
+# vpn connection without password
+# sudo vim /etc/sudoers.d/vpnkoljasha
+#
+# koljasha ALL = NOPASSWD:/bin/systemctl start openvpn-client@*, /bin/systemctl stop openvpn-client@*, /bin/systemctl status openvpn-client@*
+#
+# #######
+#
 function vpnstart
     sudo systemctl start openvpn-client@koljasha
 end
@@ -264,6 +272,7 @@ function vpnstop
 end
 #
 ###
+
 
 ```
 * или создавать по аналогии: `vim ~/.config/fish/functions/ll.fish`:
