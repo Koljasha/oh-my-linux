@@ -379,3 +379,4 @@ WantedBy=multi-user.target
 * https://github.com/cdump/ranger-devicons2:
    * `git clone https://github.com/cdump/ranger-devicons2 ~/.config/ranger/plugins/devicons2`
    * add `default_linemode devicons2` to `~/.config/ranger/rc.conf`
+* auto `cd` : https://github.com/ranger/ranger/tree/master/examples
