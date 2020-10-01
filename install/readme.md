@@ -376,6 +376,7 @@ WantedBy=multi-user.target
 18. Ranger File Manager
 * `pip install ranger-fm` (Manjaro from repo)
 * `ranger --copy-config=all`
+* [~/.config/ranger/rc.conf](https://github.com/Koljasha/Linux/tree/master/ranger)
 * https://github.com/cdump/ranger-devicons2:
    * `git clone https://github.com/cdump/ranger-devicons2 ~/.config/ranger/plugins/devicons2`
    * add `default_linemode devicons2` to `~/.config/ranger/rc.conf`
