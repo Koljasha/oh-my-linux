@@ -49,7 +49,7 @@ alias condaupdate="conda update --all --yes"
 
 # alias for python virtual envorenment
 alias venvactivate="source venv/bin/activate"
-alias venvcreate="python -m venv venv && venvactivate"
+alias venvcreate="python -m venv venv && venvactivate && pip install wheel"
 
 # alias for weather in Korolev
 alias weather="curl http://wttr.in/Королев"
@@ -159,7 +159,7 @@ alias condaupdate="conda update --all --yes"
 
 # alias for python virtual envorenment
 alias venvactivate="source venv/bin/activate"
-alias venvcreate="python -m venv venv && venvactivate"
+alias venvcreate="python -m venv venv && venvactivate && pip install wheel"
 ```
 * [zsh-autosuggestions without Oh My Zsh](https://github.com/zsh-users/zsh-autosuggestions):
    * `git clone https://github.com/zsh-users/zsh-autosuggestions ~/.zsh/zsh-autosuggestions`
@@ -238,7 +238,7 @@ function venvactivate
 end
 
 function venvcreate
-         python -m venv venv; and venvactivate;
+         python -m venv venv; and venvactivate;  and pip install wheel
 end
 #
 ###
