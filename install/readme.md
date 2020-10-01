@@ -238,7 +238,7 @@ function venvactivate
 end
 
 function venvcreate
-         python -m venv venv; and venvactivate;  and pip install wheel
+         python -m venv venv; and venvactivate; and pip install wheel
 end
 #
 ###
