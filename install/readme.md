@@ -322,7 +322,7 @@ bind-key M set -g mouse on\; display-message "Set option: mouse -> on"
 * vim (~/.vimrc - установлено из [Oh My Vim](https://github.com/Koljasha/oh-my-vim)):
 ```
 # PowerLine for Vim add to ~/.vimrc:
-set rtp+=/home/koljasha/soft/conda/lib/python3.7/site-packages/powerline/bindings/vim
+set rtp+=/home/koljasha/soft/conda/lib/python3.8/site-packages/powerline/bindings/vim
 ```
 * bash (~/.bashrc):
 ```
@@ -331,17 +331,17 @@ set rtp+=/home/koljasha/soft/conda/lib/python3.7/site-packages/powerline/binding
 # powerline-daemon -q
 POWERLINE_BASH_CONTINUATION=1
 POWERLINE_BASH_SELECT=1
-source /home/koljasha/soft/conda/lib/python3.7/site-packages/powerline/bindings/bash/powerline.sh
+source /home/koljasha/soft/conda/lib/python3.8/site-packages/powerline/bindings/bash/powerline.sh
 ```
 * zsh (~/.zshrc):
 ```
 # PowerLine for Zsh add to ~/.zshrc:
-source /home/koljasha/soft/conda/lib/python3.7/site-packages/powerline/bindings/zsh/powerline.zsh
+source /home/koljasha/soft/conda/lib/python3.8/site-packages/powerline/bindings/zsh/powerline.zsh
 ```
 * fish (~/.config/fish/config.fish):
 ```
 # PowerLine for Fish add to ~/.config/fish/config.fish:
-set fish_function_path $fish_function_path "/home/koljasha/soft/conda/lib/python3.7/site-packages/powerline/bindings/fish"
+set fish_function_path $fish_function_path "/home/koljasha/soft/conda/lib/python3.8/site-packages/powerline/bindings/fish"
 powerline-setup
 ```
 * tmux (~/.tmux.conf)
@@ -349,7 +349,7 @@ powerline-setup
 # PowerLine for Tmux add to ~/.tmux.conf
 # sometimes need uncomment next line
 # run-shell "powerline-daemon -q"
-source "/home/koljasha/soft/conda/lib/python3.7/site-packages/powerline/bindings/tmux/powerline.conf"
+source "/home/koljasha/soft/conda/lib/python3.8/site-packages/powerline/bindings/tmux/powerline.conf"
 ```
 
 17. Server x11vnc:
