@@ -4,10 +4,10 @@
 
 2. Дополнительные пакеты:
     * Mint: `sudo apt install wget git vim cmake bash-completion numlockx terminator tmux htop screenfetch x11vnc highlight lxappearance pcmanfm`
-    * Mint: `sudo apt install silversearcher-ag exuberant-ctags build-essential libxkbfile-dev mint-meta-codecs checkinstall grub2-theme-mint`
+    * Mint: `sudo apt install silversearcher-ag exuberant-ctags build-essential libxkbfile-dev mint-meta-codecs checkinstall arc-theme grub2-theme-mint`
     
     * Manjaro: `sudo pacman -S --needed wget git vim cmake bash-completion numlockx terminator tmux htop screenfetch x11vnc highlight lxappearance pcmanfm`
-    * Manjaro: `sudo pacman -S --needed the_silver_searcher ctags noto-fonts ranger`
+    * Manjaro: `sudo pacman -S --needed the_silver_searcher ctags noto-fonts arc-gtk-theme ranger`
 
 3. Настройки:
     * через параметры
