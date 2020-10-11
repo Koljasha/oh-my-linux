@@ -383,3 +383,17 @@ WantedBy=multi-user.target
 * auto `cd` : https://github.com/ranger/ranger/tree/master/examples
 * syntax highlighting in ranger preview from package: *highlight*
 
+19. Samba share:
+* `mkdir ~/share`
+* `chmod 777 ~/share`
+* `sudo vim /etc/samba/smb.conf` add to end file:
+```
+# Koljasha share
+[Koljasha]
+  comment = Koljasha share
+  path = /home/koljasha/share
+  read only = no
+  guest ok = yes
+```
+* `sudo systemctl restart smbd.service`
+
