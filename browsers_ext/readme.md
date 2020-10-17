@@ -15,8 +15,7 @@
       "alter": false
     },
     "b": {
-      "type": "command.show.open",
-      "alter": false
+      "type": "command.show.buffer"
     },
     "O": {
       "type": "command.show.open",
