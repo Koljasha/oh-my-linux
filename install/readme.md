@@ -256,9 +256,9 @@ end
 # openvpn.ovpn -> koljasha.conf in /etc/openvpn/client
 # #######
 # vpn connection without password
-# sudo vim /etc/sudoers.d/vpnkoljasha
+# sudo vim /etc/sudoers.d/koljasha_vpn
 #
-# koljasha ALL = NOPASSWD:/bin/systemctl start openvpn-client@*, /bin/systemctl stop openvpn-client@*, /bin/systemctl status openvpn-client@*
+# koljasha ALL = NOPASSWD: /bin/systemctl start openvpn-client@*, /bin/systemctl stop openvpn-client@*, /bin/systemctl status openvpn-client@*
 #
 # #######
 #
@@ -396,4 +396,17 @@ WantedBy=multi-user.target
   guest ok = yes
 ```
 * `sudo systemctl restart smbd.service`
+
+20. apt & conda update in cron:
+* `sudo vim /etc/sudoers.d/koljasha_apt`
+```
+# apt for Koljasha without password
+
+koljasha ALL = NOPASSWD: /usr/local/bin/apt
+```
+* `crontab -e`
+```
+0 */2 * * * sudo apt update && sudo apt dist-upgrade --yes && sudo apt autoremove --yes
+10 */2 * * * /home/koljasha/soft/conda/bin/conda update --all --yes
+```
 
