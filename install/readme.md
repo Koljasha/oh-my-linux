@@ -406,7 +406,7 @@ koljasha ALL = NOPASSWD: /usr/local/bin/apt
 ```
 * `crontab -e`
 ```
-0 */2 * * * sudo apt update && sudo apt dist-upgrade --yes && sudo apt autoremove --yes
-10 */2 * * * /home/koljasha/soft/conda/bin/conda update --all --yes
+0 */4 * * * sudo apt update && sudo apt dist-upgrade --yes && sudo apt autoremove --yes
+10 */4 * * * /home/koljasha/soft/conda/bin/conda update --all --yes
 ```
 
