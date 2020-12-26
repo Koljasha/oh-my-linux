@@ -51,8 +51,20 @@ alias condaupdate="conda update --all --yes"
 alias venvactivate="source venv/bin/activate"
 alias venvcreate="python -m venv venv && venvactivate && pip install wheel"
 
+# ssh for koljasha
+alias sshkoljasha="ssh -i ~/.ssh/{key}.pem {login}@{domain}"
+
 # alias for weather in Korolev
 alias weather="curl http://wttr.in/Королев"
+
+# disable brightness for laptop
+disable_brightness() {
+    default_brightness=`xrandr --verbose | grep -i brightness | cut -d':' -f2 | cut -c2-`
+    xrandr --output eDP-1 --brightness 0
+    read -n1
+    xrandr --output eDP-1 --brightness $default_brightness
+}
+
 ```
 * внешний вид:
    * [Oh My Bash by Koljasha with Git](#ohmybash)
@@ -160,6 +172,18 @@ alias condaupdate="conda update --all --yes"
 # alias for python virtual envorenment
 alias venvactivate="source venv/bin/activate"
 alias venvcreate="python -m venv venv && venvactivate && pip install wheel"
+
+# ssh for koljasha
+alias sshkoljasha="ssh -i ~/.ssh/{key}.pem {login}@{domain}"
+
+# disable brightness for laptop
+disable_brightness() {
+    default_brightness=`xrandr --verbose | grep -i brightness | cut -d':' -f2 | cut -c2-`
+    xrandr --output eDP-1 --brightness 0
+    read -n1
+    xrandr --output eDP-1 --brightness $default_brightness
+}
+
 ```
 * [zsh-autosuggestions without Oh My Zsh](https://github.com/zsh-users/zsh-autosuggestions):
    * `git clone https://github.com/zsh-users/zsh-autosuggestions ~/.zsh/zsh-autosuggestions`
@@ -276,6 +300,16 @@ end
 #
 ###
 
+# disable brightness for laptop
+#
+function disable_brightness
+    set default_brightness (xrandr --verbose | grep -i brightness | cut -d':' -f2 | cut -c2-)
+    xrandr --output eDP-1 --brightness 0
+    read -n1
+    xrandr --output eDP-1 --brightness $default_brightness
+end
+#
+###
 
 ```
 * или создавать по аналогии: `vim ~/.config/fish/functions/ll.fish`:
