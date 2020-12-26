@@ -57,19 +57,9 @@ alias sshkoljasha="ssh -i ~/.ssh/{key}.pem {login}@{domain}"
 # alias for weather in Korolev
 alias weather="curl http://wttr.in/Королев"
 
-# set and disable brightness
-disable_set_brightness() {
-    # for set brightness
-    if (( $# != 0 )); then
-        xrandr --output eDP-1 --brightness $1
-        return
-    fi
-
-    # for disable brightness
-    default_brightness=`xrandr --verbose | grep -i brightness | cut -d':' -f2 | cut -c2-`
-    xrandr --output eDP-1 --brightness 0
-    read -n1
-    xrandr --output eDP-1 --brightness $default_brightness
+# display functions
+display_functions (){
+    /home/koljasha/.config/openbox/display_functions $@
 }
 
 ```
@@ -182,21 +172,6 @@ alias venvcreate="python -m venv venv && venvactivate && pip install wheel"
 
 # ssh for koljasha
 alias sshkoljasha="ssh -i ~/.ssh/{key}.pem {login}@{domain}"
-
-# set and disable brightness
-disable_set_brightness() {
-    # for set brightness
-    if (( $# != 0 )); then
-        xrandr --output eDP-1 --brightness $1
-        return
-    fi
-
-    # for disable brightness
-    default_brightness=`xrandr --verbose | grep -i brightness | cut -d':' -f2 | cut -c2-`
-    xrandr --output eDP-1 --brightness 0
-    read -n1
-    xrandr --output eDP-1 --brightness $default_brightness
-}
 
 ```
 * [zsh-autosuggestions without Oh My Zsh](https://github.com/zsh-users/zsh-autosuggestions):
@@ -314,20 +289,10 @@ end
 #
 ###
 
-# set and disable brightness
+# display functions
 #
-function disable_set_brightness
-    # for set brightness
-    if test (count $argv) -gt 0
-            xrandr --output eDP-1 --brightness $argv[1]
-            return
-    end
-
-    # for disable brightness
-    set default_brightness (xrandr --verbose | grep -i brightness | cut -d':' -f2 | cut -c2-)
-    xrandr --output eDP-1 --brightness 0
-    read -n1
-    xrandr --output eDP-1 --brightness $default_brightness
+function display_functions
+        /home/koljasha/.config/openbox/display_functions $argv
 end
 #
 ###
