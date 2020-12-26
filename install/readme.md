@@ -57,8 +57,15 @@ alias sshkoljasha="ssh -i ~/.ssh/{key}.pem {login}@{domain}"
 # alias for weather in Korolev
 alias weather="curl http://wttr.in/Королев"
 
-# disable brightness for laptop
-disable_brightness() {
+# set and disable brightness
+disable_set_brightness() {
+    # for set brightness
+    if (( $# != 0 )); then
+        xrandr --output eDP-1 --brightness $1
+        return
+    fi
+
+    # for disable brightness
     default_brightness=`xrandr --verbose | grep -i brightness | cut -d':' -f2 | cut -c2-`
     xrandr --output eDP-1 --brightness 0
     read -n1
@@ -176,8 +183,15 @@ alias venvcreate="python -m venv venv && venvactivate && pip install wheel"
 # ssh for koljasha
 alias sshkoljasha="ssh -i ~/.ssh/{key}.pem {login}@{domain}"
 
-# disable brightness for laptop
-disable_brightness() {
+# set and disable brightness
+disable_set_brightness() {
+    # for set brightness
+    if (( $# != 0 )); then
+        xrandr --output eDP-1 --brightness $1
+        return
+    fi
+
+    # for disable brightness
     default_brightness=`xrandr --verbose | grep -i brightness | cut -d':' -f2 | cut -c2-`
     xrandr --output eDP-1 --brightness 0
     read -n1
@@ -234,7 +248,7 @@ set fish_greeting
 # linux ll command
 #
 function ll --description 'List contents of directory using long format'
-        ls -lah $argv
+    ls -lah $argv
 end
 #
 ###
@@ -242,7 +256,7 @@ end
 # only for Ubuntu and Mint...
 #
 # function aptupdate
-#         sudo apt update; and sudo apt dist-upgrade --yes; and sudo apt autoremove --yes;
+#    sudo apt update; and sudo apt dist-upgrade --yes; and sudo apt autoremove --yes;
 # end
 #
 ###
@@ -250,7 +264,7 @@ end
 # alias for conda
 #
 function condaupdate
-         conda update --all --yes
+     conda update --all --yes
 end
 #
 ###
@@ -258,11 +272,11 @@ end
 # python virtualenv
 #
 function venvactivate
-         source venv/bin/activate.fish
+     source venv/bin/activate.fish
 end
 
 function venvcreate
-         python -m venv venv; and venvactivate; and pip install wheel
+     python -m venv venv; and venvactivate; and pip install wheel
 end
 #
 ###
@@ -300,9 +314,16 @@ end
 #
 ###
 
-# disable brightness for laptop
+# set and disable brightness
 #
-function disable_brightness
+function disable_set_brightness
+    # for set brightness
+    if test (count $argv) -gt 0
+            xrandr --output eDP-1 --brightness $argv[1]
+            return
+    end
+
+    # for disable brightness
     set default_brightness (xrandr --verbose | grep -i brightness | cut -d':' -f2 | cut -c2-)
     xrandr --output eDP-1 --brightness 0
     read -n1
