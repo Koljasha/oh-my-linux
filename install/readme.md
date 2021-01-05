@@ -23,6 +23,10 @@
 wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh \
 && bash Miniconda3-latest-Linux-x86_64.sh
 ```
+install from pip: `pip install python3-pip-autoremove ranger-fm powerline-status powerline-gitstatus`
+* python3-pip-autoremove - *remove a package and its unused dependencies*
+* ranger-fm - *from repo in Manjaro*
+* powerline-status powerline-gitstatus - *install with Vim in Oh My Vim*
 
 5. Node.js - Node Version Manager (nvm): 
 * [Node Version Manager](https://github.com/nvm-sh/nvm)
