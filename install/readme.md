@@ -3,11 +3,11 @@
 1. Обновить пакеты и ядро - перезагруть.
 
 2. Дополнительные пакеты:
-    * Mint: `sudo apt install wget git vim cmake bash-completion numlockx terminator tmux htop neofetch x11vnc highlight lxappearance pcmanfm terminology`
-    * Mint: `sudo apt install silversearcher-ag exuberant-ctags build-essential libxkbfile-dev mint-meta-codecs checkinstall arc-theme grub2-theme-mint`
+    * Mint: `sudo apt install wget git vim cmake bash-completion numlockx terminator tmux htop neofetch x11vnc highlight lxappearance pcmanfm viewnior`
+    * Mint: `sudo apt install build-essential libxkbfile-dev mint-meta-codecs checkinstall grub2-theme-mint arc-theme`
     
-    * Manjaro: `sudo pacman -S --needed wget git vim cmake bash-completion numlockx terminator tmux htop neofetch x11vnc highlight lxappearance pcmanfm terminology`
-    * Manjaro: `sudo pacman -S --needed the_silver_searcher ctags noto-fonts arc-gtk-theme ranger`
+    * Manjaro: `sudo pacman -S --needed wget git vim cmake bash-completion numlockx terminator tmux htop neofetch x11vnc highlight lxappearance pcmanfm viewnior`
+    * Manjaro: `sudo pacman -S --needed noto-fonts arc-gtk-theme ranger`
 
 3. Настройки:
     * через параметры
