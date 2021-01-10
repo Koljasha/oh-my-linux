@@ -3,10 +3,10 @@
 1. Обновить пакеты и ядро - перезагруть.
 
 2. Дополнительные пакеты:
-    * Mint: `sudo apt install wget git vim cmake bash-completion numlockx terminator tmux htop zenity neofetch x11vnc highlight lxappearance pcmanfm viewnior`
+    * Mint: `sudo apt install wget git vim gcc make cmake bash-completion numlockx terminator tmux htop zenity neofetch x11vnc highlight lxappearance pcmanfm viewnior`
     * Mint: `sudo apt install build-essential libxkbfile-dev mint-meta-codecs checkinstall grub2-theme-mint arc-theme`
     
-    * Manjaro: `sudo pacman -S --needed wget git vim cmake bash-completion numlockx terminator tmux htop zenity neofetch x11vnc highlight lxappearance pcmanfm viewnior`
+    * Manjaro: `sudo pacman -S --needed wget git vim gcc make cmake bash-completion numlockx terminator tmux htop zenity neofetch x11vnc highlight lxappearance pcmanfm viewnior`
     * Manjaro: `sudo pacman -S --needed noto-fonts arc-gtk-theme ranger`
 
 3. Настройки:
