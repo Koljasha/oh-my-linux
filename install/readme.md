@@ -1,4 +1,6 @@
 ## Первичная настройка Linux
+### ->->-> "Deprecated" - look [Arch Linux Installer](https://github.com/Koljasha/archlinux_installer) for current settings <-<-<-
+***
 
 1. Обновить пакеты и ядро - перезагруть.
 
