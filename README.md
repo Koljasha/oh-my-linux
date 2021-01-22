@@ -1,6 +1,6 @@
 ## [Oh My Linux](https://github.com/Koljasha/oh-my-linux/tree/master/install)
 
-* [browsers_ext](https://github.com/Koljasha/Linux/tree/master/browsers_ext) - Vim расширения для браузеров
+* [browsers](https://github.com/Koljasha/Linux/tree/master/browsers) - Vim расширения для браузеров
 * [git](https://github.com/Koljasha/Linux/tree/master/git) - основные команды git
 * [grub](https://github.com/Koljasha/Linux/tree/master/grub) - тема Koljasha для Grub2
 * [install](https://github.com/Koljasha/Linux/tree/master/install) - первичная настройка Linux (**Oh My Linux**)
