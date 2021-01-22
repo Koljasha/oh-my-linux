@@ -1,3 +1,7 @@
+## Disable close browser when close last tab
+* about:config
+* browser.tabs.closeWindowWithLastTab -> false
+
 ## Vim расширения для браузеров
 * **Chrome** - [cVim](https://github.com/1995eaton/chromium-vim)
 * **Firefox** - [Vim Vixen](https://github.com/ueokande/vim-vixen)
