@@ -48,17 +48,17 @@ vim -c PlugInstall
 alias ll="ls -lah"
 
 # only for Ubuntu and Mint...
-# alias aptupdate="apt update && apt dist-upgrade --yes && apt autoremove --yes"
+# alias apt.update="apt update && apt dist-upgrade --yes && apt autoremove --yes"
 
 # alias for conda
-alias condaupdate="conda update --all --yes"
+alias conda.update="conda update --all --yes"
 
 # alias for python virtual envorenment
-alias venvactivate="source venv/bin/activate"
-alias venvcreate="python -m venv venv && venvactivate && pip install wheel"
+alias venv.activate="source venv/bin/activate"
+alias venv.create="python -m venv venv && venv.activate && pip install wheel"
 
 # ssh for koljasha
-alias sshkoljasha="ssh -i ~/.ssh/{key}.pem {login}@{domain}"
+alias ssh.koljasha="ssh -i ~/.ssh/{key}.pem {login}@{domain}"
 
 # alias for weather in Korolev
 alias weather="curl http://wttr.in/Королев"
@@ -167,17 +167,17 @@ zstyle ':completion:*' menu select
 alias ll="ls -lah"
 
 # only for Ubuntu and Mint...
-# alias aptupdate="apt update && apt dist-upgrade --yes && apt autoremove --yes"
+# alias apt.update="apt update && apt dist-upgrade --yes && apt autoremove --yes"
 
 # alias for conda
-alias condaupdate="conda update --all --yes"
+alias conda.update="conda update --all --yes"
 
 # alias for python virtual envorenment
-alias venvactivate="source venv/bin/activate"
-alias venvcreate="python -m venv venv && venvactivate && pip install wheel"
+alias venv.activate="source venv/bin/activate"
+alias venv.create="python -m venv venv && venv.activate && pip install wheel"
 
 # ssh for koljasha
-alias sshkoljasha="ssh -i ~/.ssh/{key}.pem {login}@{domain}"
+alias ssh.koljasha="ssh -i ~/.ssh/{key}.pem {login}@{domain}"
 
 ```
 * [zsh-autosuggestions without Oh My Zsh](https://github.com/zsh-users/zsh-autosuggestions):
@@ -236,7 +236,7 @@ end
 
 # only for Ubuntu and Mint...
 #
-# function aptupdate
+# function apt.update
 #    sudo apt update; and sudo apt dist-upgrade --yes; and sudo apt autoremove --yes;
 # end
 #
@@ -244,7 +244,7 @@ end
 
 # alias for conda
 #
-function condaupdate
+function conda.update
      conda update --all --yes
 end
 #
@@ -252,19 +252,19 @@ end
 
 # python virtualenv
 #
-function venvactivate
+function venv.activate
      source venv/bin/activate.fish
 end
 
-function venvcreate
-     python -m venv venv; and venvactivate; and pip install wheel
+function venv.create
+     python -m venv venv; and venv.activate; and pip install wheel
 end
 #
 ###
 
 # ssh connection
 #
-function sshkoljasha
+function ssh.koljasha
     ssh -i ~/.ssh/{key}.pem {login}@{domain}
 end
 #
@@ -281,15 +281,15 @@ end
 #
 # #######
 #
-function vpnstart
+function vpn.start
     sudo systemctl start openvpn-client@koljasha
 end
 
-function vpnstatus
+function vpn.status
     sudo systemctl status openvpn-client@koljasha
 end
 
-function vpnstop
+function vpn.stop
     sudo systemctl stop openvpn-client@koljasha
 end
 #
