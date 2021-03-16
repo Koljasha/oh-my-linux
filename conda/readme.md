@@ -24,7 +24,7 @@
 * `conda activate <env>`    -> активация окружения conda
 * `conda deactivate`    -> деактивация окружения conda
 
-#### боевой вариант работы с python (для меня)
+#### "боевой" вариант работы с python
 * системный python (`/usr/bin/python`) -> не трогаю
 * основной повседневный python -> из `miniconda`
 * для разработки `venv` -> `venv.create; pip install ...`
