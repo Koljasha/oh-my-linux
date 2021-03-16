@@ -1,7 +1,11 @@
-### Работа с Python conda "боевой вариант"
+### Работа с Python "боевой вариант"
+
+#### venv
+`alias venv.activate="source venv/bin/activate"`
+`alias venv.create="python -m venv venv && venv.activate && pip install wheel"`
 
 #### установка conda (путь установки `~/.local/conda`)
-* скачать c `https://repo.anaconda.com/miniconda/`
+* скачать c [repo.anaconda.com/miniconda](https://repo.anaconda.com/miniconda/)
 * переименовать в `miniconda.sh`
 * `bash miniconda.sh -b -p ~/.local/conda 2>/dev/null`    -> установка
 * `bash miniconda.sh -b -u -p ~/.local/conda 2>/dev/null`    -> обновление
@@ -21,3 +25,12 @@
 * `conda deactivate`    -> деактивация окружения conda
 
 #### боевой вариант работы с python (для меня)
+* системный python (`/usr/bin/python`) -> не трогаю
+* основной повседневный python -> из `miniconda`
+* для разработки `venv` -> `venv.create; pip install ...`
+* для "боевых" сервисов -> coздаем *(если нет)* окружение с текущим python:
+  * `conda create -n v3.7 python=3.7`    -> пример для python3.7
+  * `conda activate v3.7`
+  * `venv.create; pip install ...`    -> создаем venv окружение проекта
+  * или без активации -> `~/.local/conda/envs/v3.7/bin/python -m venv venv && venv.activate && pip install ...`
+  
