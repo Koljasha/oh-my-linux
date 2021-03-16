@@ -33,4 +33,4 @@
   * `conda activate v3.7`
   * `venv.create; pip install ...`    -> создаем venv окружение проекта
   * или без активации -> `~/.local/conda/envs/v3.7/bin/python -m venv venv && venv.activate && pip install ...`
-  
+* в дальнейшем основное окружение можно обновлять - ссылки **venv** на окружение conda будут работать  
