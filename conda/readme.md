@@ -1,8 +1,8 @@
 ### Работа с Python "боевой вариант"
 
 #### venv
-`alias venv.activate="source venv/bin/activate"`
-`alias venv.create="python -m venv venv && venv.activate && pip install wheel"`
+* `alias venv.activate="source venv/bin/activate"`
+* `alias venv.create="python -m venv venv && venv.activate && pip install wheel"`
 
 #### установка conda (путь установки `~/.local/conda`)
 * скачать c [repo.anaconda.com/miniconda](https://repo.anaconda.com/miniconda/)
