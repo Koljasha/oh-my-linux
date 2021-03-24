@@ -424,11 +424,11 @@ WantedBy=multi-user.target
 * `sudo systemctl restart smbd.service`
 
 20. apt & conda update in cron:
-* `sudo vim /etc/sudoers.d/koljasha_apt`
+* `sudo vim /etc/sudoers.d/apt`
 ```
 # apt for Koljasha without password
 
-koljasha ALL = NOPASSWD: /usr/local/bin/apt
+koljasha ALL = (ALL) NOPASSWD: /usr/local/bin/apt
 ```
 * `crontab -e`
 ```
