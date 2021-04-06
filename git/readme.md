@@ -42,7 +42,14 @@ git commit -m "fixed untracked files"
 * Ветки все:                     git branch -a
 * Создать ветку:                 git checkout -b _branch_
 * Сменить ветку:                 git checkout _branch_
-* Удалить ветку локально:        git branch -D _branch_
+** **
+* merge to main|master
+ ```
+ git checkout main
+ git merge _branch_
+ ```
+** **
+* Удалить ветку локально:        git branch -d _branch_    git branch -D _branch_
 * Удалить ветку удаленно:        git push --delete origin _branch_
 * Переписать локальную:
 ```
