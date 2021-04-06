@@ -49,7 +49,7 @@ git commit -m "fixed untracked files"
  git merge _branch_
  ```
 ** **
-* Удалить ветку локально:        git branch -d _branch_    git branch -D _branch_
+* Удалить ветку локально:        git branch -d _branch_
 * Удалить ветку удаленно:        git push --delete origin _branch_
 * Переписать локальную:
 ```
