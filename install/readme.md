@@ -451,10 +451,10 @@ UUID="01D09BCBA9456C70"    /mnt/win    ntfs    rw,notail,relatime    0    0
 22. chroot in other linux
 * `sudo mount /dev/sdaX /mnt`
 * `cd /mnt`
-* **sometime** `sudo cp /etc/resolv.conf etc/resolv.conf`
+* *sometime* `sudo cp /etc/resolv.conf etc/resolv.conf`
 * `sudo chroot /mnt`
 * `su - username`
-* **do something**
+* *do something*
 * `exit` and `exit`
 * `cd ~`
 * `sudo umount /mnt`
