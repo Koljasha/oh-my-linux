@@ -435,6 +435,7 @@ koljasha ALL = (ALL) NOPASSWD: /usr/local/bin/apt
 0 */4 * * * sudo apt update && sudo apt dist-upgrade --yes && sudo apt autoremove --yes
 10 */4 * * * /home/koljasha/soft/conda/bin/conda update --all --yes
 ```
+
 21. mount ntfs disk on boot:
 * show disks: `sudo blkid` or `lsblk -o "NAME,SIZE,LABEL,MOUNTPOINT,UUID"`
 * write UUID to `/etc/fstab`, for example:
@@ -446,4 +447,15 @@ UUID=0cee9567-58e6-4047-a5fe-fcfa5312a08c    none    swap    defaults    0    0
 #
 UUID="01D09BCBA9456C70"    /mnt/win    ntfs    rw,notail,relatime    0    0
 ```
+
+22. chroot in other linux
+* `sudo mount /dev/sdaX /mnt`
+* `cd /mnt`
+* **sometime** `sudo cp /etc/resolv.conf etc/resolv.conf`
+* `sudo chroot /mnt`
+* `su - username`
+* **do something**
+* `exit` and `exit`
+* `cd ~`
+* `sudo umount /mnt`
 
