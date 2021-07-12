@@ -459,3 +459,7 @@ UUID="01D09BCBA9456C70"    /mnt/win    ntfs    rw,notail,relatime    0    0
 * `cd ~`
 * `sudo umount /mnt`
 
+23. Если нет wifi-адаптера (*на linux Mint ядро 5.4*):
+* [rtl8821ce](https://github.com/tomaspinho/rtl8821ce)
+
+
