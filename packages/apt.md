@@ -17,3 +17,4 @@
 ****
 * apt add-repository .... - добавить репозиторий
 * apt add-repository -- remove .... - удалить репозиторий
+
