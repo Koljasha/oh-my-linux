@@ -9,5 +9,4 @@
 * [packages](https://github.com/Koljasha/Linux/tree/master/packages) - описание команд пакетных менеджеров Apt и Pacman
 * [ranger](https://github.com/Koljasha/Linux/tree/master/ranger) - файл настройки ranger-fm
 * [sublime](https://github.com/Koljasha/Linux/tree/master/sublime) - базовые плагины Sublime
-* [terminology](https://github.com/Koljasha/Linux/tree/master/terminology) - конфиг для Terminology
 * [themes](https://github.com/Koljasha/Linux/tree/master/themes) - темы Cinnamon, XFCE, Openbox
