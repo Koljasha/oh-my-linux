@@ -462,4 +462,6 @@ UUID="01D09BCBA9456C70"    /mnt/win    ntfs    rw,notail,relatime    0    0
 23. Если нет wifi-адаптера (*на linux Mint ядро 5.4*):
 * [rtl8821ce](https://github.com/tomaspinho/rtl8821ce)
 
-
+24. Копия данных **pass**
+* `tar czvf pass-2022-03-31.tar.gz --directory=/home/koljasha .password-store/`
+* `gpg -r koljasha -e pass-2022-03-31.tar.gz`
