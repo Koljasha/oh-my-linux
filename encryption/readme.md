@@ -25,3 +25,8 @@
   * `openssl aes-256-cbc -d [-pbkdf2] [-iter <number>] -salt -in pass.tar.gz.aes -out pass.tar.gz` - *бинарный формат - aes*
   * `openssl aes-256-cbc -d -a [-pbkdf2] [-iter <number>] -salt -in pass.tar.gz.aes.asc -out pass.tar.gz` - *текстовый формат - asc*
 
+4. Создание зашифрованного архива **zip**
+* *перейти в домашнюю директорию*: `cd ~`
+* *создание архива и шифрование паролем*
+  * `zip -e -r pass.zip .password-store/`
+
