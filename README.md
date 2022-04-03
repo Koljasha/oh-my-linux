@@ -2,6 +2,7 @@
 
 * [browsers](https://github.com/Koljasha/Linux/tree/master/browsers) - Vim расширения для браузеров
 * [conda](https://github.com/Koljasha/Linux/tree/master/conda) - работа с python conda
+* [encryption](https://github.com/Koljasha/Linux/tree/master/encryption) - шифрование файлов GPG, OpenSSL
 * [git](https://github.com/Koljasha/Linux/tree/master/git) - основные команды git
 * [grub](https://github.com/Koljasha/Linux/tree/master/grub) - тема Koljasha для Grub2
 * [install](https://github.com/Koljasha/Linux/tree/master/install) - первичная настройка Linux (**Oh My Linux**)
