@@ -1,6 +1,10 @@
-## Disable close browser when close last tab
+## Firefox settings
 * about:config
-* browser.tabs.closeWindowWithLastTab -> false
+  * browser.tabs.closeWindowWithLastTab -> false
+  * browser.bookmarks.autoExportHTML -> true
+  * browser.bookmarks.file -> 	/home/koljasha/.config/qutebrowser/bookmarks/bookmarks.html
+
+***
 
 ## Vim расширения для браузеров
 * **Chrome** - [cVim](https://github.com/1995eaton/chromium-vim)
