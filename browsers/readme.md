@@ -1,6 +1,7 @@
 ## Firefox settings
 * about:config
   * browser.tabs.closeWindowWithLastTab -> false
+  * intl.accept_languages -> ru-RU, ru
   * browser.bookmarks.autoExportHTML -> true
   * browser.bookmarks.file -> 	/home/koljasha/.config/qutebrowser/bookmarks/bookmarks.html
 
