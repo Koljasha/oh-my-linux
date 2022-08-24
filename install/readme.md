@@ -465,3 +465,12 @@ UUID="01D09BCBA9456C70"    /mnt/win    ntfs    rw,notail,relatime    0    0
 24. Использование Rsync
 * `rsync -azvP file server:folder/`
 
+25. Некоторые комбинации fish(`bind --all`):
+* alt + <-   - перемещение по истории папок (prevd)
+* alt + ->   - перемещение по истории папок (nextd)
+* alt + l    - команда ls
+* alt + p    - добавить | less
+* alt + w    - информация о команде (type)
+* alt + e    - запустить $EDITOR
+* alt + s    - добавить sudo
+
