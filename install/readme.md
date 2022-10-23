@@ -448,7 +448,23 @@ UUID=0cee9567-58e6-4047-a5fe-fcfa5312a08c    none    swap    defaults    0    0
 UUID="01D09BCBA9456C70"    /mnt/win    ntfs    rw,notail,relatime    0    0
 ```
 
-22. chroot in other linux
+22. mount disk on boot:
+* show disks: `sudo blkid` or `lsblk -o "NAME,SIZE,LABEL,MOUNTPOINT,UUID"`
+* write UUID to `/etc/fstab`, for example:
+```
+# <file system> <dir> <type> <options> <dump> <pass>
+
+# /dev/nvme0n1p1 LABEL=Arch
+UUID=f3a3fdc6-ab9c-4633-9bfd-030766b079c1	/         	ext4      	rw,relatime	0 1
+
+# swapfile
+/swapfile	none	swap	defaults	0 0
+
+# /dev/sda4 LABAL=Storage
+UUID=c6ab23b5-1b6d-4c3f-8488-6efee0144e54	/run/mount/storage/	ext4	rw,relatime	0 2
+```
+
+23. chroot in other linux
 * `sudo mount /dev/sdaX /mnt`
 * `cd /mnt`
 * *sometime for network* `sudo cp /etc/resolv.conf etc/resolv.conf`
@@ -459,13 +475,18 @@ UUID="01D09BCBA9456C70"    /mnt/win    ntfs    rw,notail,relatime    0    0
 * `cd ~`
 * `sudo umount /mnt`
 
-23. Если нет wifi-адаптера (*на linux Mint ядро 5.4*):
+24. Если нет wifi-адаптера (*на linux Mint ядро 5.*):
 * [rtl8821ce](https://github.com/tomaspinho/rtl8821ce)
 
-24. Использование Rsync
+25. Скрыть/Показать пользователя
+* `sudo vim /var/lib/AccountsService/users/USERNAME`
+* Скрыть: `SystemAccount=true`
+* Показать: `SystemAccount=false`
+
+26. Использование Rsync
 * `rsync -azvP file server:folder/`
 
-25. Некоторые комбинации fish(`bind --all`):
+27. Некоторые комбинации fish(`bind --all`):
 * `alt + <-`   - перемещение по истории папок (prevd)
 * `alt + ->`   - перемещение по истории папок (nextd)
 * `alt + l`   - команда ls
