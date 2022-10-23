@@ -8,6 +8,5 @@
 * [install](https://github.com/Koljasha/Linux/tree/master/install) - первичная настройка Linux (**Oh My Linux**)
 * [lessons](https://github.com/Koljasha/Linux/tree/master/lessons) - уроки по командам Linux
 * [packages](https://github.com/Koljasha/Linux/tree/master/packages) - описание команд пакетных менеджеров Apt и Pacman
-* [ranger](https://github.com/Koljasha/Linux/tree/master/ranger) - файл настройки ranger-fm
 * [sublime](https://github.com/Koljasha/Linux/tree/master/sublime) - базовые плагины Sublime
 * [themes](https://github.com/Koljasha/Linux/tree/master/themes) - темы Cinnamon, XFCE, Openbox
