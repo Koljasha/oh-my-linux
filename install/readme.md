@@ -104,7 +104,7 @@ UUID=c6ab23b5-1b6d-4c3f-8488-6efee0144e54	/run/mount/storage/	ext4	rw,relatime	0
   * [rtl8821ce](https://github.com/tomaspinho/rtl8821ce)
   * [rtl8821ce-dkms-git](https://aur.archlinux.org/packages/rtl8821ce-dkms-git)
 
-13. 12. Если нет ethernet
+13. Если нет ethernet
   * [Archlinux](https://archlinux.org/packages/?q=r8168)
   * [Manjaro](https://packages.manjaro.org/?query=8168)
 
