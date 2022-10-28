@@ -33,27 +33,8 @@ git config --global user.name "Koljasha" \
 5. *Fish Shell*: `sudo chsh -s /usr/bin/fish koljasha`
   * do `fish_update_completions`
 
-6. Server x11vnc:
-  * `sudo vim /etc/systemd/system/x11vnc.service.d/override.conf`
-```
-[Unit]
-Description=VNC Server for X11
-Requires=graphical.target
-After=graphical.target
-
-[Service]
-ExecStart=
-ExecStart=/usr/bin/x11vnc -auth guess -loop -forever -shared -rfbport 5900 -o /var/log/x11vnc.log
-ExecStop=/usr/bin/killall x11vnc
-
-[Install]
-WantedBy=graphical.target
-```
+6. Обновить сервисы systemd
   * `sudo systemctl daemon-reload`
-  * `sudo systemctl status x11vnc.service`
-  * `sudo systemctl start x11vnc.service`
-  * `sudo systemctl enable x11vnc.service`
-  * `sudo systemctl status x11vnc.service`
 
 7. Samba share:
   * `sudo vim /etc/samba/smb.conf`
@@ -108,7 +89,7 @@ UUID=f3a3fdc6-ab9c-4633-9bfd-030766b079c1	/         	ext4      	rw,relatime	0 1
 UUID=c6ab23b5-1b6d-4c3f-8488-6efee0144e54	/run/mount/storage/	ext4	rw,relatime	0 2
 ```
 
-23. chroot in other linux
+11. chroot in other linux
   * `sudo mount /dev/sdaX /mnt`
   * `cd /mnt`
   * *sometime for network* `sudo cp /etc/resolv.conf etc/resolv.conf`
@@ -119,18 +100,23 @@ UUID=c6ab23b5-1b6d-4c3f-8488-6efee0144e54	/run/mount/storage/	ext4	rw,relatime	0
   * `cd ~`
   * `sudo umount /mnt`
 
-24. Если нет wifi-адаптера (*на linux Mint ядро 5.*):
+12. Если нет wifi-адаптера
   * [rtl8821ce](https://github.com/tomaspinho/rtl8821ce)
+  * [rtl8821ce-dkms-git](https://aur.archlinux.org/packages/rtl8821ce-dkms-git)
 
-25. Скрыть/Показать пользователя
+13. 12. Если нет ethernet
+  * [Archlinux](https://archlinux.org/packages/?q=r8168)
+  * [Manjaro](https://packages.manjaro.org/?query=8168)
+
+14. Скрыть/Показать пользователя
   * `sudo vim /var/lib/AccountsService/users/USERNAME`
   * Скрыть: `SystemAccount=true`
   * Показать: `SystemAccount=false`
 
-26. Использование Rsync
+15. Использование Rsync
   * `rsync -azvP file server:folder/`
 
-27. Некоторые комбинации fish(`bind --all`):
+16. Некоторые комбинации fish(`bind --all`):
   * `alt + <-`   - перемещение по истории папок (prevd)
   * `alt + ->`   - перемещение по истории папок (nextd)
   * `alt + l`   - команда ls
