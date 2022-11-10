@@ -127,3 +127,23 @@ UUID=c6ab23b5-1b6d-4c3f-8488-6efee0144e54	/run/mount/storage/	ext4	rw,relatime	0
 
 17. [Useful bash keymap](https://gist.github.com/1eedaegon/6372b024c3793fa4887190d01f6c21f9)
 
+  * 1. Move and delete cursor
+    - `Ctrl + b`: move cursor backward
+    - `Ctrl + f`: move cursor forward
+    - `Ctrl + h`: delete character on before cursor
+    - `Ctrl + d`: delete character on current cursor
+    - `Ctrl + a`: move cursor to begin of the line
+    - `Ctrl + e`: move cursor to end of the line
+    - `Meta(Alt or Option) + b`: move cursor to begin of a word
+    - `Meta(Alt or Option) + f`: move cursor to end of a word
+    - `Ctrl + p`: load previous command
+    - `Ctrl + n`: load next command
+
+  * 2. Cut and save word on buffer(kill ring - deque)
+    - `Ctrl + w`: cut word on before cursor
+    - `Meta(Alt or Option) + d`: cut word on current cursor
+    - `Ctrl + u`: cut word from beginning to before cursor
+    - `Ctrl + k`: cut word from current cursor to end
+    - `Ctrl + y`: paste word (yank)
+    - `Meta(Alt or Option) + y`: Pass over to buffer
+
