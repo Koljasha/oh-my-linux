@@ -127,7 +127,7 @@ UUID=c6ab23b5-1b6d-4c3f-8488-6efee0144e54	/run/mount/storage/	ext4	rw,relatime	0
 
 17. [Useful bash keymap](https://gist.github.com/1eedaegon/6372b024c3793fa4887190d01f6c21f9)
 
-  * 1. Move and delete cursor
+  * Move and delete cursor
     - `Ctrl + b`: move cursor backward
     - `Ctrl + f`: move cursor forward
     - `Ctrl + h`: delete character on before cursor
@@ -139,7 +139,7 @@ UUID=c6ab23b5-1b6d-4c3f-8488-6efee0144e54	/run/mount/storage/	ext4	rw,relatime	0
     - `Ctrl + p`: load previous command
     - `Ctrl + n`: load next command
 
-  * 2. Cut and save word on buffer(kill ring - deque)
+  * Cut and save word on buffer(kill ring - deque)
     - `Ctrl + w`: cut word on before cursor
     - `Meta(Alt or Option) + d`: cut word on current cursor
     - `Ctrl + u`: cut word from beginning to before cursor
