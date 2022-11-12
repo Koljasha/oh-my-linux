@@ -113,8 +113,10 @@ UUID=c6ab23b5-1b6d-4c3f-8488-6efee0144e54	/run/mount/storage/	ext4	rw,relatime	0
   * Скрыть: `SystemAccount=true`
   * Показать: `SystemAccount=false`
 
-15. Использование Rsync
-  * `rsync -azvP file server:folder/`
+15. Использование Rsync, Fd, Rg
+  * `rsync -av file server:folder/`
+  * `fd -HI <search>` or `fd --hidden --no-ignore <search>`
+  * `rg --hidden --no-ignore --ignore-case <search>`
 
 16. Некоторые комбинации fish(`bind --all`):
   * `alt + <-`   - перемещение по истории папок (prevd)
