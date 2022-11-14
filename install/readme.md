@@ -66,11 +66,9 @@ koljasha ALL = (ALL) NOPASSWD: /usr/local/bin/apt
   * write UUID to `/etc/fstab`, for example:
 ```
 # <file system>             <mount point>  <type>  <options>  <dump>  <pass>
-#
-UUID=2efe493c-1787-44f1-b3d2-f0b71f522ec4 /              ext4    defaults,noatime 0 1
-UUID=0cee9567-58e6-4047-a5fe-fcfa5312a08c    none    swap    defaults    0    0
-#
-UUID="01D09BCBA9456C70"    /mnt/win    ntfs    rw,notail,relatime    0    0
+UUID=7488d026-ea24-4c24-9618-3d54d0dee8db /              ext4    defaults,noatime 0 1
+UUID=81174079-1ed8-4986-9269-b614e120856a	none	swap	defaults	0	0
+UUID="01D09BCBA9456C70"	/run/mount/storage	ntfs	rw,notail,relatime	0	0
 ```
 
 10. mount disk on boot:
