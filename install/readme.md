@@ -113,6 +113,7 @@ UUID=c6ab23b5-1b6d-4c3f-8488-6efee0144e54	/run/mount/storage/	ext4	rw,relatime	0
 
 15. Использование Rsync, Fd, Rg
   * `rsync -av file server:folder/`
+  * `rsync -av --delete src/ dest/`    # delete extraneous files from dest dirs
   * `fd -HI <search>` or `fd --hidden --no-ignore <search>`
   * `rg --hidden --no-ignore --ignore-case <search>`
 
