@@ -8,15 +8,18 @@
 ***
 
 2. Симметричное | ассиметричное шифрование с помощью **GPG**
-* *симметричное шифрование - расшифровка по паролю*
+* *симметричное шифрование - расшифровка по паролю*:
+* `-c`, `--symmetric`, `-a`, `--armor`
   * `gpg -c pass.tar.gz` - *бинарный формат - gpg*
   * `gpg -c -a pass.tar.gz` - *текстовый формат - asc*
 * *ассиметричное шифрование - расшифровка по приватному ключу пользователя koljasha*
+* `-e`, `--encrypt`, `-r`, `--recipient`, `-a`, `--armor`
   * `gpg -r koljasha -e pass.tar.gz` - *бинарный формат - gpg*
   * `gpg -r koljasha -e -a pass.tar.gz` - *текстовый формат - asc*
-* *расшифровка*
+* *расшифровка*:
+* `-d`, `--decrypt`
   * `gpg -d pass.tar.gz.gpg > pass.tar.gz` - *бинарный формат - gpg*
-  * `gpg -d pass.tar.gz.asc > pass.tar.gz` - *текстовый формат - asc*
+  * `gpg --decrypt pass.tar.gz.asc > pass.tar.gz` - *текстовый формат - asc*
 ***
 
 3. Симметричное шифрование с помощью **OpenSSL**
@@ -32,4 +35,5 @@
 * *перейти в домашнюю директорию*: `cd ~`
 * *создание архива и шифрование паролем*
   * `zip -e -r pass.zip .password-store/`
+  * `zip --encrypt -r pass.zip .password-store/`
 
