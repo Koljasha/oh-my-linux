@@ -148,3 +148,8 @@ UUID=c6ab23b5-1b6d-4c3f-8488-6efee0144e54	/run/mount/storage/	ext4	rw,relatime	0
     - `Ctrl + y`: paste word (yank)
     - `Meta(Alt or Option) + y`: Pass over to buffer
 
+18. Использование `WINEPREFIX`
+  * `WINEPREFIX=~/tmp/prefix/ WINEARCH=win64 winecfg`
+  * `WINEPREFIX=~/tmp/prefix/ winetricks dxvk`
+  * `WINEPREFIX=~/tmp/prefix/ wine <game>.exe`
+
