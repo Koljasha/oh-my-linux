@@ -4,7 +4,7 @@
 * [conda](https://github.com/Koljasha/Linux/tree/master/conda) - работа с python conda
 * [encryption](https://github.com/Koljasha/Linux/tree/master/encryption) - шифрование файлов GPG, OpenSSL
 * [git](https://github.com/Koljasha/Linux/tree/master/git) - основные команды git
-* [install](https://github.com/Koljasha/Linux/tree/master/install) - первичная настройка Linux (**Oh My Linux**)
+* [install](https://github.com/Koljasha/Linux/tree/master/install) - заметки о Linux (**Oh My Linux**)
 * [lessons](https://github.com/Koljasha/Linux/tree/master/lessons) - уроки по командам Linux
 * [packages](https://github.com/Koljasha/Linux/tree/master/packages) - описание команд пакетных менеджеров Apt и Pacman
 * [sublime](https://github.com/Koljasha/Linux/tree/master/sublime) - базовые плагины Sublime

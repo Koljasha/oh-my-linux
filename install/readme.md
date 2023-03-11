@@ -1,5 +1,5 @@
-## Дополнительная настройка Linux
-### ->->-> "Deprecated" - look [Arch Linux Installer](https://github.com/Koljasha/archlinux_installer) for current settings <-<-<-
+## Заметки о Linux
+### ->->-> look [Arch Linux Installer](https://github.com/Koljasha/archlinux_installer) for current settings <-<-<-
 ***
 
 1. Настройки:
@@ -87,15 +87,12 @@ UUID=f3a3fdc6-ab9c-4633-9bfd-030766b079c1	/         	ext4      	rw,relatime	0 1
 UUID=c6ab23b5-1b6d-4c3f-8488-6efee0144e54	/run/mount/storage/	ext4	rw,relatime	0 2
 ```
 
-11. chroot in other linux
+11. chroot in other linux (для корректной работы нужен пакет: [arch-install-scripts](https://www.thegeekdiary.com/arch-chroot-command-not-found/))
   * `sudo mount /dev/sdaX /mnt`
-  * `cd /mnt`
-  * *sometime for network* `sudo cp /etc/resolv.conf etc/resolv.conf`
-  * `sudo chroot /mnt`
+  * `sudo arch-chroot /mnt`
   * `su - username`
   * *do something*
   * `exit` and `exit`
-  * `cd ~`
   * `sudo umount /mnt`
 
 12. Если нет wifi-адаптера
