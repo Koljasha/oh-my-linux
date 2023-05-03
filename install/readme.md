@@ -149,4 +149,15 @@ UUID=c6ab23b5-1b6d-4c3f-8488-6efee0144e54	/run/mount/storage/	ext4	rw,relatime	0
   * `WINEPREFIX=~/tmp/prefix/ WINEARCH=win64 winecfg`
   * `WINEPREFIX=~/tmp/prefix/ winetricks dxvk`
   * `WINEPREFIX=~/tmp/prefix/ wine <game>.exe`
+  * example `.desktop` file:
+  ```
+[Desktop Entry]
+Name=The Binding of Isaac - Rebirth
+Exec=env WINEPREFIX="/run/mount/storage/local/wineprefixes/Isaac" /usr/bin/wine C:\\\\ProgramData\\\\Microsoft\\\\Windows\\\\Start\\ Menu\\\\Programs\\\\R.G.\\ Mechanics\\\\The\\ Binding\\ of\\ Isaac\\ -\\ Rebirth\\\\Играть\\ The\\ Binding\\ of\\ Isaac\\ -\\ Rebirth.lnk
+Type=Application
+StartupNotify=true
+Path=/run/mount/storage/local/wineprefixes/Isaac/dosdevices/c:/Program Files (x86)/R.G. Mechanics/The Binding of Isaac - Rebirth
+Icon=A444_isaac-ng.0
+StartupWMClass=isaac-ng.exe
+  ```
 
