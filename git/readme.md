@@ -63,3 +63,6 @@ git reset --hard origin/<branch>
 * далее fixup
 ```
 ** **
+* [Изменить удаленный репозиторий](https://docs.github.com/en/get-started/getting-started-with-git/managing-remote-repositories)
+** **
+
