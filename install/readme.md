@@ -160,4 +160,5 @@ Path=/run/mount/storage/local/wineprefixes/Isaac/dosdevices/c:/Program Files (x8
 Icon=A444_isaac-ng.0
 StartupWMClass=isaac-ng.exe
   ```
+19. Отключить os-prober для GRUB: `sudo chmod -x /etc/grub.d/30_os-prober`
 
