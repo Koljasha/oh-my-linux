@@ -162,3 +162,20 @@ StartupWMClass=isaac-ng.exe
   ```
 19. Отключить os-prober для GRUB: `sudo chmod -x /etc/grub.d/30_os-prober`
 
+20. Cinnamon апплет **Меню скриптов** `~/.local/share/nemo/scripts`:
+```
+#!/usr/bin/env bash
+
+status=`sudo wg`
+
+if [[ $status == "" ]]; then
+    sudo wg-quick up wg0
+    echo; echo "Wireguard Up"
+    sleep 1
+else
+    sudo wg-quick down wg0
+    echo; echo "Wireguard Down"
+    sleep 1
+fi
+```
+
