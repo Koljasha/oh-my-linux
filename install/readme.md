@@ -162,7 +162,7 @@ StartupWMClass=isaac-ng.exe
   ```
 19. Отключить os-prober для GRUB: `sudo chmod -x /etc/grub.d/30_os-prober`
 
-20. Cinnamon апплет **Меню скриптов** `~/.local/share/nemo/scripts`:
+20. Cinnamon апплет *Меню скриптов* `~/.local/share/nemo/scripts`:
 ```
 #!/usr/bin/env bash
 
