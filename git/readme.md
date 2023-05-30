@@ -63,6 +63,10 @@ git reset --hard origin/<branch>
 * далее fixup
 ```
 ** **
-* [Изменить удаленный репозиторий](https://docs.github.com/en/get-started/getting-started-with-git/managing-remote-repositories)
+* [Github Docs](https://docs.github.com/en/get-started/getting-started-with-git/managing-remote-repositories)
+* показать: `git remote -v`
+* изменить: `git remote set-url origin https://koljasha@github.com/koljasha/example_repo.git`
+* добавить: `git remote add gitlab https://koljasha@gitlab.com/koljasha/example_repo.git`
+* использовать: `git push gitlab`
 ** **
 
