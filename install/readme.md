@@ -47,6 +47,13 @@ git config --global user.name "Koljasha" \
   writable = yes
 ```
   * `sudo systemctl restart smbd.service`
+  * используем `smbclient`:
+    * показать доступные (без пароля) `smbclient -N -L \\\\<host|ip>\\`
+    * показать доступные (с паролем) `smbclient -U login%password -L \\\\<host|ip>\\`
+    * подключиться (без пароля) `smbclient -N \\\\<host|ip>\\<share>\\`
+    * подключиться (с паролем) `smbclient -U login%password \\\\<host|ip>\\<share>\\`
+    * выполнить (без пароля) `smbclient -N -c help \\\\<host|ip>\\<share>\\`
+    * выполнить (с паролем) `smbclient -U login%password -c help \\\\<host|ip>\\<share>\\`
 
 8. apt & conda update in cron:
   * `sudo vim /etc/sudoers.d/apt`
