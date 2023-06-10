@@ -1,4 +1,4 @@
-## Шифрование | расшифрование на примере копии данных **pass**
+## Шифрование | дешифрование на примере копии данных **pass**
 
 1. Работа с архивом **tar**
 * *создание архива*
@@ -36,4 +36,31 @@
 * *создание архива и шифрование паролем*
   * `zip -e -r pass.zip .password-store/`
   * `zip --encrypt -r pass.zip .password-store/`
+
+***
+***
+
+## Зашифрованный раздел с помощью **cryptsetup**
+
+* *опционально* Создание ключа шифрования
+  * `openssl genrsa -out keyfile`
+  * `chmod 400 keyfile; chown root:root keyfile`
+1. Создание зашифрованного раздела
+  * `sudo cryptsetup luksFormat /dev/sdXY`
+  * `sudo cryptsetup luksAddKey /dev/sdaXY keyfile` - *опционально* Добавление ключа
+2. Открытие зашифрованного раздела
+  * `sudo cryptsetup open /dev/sdaXY crypto`
+  * *или* `sudo cryptsetup open /dev/sdaXY crypto --key-file=keyfile`
+3. Форматирование
+  * `sudo mkfs.ext4 /dev/mapper/crypto`
+4. Открытие расшифрованного раздела
+  * `sudo mount /dev/mapper/crypto /mnt`
+  * *или* `udisksctl mount -b /dev/mapper/crypto`
+5. Размонтирование раздела
+  * `sudo umount /mnt/`
+  * *или* `udisksctl unmount -b /dev/mapper/crypto`
+6. Закрытие раздела
+  * `sudo cryptsetup close crypto`
+
+***
 

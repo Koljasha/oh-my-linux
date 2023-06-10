@@ -2,7 +2,7 @@
 
 * [browsers](https://github.com/Koljasha/Linux/tree/master/browsers) - Vim расширения для браузеров
 * [conda](https://github.com/Koljasha/Linux/tree/master/conda) - работа с python conda
-* [encryption](https://github.com/Koljasha/Linux/tree/master/encryption) - шифрование файлов GPG, OpenSSL
+* [encryption](https://github.com/Koljasha/Linux/tree/master/encryption) - шифрование файлов GPG, OpenSSL; зашифрованный раздел Cryptsetup
 * [git](https://github.com/Koljasha/Linux/tree/master/git) - основные команды git
 * [install](https://github.com/Koljasha/Linux/tree/master/install) - заметки о Linux (**Oh My Linux**)
 * [lessons](https://github.com/Koljasha/Linux/tree/master/lessons) - уроки по командам Linux
