@@ -30,13 +30,10 @@ git config --global user.name "Koljasha" \
 && git config --global credential.helper store
 ```
 
-5. *Fish Shell*: `sudo chsh -s /usr/bin/fish koljasha`
-  * do `fish_update_completions`
-
-6. Обновить сервисы systemd
+5. Обновить сервисы systemd
   * `sudo systemctl daemon-reload`
 
-7. Samba share:
+6. Samba share:
   * `sudo vim /etc/samba/smb.conf`
 ```
 # Koljasha share
@@ -55,7 +52,7 @@ git config --global user.name "Koljasha" \
     * выполнить (без пароля) `smbclient -N -c help \\\\<host|ip>\\<share>\\`
     * выполнить (с паролем) `smbclient -U login%password -c help \\\\<host|ip>\\<share>\\`
 
-8. apt & conda update in cron:
+7. apt & conda update in cron:
   * `sudo vim /etc/sudoers.d/apt`
 ```
 # apt for Koljasha without password
@@ -68,7 +65,7 @@ koljasha ALL = (ALL) NOPASSWD: /usr/local/bin/apt
 10 */4 * * * /home/koljasha/soft/conda/bin/conda update --all --yes
 ```
 
-9. mount ntfs disk on boot:
+8. mount ntfs disk on boot:
   * show disks: `sudo blkid` or `lsblk -o "NAME,SIZE,LABEL,MOUNTPOINT,UUID"`
   * write UUID to `/etc/fstab`, for example:
 ```
@@ -78,7 +75,7 @@ UUID=81174079-1ed8-4986-9269-b614e120856a	none	swap	defaults	0	0
 UUID="01D09BCBA9456C70"	/run/mount/storage	ntfs	rw,notail,relatime	0	0
 ```
 
-10. mount disk on boot:
+9. mount disk on boot:
   * show disks: `sudo blkid` or `lsblk -o "NAME,SIZE,LABEL,MOUNTPOINT,UUID"`
   * write UUID to `/etc/fstab`, for example:
 ```
@@ -94,7 +91,7 @@ UUID=f3a3fdc6-ab9c-4633-9bfd-030766b079c1	/         	ext4      	rw,relatime	0 1
 UUID=c6ab23b5-1b6d-4c3f-8488-6efee0144e54	/run/mount/storage/	ext4	rw,relatime	0 2
 ```
 
-11. chroot in other linux (для корректной работы нужен пакет: [arch-install-scripts](https://www.thegeekdiary.com/arch-chroot-command-not-found/))
+10. chroot in other linux (для корректной работы нужен пакет: [arch-install-scripts](https://www.thegeekdiary.com/arch-chroot-command-not-found/))
   * `sudo mount /dev/sdaX /mnt`
   * `sudo arch-chroot /mnt`
   * `su - username`
@@ -102,26 +99,26 @@ UUID=c6ab23b5-1b6d-4c3f-8488-6efee0144e54	/run/mount/storage/	ext4	rw,relatime	0
   * `exit` and `exit`
   * `sudo umount /mnt`
 
-12. Если нет wifi-адаптера
+11. Если нет wifi-адаптера
   * [rtl8821ce](https://github.com/tomaspinho/rtl8821ce)
   * [rtl8821ce-dkms-git](https://aur.archlinux.org/packages/rtl8821ce-dkms-git)
 
-13. Если нет ethernet
+12. Если нет ethernet
   * [Archlinux](https://archlinux.org/packages/?q=r8168)
   * [Manjaro](https://packages.manjaro.org/?query=8168)
 
-14. Скрыть/Показать пользователя
+13. Скрыть/Показать пользователя
   * `sudo vim /var/lib/AccountsService/users/USERNAME`
   * Скрыть: `SystemAccount=true`
   * Показать: `SystemAccount=false`
 
-15. Использование Rsync, Fd, Rg
+14. Использование Rsync, Fd, Rg
   * `rsync -av file server:folder/`
   * `rsync -av --delete src/ dest/`    # delete extraneous files from dest dirs
   * `fd -HI <search>` or `fd --hidden --no-ignore <search>`
   * `rg --hidden --no-ignore --ignore-case <search>`
 
-16. Некоторые комбинации fish(`bind --all`):
+15. Некоторые комбинации fish(`bind --all`):
   * `alt + <-`   - перемещение по истории папок (prevd)
   * `alt + ->`   - перемещение по истории папок (nextd)
   * `alt + l`   - команда ls
@@ -130,7 +127,7 @@ UUID=c6ab23b5-1b6d-4c3f-8488-6efee0144e54	/run/mount/storage/	ext4	rw,relatime	0
   * `alt + e`   - запустить $EDITOR
   * `alt + s`   - добавить sudo
 
-17. [Useful bash keymap](https://gist.github.com/1eedaegon/6372b024c3793fa4887190d01f6c21f9)
+16. [Useful bash keymap](https://gist.github.com/1eedaegon/6372b024c3793fa4887190d01f6c21f9)
 
   * Move and delete cursor
     - `Ctrl + b`: move cursor backward
@@ -152,7 +149,7 @@ UUID=c6ab23b5-1b6d-4c3f-8488-6efee0144e54	/run/mount/storage/	ext4	rw,relatime	0
     - `Ctrl + y`: paste word (yank)
     - `Meta(Alt or Option) + y`: Pass over to buffer
 
-18. Использование `WINEPREFIX`
+17. Использование `WINEPREFIX`
   * `WINEPREFIX=~/tmp/prefix/ WINEARCH=win64 winecfg`
   * `WINEPREFIX=~/tmp/prefix/ winetricks dxvk`
   * `WINEPREFIX=~/tmp/prefix/ wine <game>.exe`
@@ -167,9 +164,9 @@ Path=/run/mount/storage/local/wineprefixes/Isaac/dosdevices/c:/Program Files (x8
 Icon=A444_isaac-ng.0
 StartupWMClass=isaac-ng.exe
   ```
-19. Отключить os-prober для GRUB: `sudo chmod -x /etc/grub.d/30_os-prober`
+18. Отключить os-prober для GRUB: `sudo chmod -x /etc/grub.d/30_os-prober`
 
-20. Cinnamon апплет *Меню скриптов* `~/.local/share/nemo/scripts`:
+19. Cinnamon апплет *Меню скриптов* `~/.local/share/nemo/scripts`:
 ```
 #!/usr/bin/env bash
 
@@ -186,7 +183,12 @@ else
 fi
 ```
 
-21. Zsh
+20. **Fish Shell** : `sudo chsh -s /usr/bin/fish koljasha`
+* [Install Fish](https://fishshell.com/docs/current/index.html#installation)
+* [Install Oh My Fish](https://github.com/oh-my-fish/oh-my-fish/wiki#install)
+* [Koljasha settings](https://github.com/Koljasha/archlinux/blob/master/packages#L707)
+
+21. **Zsh Shell** : `sudo chsh -s /usr/bin/zsh koljasha`
 * [Install Zsh](https://github.com/ohmyzsh/ohmyzsh/wiki/Installing-ZSH#how-to-install-zsh-on-many-platforms)
 * [Install Oh My Zsh](https://github.com/ohmyzsh/ohmyzsh/wiki#welcome-to-oh-my-zsh)
 * [Install zsh-autosuggestions](https://github.com/zsh-users/zsh-autosuggestions/blob/master/INSTALL.md#oh-my-zsh)
@@ -202,6 +204,15 @@ plugins=(git vi-mode
     zsh-autosuggestions
     zsh-syntax-highlighting
     )
+.........
+```
+
+22. **Bash Shell** : `sudo chsh -s /usr/bin/bash koljasha`
+* [Install Oh My Bash](https://github.com/ohmybash/oh-my-bash#basic-installation)
+* `vim .zshrc`:
+```
+.........
+OSH_THEME="powerline"
 .........
 ```
 
