@@ -186,3 +186,22 @@ else
 fi
 ```
 
+21. Zsh
+* [Install Zsh](https://github.com/ohmyzsh/ohmyzsh/wiki/Installing-ZSH#how-to-install-zsh-on-many-platforms)
+* [Install Oh My Zsh](https://github.com/ohmyzsh/ohmyzsh/wiki#welcome-to-oh-my-zsh)
+* [Install zsh-autosuggestions](https://github.com/zsh-users/zsh-autosuggestions/blob/master/INSTALL.md#oh-my-zsh)
+* [Install zsh-syntax-highlighting](https://github.com/zsh-users/zsh-syntax-highlighting/blob/master/INSTALL.md#with-a-plugin-manager)
+* `vim .zshrc`:
+```
+.........
+ZSH_THEME="agnoster"
+.........
+zstyle ':omz:update' mode auto
+.........
+plugins=(git vi-mode
+    zsh-autosuggestions
+    zsh-syntax-highlighting
+    )
+.........
+```
+
