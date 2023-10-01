@@ -219,8 +219,16 @@ source $HOME/.vim/plugged/fzf/shell/completion.zsh
 * [Install Oh My Bash](https://github.com/ohmybash/oh-my-bash#basic-installation)
 * `vim .bashrc`:
 ```
+# Path to fzf (install with vim)
+export PATH=$HOME/.vim/plugged/fzf/bin:$PATH
 .........
 OSH_THEME="powerline"
+.........
+source "$OSH"/oh-my-bash.sh
+
+# Enable fzf (install with vim)
+source $HOME/.vim/plugged/fzf/shell/key-bindings.bash
+source $HOME/.vim/plugged/fzf/shell/completion.bash
 .........
 ```
 
