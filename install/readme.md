@@ -195,6 +195,8 @@ fi
 * [Install zsh-syntax-highlighting](https://github.com/zsh-users/zsh-syntax-highlighting/blob/master/INSTALL.md#with-a-plugin-manager)
 * `vim .zshrc`:
 ```
+# Path to fzf (install with vim)
+export PATH=$HOME/.vim/plugged/fzf/bin:$PATH
 .........
 ZSH_THEME="agnoster"
 .........
@@ -204,6 +206,12 @@ plugins=(git vi-mode
     zsh-autosuggestions
     zsh-syntax-highlighting
     )
+.........
+source $ZSH/oh-my-zsh.sh
+
+# Enable fzf (install with vim)
+source $HOME/.vim/plugged/fzf/shell/key-bindings.zsh
+source $HOME/.vim/plugged/fzf/shell/completion.zsh
 .........
 ```
 
