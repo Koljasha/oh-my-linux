@@ -217,7 +217,7 @@ source $HOME/.vim/plugged/fzf/shell/completion.zsh
 
 22. **Bash Shell** : `sudo chsh -s /usr/bin/bash koljasha`
 * [Install Oh My Bash](https://github.com/ohmybash/oh-my-bash#basic-installation)
-* `vim .zshrc`:
+* `vim .bashrc`:
 ```
 .........
 OSH_THEME="powerline"
