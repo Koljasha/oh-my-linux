@@ -203,6 +203,7 @@ ZSH_THEME="agnoster"
 zstyle ':omz:update' mode auto
 .........
 plugins=(git vi-mode
+    dirhistory
     zsh-autosuggestions
     zsh-syntax-highlighting
     )
