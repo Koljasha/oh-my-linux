@@ -6,6 +6,7 @@
     * https://files.pythonhosted.org/packages/source/D/Django/Django-4.2.6.tar.gz
     * https://files.pythonhosted.org/packages/py3/D/Django/Django-4.2.6-py3-none-any.whl
 
+***
 
 * api (ссылки в urls):
     * https://pypi.org/pypi/flask/json (ссылки в urls)
