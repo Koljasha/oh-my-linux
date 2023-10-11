@@ -213,6 +213,11 @@ source $ZSH/oh-my-zsh.sh
 # Enable fzf (install with vim)
 source $HOME/.vim/plugged/fzf/shell/key-bindings.zsh
 source $HOME/.vim/plugged/fzf/shell/completion.zsh
+
+# Bindkeys
+bindkey '\e.' insert-last-word
+
+# User configuration
 .........
 ```
 
