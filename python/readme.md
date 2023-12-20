@@ -1,7 +1,7 @@
 ### Сборка Python из исходников
 
 * скачиваем [download](https://www.python.org/downloads/)
-* для сборки: `apt install build-essential libssl-dev`
+* для сборки: [Install dependencies](https://devguide.python.org/getting-started/setup-building/#install-dependencies)
 * конфигурация: `./configure --enable-optimizations --prefix=/home/USERNAME/bin/python-3.XX.XX`
 * сборка и установка: `make`, `make install`
 
