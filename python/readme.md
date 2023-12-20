@@ -2,7 +2,7 @@
 
 * скачиваем [download](https://www.python.org/downloads/)
 * для сборки: `apt install build-essential libssl-dev`
-* конфигурация: `./configure --prefix=/home/USERNAME/bin/python-3.XX.XX --enable-optimizations`
+* конфигурация: `./configure --enable-optimizations --prefix=/home/USERNAME/bin/python-3.XX.XX`
 * сборка и установка: `make`, `make install`
 
 ** **
