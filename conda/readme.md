@@ -1,4 +1,13 @@
-### Работа с Python "боевой вариант"
+### Сборка Python из исходников
+
+* скачиваем [download](https://www.python.org/downloads/)
+* для сборки: `apt install build-essential libssl-dev`
+* конфигурация: `./configure --prefix=/home/USERNAME/bin/python-3.XX.XX --enable-optimizations`
+* сборка и установка: `make`, `make install`
+
+** **
+
+### Работа с Python "боевой вариант" - Conda
 
 #### venv
 * `alias venv.activate="source venv/bin/activate"`
