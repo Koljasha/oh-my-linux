@@ -6,7 +6,14 @@
   * network.dns.echconfig.enabled -> true
   * browser.bookmarks.autoExportHTML -> true
   * browser.bookmarks.file -> 	/home/koljasha/.config/qutebrowser/bookmarks/bookmarks.html
-
+* disable private mode: `sudo vim /usr/lib/firefox/distribution/policies.json`
+  ```
+  {
+  "policies": {
+    "DisablePrivateBrowsing": true
+    }
+  }
+  ```
 ***
 
 ## Vim расширения для браузеров
