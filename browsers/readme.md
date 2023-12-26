@@ -6,13 +6,23 @@
   * network.dns.echconfig.enabled -> true
   * browser.bookmarks.autoExportHTML -> true
   * browser.bookmarks.file -> 	/home/koljasha/.config/qutebrowser/bookmarks/bookmarks.html
-* disable private mode: `sudo vim /usr/lib/firefox/distribution/policies.json`
+* [policy-templates](https://mozilla.github.io/policy-templates/): `sudo vim /usr/lib/firefox/distribution/policies.json`
   ```
-  {
+{
   "policies": {
-    "DisablePrivateBrowsing": true
+    "DisablePrivateBrowsing": true,
+    "WebsiteFilter": {
+      "Block": ["<all_urls>"],
+      "Exceptions": [
+	      "*://mail.ru/*",
+	      "*://sportmail.ru/*",
+	      "*://*.mail.ru/*",
+	      "*://vk.com/*",
+	      "*://*.youtube.com/*"
+      ]
     }
   }
+}
   ```
 ***
 
