@@ -1,6 +1,6 @@
 ## [Oh My Linux](https://github.com/Koljasha/oh-my-linux/tree/master/install)
 
-* [browsers](https://github.com/Koljasha/Linux/tree/master/browsers) - Vim расширения для браузеров
+* [browsers](https://github.com/Koljasha/Linux/tree/master/browsers) - некоторые настройки Firefox, Vim расширения
 * [conda](https://github.com/Koljasha/Linux/tree/master/conda) - работа с python conda
 * [encryption](https://github.com/Koljasha/Linux/tree/master/encryption) - шифрование файлов GPG, OpenSSL; зашифрованный раздел Cryptsetup
 * [git](https://github.com/Koljasha/Linux/tree/master/git) - основные команды git
