@@ -15,10 +15,9 @@
       "Block": ["<all_urls>"],
       "Exceptions": [
 	      "*://mail.ru/*",
-	      "*://sportmail.ru/*",
 	      "*://*.mail.ru/*",
-	      "*://vk.com/*",
-	      "*://*.youtube.com/*"
+	      "*://*.youtube.com/*",
+	      "*://vk.com/*"
       ]
     }
   }
