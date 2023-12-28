@@ -6,7 +6,7 @@
   * network.dns.echconfig.enabled -> true
   * browser.bookmarks.autoExportHTML -> true
   * browser.bookmarks.file -> 	/home/koljasha/.config/qutebrowser/bookmarks/bookmarks.html
-* [policy-templates](https://mozilla.github.io/policy-templates/): `sudo vim /usr/lib/firefox/distribution/policies.json`
+* [policy-templates](https://mozilla.github.io/policy-templates/): `sudo vim /etc/firefox/policies/policies.json`
 ```
 {
   "policies": {
