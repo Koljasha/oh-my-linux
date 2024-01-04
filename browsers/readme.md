@@ -3,9 +3,10 @@
   * browser.tabs.closeWindowWithLastTab -> false
   * intl.accept_languages -> ru-RU, ru
   * ui.key.menuAccessKeyFocuses -> false
-  * network.dns.echconfig.enabled -> true
   * browser.bookmarks.autoExportHTML -> true
-  * browser.bookmarks.file -> 	/home/koljasha/.config/qutebrowser/bookmarks/bookmarks.html
+  * browser.bookmarks.file -> `/home/koljasha/.config/qutebrowser/bookmarks/bookmarks.html`
+  * browser.compactmode.show -> true | Другие инструменты - Настройка панели инструментов - Значки - Компактные
+    
 * [policy-templates](https://mozilla.github.io/policy-templates/): `sudo vim /etc/firefox/policies/policies.json`
 ```
 {
