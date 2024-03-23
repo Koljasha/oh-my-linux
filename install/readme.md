@@ -238,3 +238,7 @@ source $HOME/.vim/plugged/fzf/shell/completion.bash
 .........
 ```
 
+23. **Enable | Disable** `sudo systemctl reboot` command:
+* disable: `sudo systemctl mask reboot.target`
+* enable: `sudo systemctl unmask reboot.target`
+
