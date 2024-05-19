@@ -10,7 +10,8 @@
 * HTML-CSS-JS Prettify
 * LiveReload
 ***
-* Anaconda
-* Djaneiro
+[LSP for Python](https://github.com/sublimelsp/LSP-pyright)
+* LSP
+* LSP-pyright
 ***
 
