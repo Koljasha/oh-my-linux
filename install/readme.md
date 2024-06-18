@@ -242,3 +242,6 @@ source $HOME/.vim/plugged/fzf/shell/completion.bash
 * disable: `sudo systemctl mask reboot.target`
 * enable: `sudo systemctl unmask reboot.target`
 
+24. Copy to clipboard
+* `echo 'qwerty_xclip' | xclip -selection clipboard`
+* `echo 'qwerty_xsel' | xsel --clipboard`
