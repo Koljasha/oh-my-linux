@@ -6,6 +6,7 @@
   * browser.bookmarks.autoExportHTML -> true
   * browser.bookmarks.file -> `/home/koljasha/.config/qutebrowser/bookmarks/bookmarks.html`
   * browser.compactmode.show -> true | Другие инструменты - Настройка панели инструментов - Значки - Компактные
+  * network.http.http3.enabled -> true
     
 * [policy-templates](https://mozilla.github.io/policy-templates/): `sudo vim /etc/firefox/policies/policies.json`
 ```
