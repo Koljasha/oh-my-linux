@@ -242,6 +242,11 @@ source $HOME/.vim/plugged/fzf/shell/completion.bash
 * disable: `sudo systemctl mask reboot.target`
 * enable: `sudo systemctl unmask reboot.target`
 
-24. Copy to clipboard
+24. Копируем в clipboard
 * `echo 'qwerty_xclip' | xclip -selection clipboard`
 * `echo 'qwerty_xsel' | xsel --clipboard`
+
+25. Информация о команде
+* `which` или `whereis` - расположение
+* `type` - описание alias
+* `command` - игнорирование alias
