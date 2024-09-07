@@ -238,15 +238,20 @@ source $HOME/.vim/plugged/fzf/shell/completion.bash
 .........
 ```
 
-23. **Enable | Disable** `sudo systemctl reboot` command:
+23. **FZF** [Key bindings for command-line](https://github.com/junegunn/fzf?ysclid=lqj7hv2gh7236490784#key-bindings-for-command-line)
+* CTRL-T - Paste the selected files and directories onto the command-line
+* CTRL-R - Paste the selected command from history onto the command-line
+* ALT-C - cd into the selected directory
+
+24. **Enable | Disable** `sudo systemctl reboot` command:
 * disable: `sudo systemctl mask reboot.target`
 * enable: `sudo systemctl unmask reboot.target`
 
-24. Копируем в clipboard
+25. Копируем в clipboard
 * `echo 'qwerty_xclip' | xclip -selection clipboard`
 * `echo 'qwerty_xsel' | xsel --clipboard`
 
-25. Информация о команде
+26. Информация о команде
 * `which` или `whereis` - расположение
 * `type` - описание alias
 * `command` - игнорирование alias
