@@ -214,6 +214,10 @@ source $ZSH/oh-my-zsh.sh
 source $HOME/.vim/plugged/fzf/shell/key-bindings.zsh
 source $HOME/.vim/plugged/fzf/shell/completion.zsh
 
+# Disable right arrow key triggers autosuggestion completion after paste
+# https://github.com/zsh-users/zsh-autosuggestions/issues/489
+ZSH_AUTOSUGGEST_CLEAR_WIDGETS+=(bracketed-paste)
+
 # Bindkeys
 bindkey '\e.' insert-last-word
 
