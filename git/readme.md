@@ -57,6 +57,7 @@ git fetch
 git reset --hard origin/<branch>
 ```
 ** **
+* Смотрим количество _number_:   git log --oneline | wc -l
 * Сшить коммиты:                 git rebase -i Head~_number_
 ```
 * где первый pick, или reword
