@@ -10,8 +10,7 @@
 * HTML-CSS-JS Prettify
 * LiveReload
 ***
-[LSP for Python](https://github.com/sublimelsp/LSP-pyright)
-* LSP
-* LSP-pyright
+* [LSP](https://lsp.sublimetext.io/)
+* [LSP-pyright](https://github.com/sublimelsp/LSP-pyright)
 ***
 
