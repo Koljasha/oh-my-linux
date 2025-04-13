@@ -1,17 +1,18 @@
 {
-	"ignored_packages":
-	[
-		"Vintage",
-	],
-	"index_files": true,
-
 	"color_scheme": "auto",
 	"theme": "Adaptive.sublime-theme",
 
 	"show_encoding": true,
 	"fallback_encoding": "UTF-8",
 
-	"draw_white_space": "all",
-	"translate_tabs_to_spaces": true,
 	"tab_size": 4,
+	"translate_tabs_to_spaces": true,
+	"draw_white_space": "all",
+
+	"vintage_start_in_command_mode": false,
+	"vintage_use_clipboard": true,
+
+	"relative_line_numbers": true,
+
+	"ignored_packages": [],
 }
