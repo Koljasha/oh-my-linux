@@ -1,0 +1,16 @@
+# Maintainer: Koljasha
+pkgname=hello-world
+pkgver=1.0
+pkgrel=1
+pkgdesc="A simple hello world script"
+arch=('any')
+url="https://example.com"
+license=('GPL')
+source=('source.tar.gz')
+sha256sums=('SKIP')
+
+package() {
+  cd "${srcdir}/${pkgname}"
+  install -Dm755 "script.sh" "$pkgdir/usr/bin/hello"
+}
+
