@@ -1,5 +1,6 @@
 ## [Oh My Linux](https://github.com/Koljasha/oh-my-linux/tree/master/install)
 
+* [aur-hello-world](https://github.com/Koljasha/Linux/tree/master/aur-hello-world) - простейший пример сборки Aur Arch
 * [browsers](https://github.com/Koljasha/Linux/tree/master/browsers) - некоторые настройки Firefox, Vim расширения
 * [encryption](https://github.com/Koljasha/Linux/tree/master/encryption) - шифрование файлов GPG, OpenSSL; зашифрованный раздел Cryptsetup
 * [git](https://github.com/Koljasha/Linux/tree/master/git) - основные команды git
