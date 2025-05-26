@@ -8,9 +8,9 @@
 * SideBarEnhancements
 ***
 * HTML-CSS-JS Prettify
-* LiveReload
+* [LiveReload](https://github.com/alepez/LiveReload-sublimetext3) | [LiveServerPlus](https://github.com/ifrederico/sublime-liveserverplus)
 ***
 * [LSP](https://lsp.sublimetext.io/)
 * [LSP-pyright](https://github.com/sublimelsp/LSP-pyright)
 ***
-* [LiveServerPlus](https://github.com/ifrederico/sublime-liveserverplus)
+
