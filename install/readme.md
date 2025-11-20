@@ -260,7 +260,9 @@ source $HOME/.vim/plugged/fzf/shell/completion.bash
 * `type` - описание alias
 * `command` - игнорирование alias
 
-27. Замена системного времени
+27. **nohl** для `less` : *alt+u*
+
+28. Замена системного времени
 * `sudo timedatectl set-ntp false` - отключаем автоматическое обновление
 * `sudo date --set="$(date -d '-1 day' '+%Y-%m-%d') $(date '+%H:%M:%S')"` - ставим дату на -1 день
 * `sudo timedatectl set-ntp true` - как наигрались, включаем автоматическое обновление
