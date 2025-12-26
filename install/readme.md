@@ -267,3 +267,5 @@ source $HOME/.vim/plugged/fzf/shell/completion.bash
 * `sudo date --set="$(date -d '-1 day' '+%Y-%m-%d') $(date '+%H:%M:%S')"` - ставим дату на -1 день
 * `sudo timedatectl set-ntp true` - как наигрались, включаем автоматическое обновление
 
+29. **Arch** работа с `*.pacnew` : `pacdiff -o` и `pacdiff`
+
