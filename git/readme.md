@@ -63,7 +63,9 @@ git reset --hard origin/<branch>
 * где первый pick, или reword
 * далее fixup
 ```
+
 ** **
+
 * [Github Docs](https://docs.github.com/en/get-started/getting-started-with-git/managing-remote-repositories)
 * показать: `git remote -v`
 * изменить *основной | origin*: `git remote set-url origin https://koljasha@github.com/koljasha/new_example_repo.git`
@@ -72,5 +74,33 @@ git reset --hard origin/<branch>
 * изменить *дополнительный*: `git remote set-url gitlab https://koljasha@gitlab.com/koljasha/new_example_repo.git`
 * удалить: `git remote rm gitlab`
 * использовать: `git push gitlab`
+
+** **
+
+* [Gitleaks](https://github.com/gitleaks/gitleaks)
+    * `gitleaks dir . -v`
+    * `gitleaks git . -v`
+    * если что-то нужно не учитывать `.gitleaks.toml` пример:
+```
+title = "Игнорируем Gitleaks"
+
+[allowlist]
+description = "Исключения для мультимедиа клавиш"
+regexes = [
+  '''XF86[A-Za-z]+''',      # Все XF86* клавиши
+]
+```
+
+** **
+* [Git filter-repo](https://github.com/newren/git-filter-repo)
+    * `git filter-repo --replace-text ../replacements.txt `, где `replacements.txt`:
+```
+'password': 'real_pass'==>'password': '[PASS]'
+```
+    * `git remote add origin git@github.com:koljasha/repo.git`
+    * `git remote -v`
+    * `git push origin master --force`
+    * `git push origin --force --all`
+
 ** **
 
