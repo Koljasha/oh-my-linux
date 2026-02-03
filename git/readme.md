@@ -97,6 +97,7 @@ regexes = [
 ```
 'password': 'real_pass'==>'password': '[PASS]'
 ```
+    * `git remote -v`
     * `git remote add origin git@github.com:koljasha/repo.git`
     * `git remote -v`
     * `git push origin master --force`
