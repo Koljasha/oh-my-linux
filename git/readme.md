@@ -64,8 +64,8 @@ git reset --hard origin/<branch>
 * далее fixup
 ```
 ** **
-* Полное клонирование: `git clone --mirror URL`
-* Архивация в один файл: `git bundle create файл.bundle --all` : `git clone файл.bundle новая_папка`
+* Полное клонирование: `git clone --mirror URL` : `git clone mirror_path new_folder`
+* Архивация в один файл: `git bundle create file.bundle --all` : `git clone file.bundle new_folder`
 
 ** **
 
