@@ -70,13 +70,12 @@ git reset --hard origin/<branch>
 ** **
 
 * [Github Docs](https://docs.github.com/en/get-started/getting-started-with-git/managing-remote-repositories) - добавить удаленные репо
-* показать: `git remote -v`
-* изменить *основной | origin*: `git remote set-url origin https://koljasha@github.com/koljasha/new_example_repo.git`
- 
-* добавить: `git remote add gitlab https://koljasha@gitlab.com/koljasha/example_repo.git`
-* изменить *дополнительный*: `git remote set-url gitlab https://koljasha@gitlab.com/koljasha/new_example_repo.git`
-* удалить: `git remote rm gitlab`
-* использовать: `git push gitlab`
+  * показать: `git remote -v`
+  * изменить *основной | origin*: `git remote set-url origin https://koljasha@github.com/koljasha/new_example_repo.git`
+  * добавить: `git remote add gitlab https://koljasha@gitlab.com/koljasha/example_repo.git`
+  * изменить *дополнительный*: `git remote set-url gitlab https://koljasha@gitlab.com/koljasha/new_example_repo.git`
+  * удалить: `git remote rm gitlab`
+  * использовать: `git push gitlab`
 
 ** **
 
