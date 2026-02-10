@@ -92,13 +92,17 @@ regexes = [
 ```
 
 ** **
-* [Git filter-repo](https://github.com/newren/git-filter-repo)
+* [Git filter-repo](https://github.com/newren/git-filter-repo) - удалить токен-пароль
     * `git filter-repo --replace-text ../replacements.txt `, где `replacements.txt` пример:
 ```
 'password': 'real_pass'==>'password': '[PASS]'
 regex:base_token = '[A-Za-z0-9+/=]{10,}'==>base_token = '[TOKEN]'
 ```
-    * `git remote -v`
+
+* [Git filter-repo](https://github.com/newren/git-filter-repo) - удалить файл-каталог
+    * `git filter-repo --path 'themes/' --path 'images/' --invert-paths`
+
+* Далее обновить удаленный репозиторий (стирается)
     * `git remote add origin git@github.com:koljasha/repo.git`
     * `git remote -v`
     * `git push origin master --force`
