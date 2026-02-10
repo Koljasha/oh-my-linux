@@ -92,6 +92,10 @@ regexes = [
 ```
 
 ** **
+* [Git filter-repo](https://github.com/newren/git-filter-repo)
+  * `--dry-run` - пробный запуск без изменений
+  * `--debug` - подробный вывод
+
 * [Git filter-repo](https://github.com/newren/git-filter-repo) - удалить токен-пароль
     * `git filter-repo --replace-text ../replacements.txt `, где `replacements.txt` пример:
 ```
