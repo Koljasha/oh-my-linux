@@ -11,4 +11,4 @@
 * [pypi](https://github.com/Koljasha/Linux/tree/master/pypi) - ссылки для PyPi
 * [sublime](https://github.com/Koljasha/Linux/tree/master/sublime) - базовые плагины Sublime
 * [termux](https://github.com/Koljasha/Linux/tree/master/termux) - настройка Termux на Android
-* [themes](https://github.com/Koljasha/Linux/tree/master/themes) - темы Cinnamon, XFCE, Openbox
+
