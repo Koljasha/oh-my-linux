@@ -102,7 +102,7 @@ regex:base_token = '[A-Za-z0-9+/=]{10,}'==>base_token = '[TOKEN]'
 * [Git filter-repo](https://github.com/newren/git-filter-repo) - удалить файл-каталог
     * `git filter-repo --path 'themes/' --path 'images/' --invert-paths`
 
-    * посмотреть самые большие файлы:
+* посмотреть самые большие файлы:
 ```
 bash -c 'git rev-list --all --objects | \
   while read hash path; do
@@ -116,11 +116,11 @@ bash -c 'git rev-list --all --objects | \
   tail -30'
 ```
 
-    * Далее обновить удаленный репозиторий (стирается)
-        * `git remote add origin git@github.com:koljasha/repo.git`
-        * `git remote -v`
-        * `git push origin master --force`
-        * `git push origin --force --all`
+* Далее обновить удаленный репозиторий (стирается)
+    * `git remote add origin git@github.com:koljasha/repo.git`
+    * `git remote -v`
+    * `git push origin master --force`
+    * `git push origin --force --all`
 
 ** **
 
