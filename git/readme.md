@@ -63,10 +63,13 @@ git reset --hard origin/<branch>
 * где первый pick, или reword
 * далее fixup
 ```
+** **
+* Полное клонирование: `git clone --mirror URL`
+* Архивация в один файл: `git bundle create файл.bundle --all` : `git clone файл.bundle новая_папка`
 
 ** **
 
-* [Github Docs](https://docs.github.com/en/get-started/getting-started-with-git/managing-remote-repositories)
+* [Github Docs](https://docs.github.com/en/get-started/getting-started-with-git/managing-remote-repositories) - добавить удаленные репо
 * показать: `git remote -v`
 * изменить *основной | origin*: `git remote set-url origin https://koljasha@github.com/koljasha/new_example_repo.git`
  
@@ -77,7 +80,7 @@ git reset --hard origin/<branch>
 
 ** **
 
-* [Gitleaks](https://github.com/gitleaks/gitleaks)
+* [Gitleaks](https://github.com/gitleaks/gitleaks) - проверка на секреты
     * `gitleaks dir . -v`
     * `gitleaks git . -v`
     * если что-то нужно не учитывать `.gitleaks.toml` пример:
@@ -92,7 +95,7 @@ regexes = [
 ```
 
 ** **
-* [Git filter-repo](https://github.com/newren/git-filter-repo)
+* [Git filter-repo](https://github.com/newren/git-filter-repo) - удаление из коммитов
   * `--dry-run` - пробный запуск без изменений
   * `--debug` - подробный вывод
 
