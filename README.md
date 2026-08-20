@@ -3,6 +3,7 @@
 * [aur-hello-world](https://github.com/Koljasha/Linux/tree/master/aur-hello-world) - простейший пример сборки Aur Arch
 * [browsers](https://github.com/Koljasha/Linux/tree/master/browsers) - некоторые настройки Firefox, Vim расширения
 * [encryption](https://github.com/Koljasha/Linux/tree/master/encryption) - шифрование файлов GPG, OpenSSL; зашифрованный раздел Cryptsetup
+* [firefox-policies](https://github.com/Koljasha/Linux/tree/master/firefox-policies) - доступ из Firefox только к разрешенным сайтам
 * [git](https://github.com/Koljasha/Linux/tree/master/git) - основные команды git
 * [install](https://github.com/Koljasha/Linux/tree/master/install) - заметки о Linux (**Oh My Linux**)
 * [lessons](https://github.com/Koljasha/Linux/tree/master/lessons) - уроки по командам Linux

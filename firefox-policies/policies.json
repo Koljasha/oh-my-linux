@@ -1,0 +1,32 @@
+{
+  "policies": {
+    "DisablePrivateBrowsing": true,
+    "WebsiteFilter": {
+      "Block": ["<all_urls>"],
+      "Exceptions": [
+	      "*://*.gosuslugi.ru/*",
+	      "*://*.mosreg.ru/*",
+
+	      "*://mail.ru/*",
+	      "*://*.mail.ru/*",
+
+	      "*://ya.ru/*",
+	      "*://*.ya.ru/*",
+	      "*://yandex.ru/*",
+	      "*://*.yandex.ru/*",
+
+	      "*://dzen.ru/*",
+	      "*://*.dzen.ru/*",
+
+	      "*://vk.com/*",
+	      "*://*.vk.com/*",
+
+	      "*://*.google.com/*",
+	      "*://*.google.ru/*",
+
+	      "*://*.youtube.com/*",
+	      "*://*.rutube.ru/*"
+      ]
+    }
+  }
+}
