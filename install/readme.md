@@ -269,3 +269,8 @@ source $HOME/.vim/plugged/fzf/shell/completion.bash
 
 29. **Arch** работа с `*.pacnew` : `pacdiff -o` и `pacdiff`
 
+30. Отделяем процесс:
+  * `nohup python server.py &`
+  * `python server.py & disown`
+  * `setsid python server.py`
+
