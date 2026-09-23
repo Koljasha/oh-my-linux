@@ -1,13 +1,13 @@
 ## Настройка Termux
-* [Shells](https://wiki.termux.com/wiki/Shells)
-* [Remote Access](https://wiki.termux.com/wiki/Remote_Access)
+* [Shells](https://wiki.termux.dev/wiki/Shells)
+* [Remote Access](https://wiki.termux.dev/wiki/Remote_Access)
 
 #### Первоначальная настройка
 * `termux-change-repo`
 * `termux-setup-storage`
 
 #### Обновление и установка пакетов
-* `pkg upgrade`
+* `pkg update && pkg upgrade`
 * `pkg install fish openssh pass vim`
 
 #### Настройка

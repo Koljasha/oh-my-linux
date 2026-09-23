@@ -1,15 +1,30 @@
-## [Oh My Linux](https://github.com/Koljasha/oh-my-linux/tree/master/install)
+# Oh My Linux
 
-* [aur-hello-world](https://github.com/Koljasha/Linux/tree/master/aur-hello-world) - простейший пример сборки Aur Arch
-* [browsers](https://github.com/Koljasha/Linux/tree/master/browsers) - некоторые настройки Firefox, Vim расширения
-* [encryption](https://github.com/Koljasha/Linux/tree/master/encryption) - шифрование файлов GPG, OpenSSL; зашифрованный раздел Cryptsetup
-* [firefox-policies](https://github.com/Koljasha/Linux/tree/master/firefox-policies) - доступ из Firefox только к разрешенным сайтам
-* [git](https://github.com/Koljasha/Linux/tree/master/git) - основные команды git
-* [install](https://github.com/Koljasha/Linux/tree/master/install) - заметки о Linux (**Oh My Linux**)
-* [lessons](https://github.com/Koljasha/Linux/tree/master/lessons) - уроки по командам Linux
-* [packages](https://github.com/Koljasha/Linux/tree/master/packages) - описание команд пакетных менеджеров Apt и Pacman
-* [python](https://github.com/Koljasha/Linux/tree/master/python) - работа с python и conda
-* [pypi](https://github.com/Koljasha/Linux/tree/master/pypi) - ссылки для PyPi
-* [sublime](https://github.com/Koljasha/Linux/tree/master/sublime) - базовые плагины Sublime
-* [termux](https://github.com/Koljasha/Linux/tree/master/termux) - настройка Termux на Android
+Личная микро-база знаний по Linux: заметки, шпаргалки и учебные примеры, собранные в процессе настройки и использования системы.
 
+Актуальные персональные настройки (дотфайлы и конфиги окружения) живут в отдельном репозитории — [Koljasha/archlinux](https://github.com/Koljasha/archlinux) — и здесь не дублируются.
+
+## Структура
+
+- [install](install/README.md) — заметки по установке и настройке Linux (окружение, systemd, Samba, монтирование, оболочки).
+- [browsers](browsers/README.md) — настройки Firefox через `about:config`.
+  - [firefox-policies](browsers/firefox-policies/README.md) — пример киоск-политики (доступ только к разрешённым сайтам).
+- [encryption](encryption/README.md) — шифрование: бэкап хранилища pass, GPG, OpenSSL, cryptsetup.
+- [git](git/readme.md) — шпаргалка по основным командам и настройкам Git.
+- [dev/python-from-source](dev/python-from-source/README.md) — сборка Python из исходников в отдельный префикс.
+- [packaging/hello-world-pkgbuild](packaging/hello-world-pkgbuild/README.md) — минимальный учебный PKGBUILD для Arch Linux.
+- [packaging/python-pypi-pkgbuild](packaging/python-pypi-pkgbuild/README.md) — упаковка Python-пакетов из PyPI в PKGBUILD.
+- [sublime](sublime/README.md) — базовые плагины Sublime Text.
+- [termux](termux/README.md) — настройка Termux на Android.
+
+## Как пользоваться
+
+Откройте нужный раздел из списка выше и выполняйте шаги по порядку. Примеры команд копируйте как есть, подставляя свои пути и имена.
+
+## Примечание
+
+Примеры ориентированы на Arch и Debian-производные; перед выполнением проверяйте команды под свой дистрибутив.
+
+## Лицензия
+
+MIT, см. файл [LICENSE](LICENSE).

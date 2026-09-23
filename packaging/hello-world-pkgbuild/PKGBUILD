@@ -1,11 +1,11 @@
-# Maintainer: Koljasha
+# Maintainer: Example <example@example.com>
 pkgname=hello-world
 pkgver=1.0
 pkgrel=1
 pkgdesc="A simple hello world script"
 arch=('any')
-url="https://example.com"
-license=('GPL')
+url="https://wiki.archlinux.org/title/Packaging_guidelines"
+license=('MIT')
 source=('source.tar.gz')
 sha256sums=('SKIP')
 
