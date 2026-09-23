@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.ruff_cache/
+
+# Docker / Django
+**/logs/
+**/db.sqlite3
+.env
+
+# Артефакт scripts/steam_discount.py
+scripts/steam.csv
+
+# Секреты и локальное состояние scripts/opencode_monitor.py (токен Telegram!) — не коммитить
+scripts/state.json
+scripts/.state.*.tmp
+scripts/opencode_monitor.log
+scripts/cron.err
+
+# Ключи Twitter для scripts/twitter_del_tweets.py — не коммитить
+scripts/config.py
+
+# Editor swap / backup
+*.swp
+*~

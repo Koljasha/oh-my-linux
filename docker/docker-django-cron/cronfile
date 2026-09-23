@@ -1,0 +1,3 @@
+# Cron отправляем reload Gunicorn
+* * * * * root kill -HUP 1
+

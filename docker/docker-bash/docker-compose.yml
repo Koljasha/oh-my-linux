@@ -1,0 +1,6 @@
+services:
+  timer:
+    build: .
+    restart: unless-stopped
+    volumes:
+      - ./logs:/app/logs

@@ -15,6 +15,9 @@
 - [packaging/python-pypi-pkgbuild](packaging/python-pypi-pkgbuild/README.md) — упаковка Python-пакетов из PyPI в PKGBUILD.
 - [sublime](sublime/README.md) — базовые плагины Sublime Text.
 - [termux](termux/README.md) — настройка Termux на Android.
+- [docker](docker/README.md) — минимальные примеры Docker и Docker Compose: cron-таймеры на bash и Python, Django dev-сервер, связка Django + gunicorn + cron.
+- [scripts](scripts/README.md) — коллекция утилит на Python и Bash: сетевые проверки, мониторинг цен, закладки, Steam, Twitter, Lightroom, пакетная работа с git.
+- [mouse-mover](mouse-mover/README.md) — сервис против AFK-статуса: периодически двигает курсор (systemd + скрипт управления).
 
 ## Как пользоваться
 

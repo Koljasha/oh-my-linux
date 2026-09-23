@@ -1,0 +1,6 @@
+.venv/
+.git/
+**/__pycache__/
+
+app/db.sqlite3
+

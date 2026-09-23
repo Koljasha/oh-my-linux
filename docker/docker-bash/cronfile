@@ -1,0 +1,6 @@
+# Cron классический
+# * * * * * root /usr/bin/bash /app/script.sh
+
+# Cron дополнительный вывод в stdout контейнера
+* * * * * root /usr/bin/bash /app/script.sh >> /proc/1/fd/1 2>> /proc/1/fd/2
+
