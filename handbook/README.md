@@ -380,6 +380,15 @@ sudo date --set="$(date -d '-1 day' '+%Y-%m-%d') $(date '+%H:%M:%S')"       # с
 sudo timedatectl set-ntp true                                              # включаем обратно
 ```
 
+Арифметика дат (GNU date):
+
+```bash
+date +'%F' --date='2021-01-01 + 6days'   # 2021-01-07
+date +'%Y-%m-%d %H:%M' --date='-10 min'  # минус 10 минут от текущего времени
+# минус 10 минут от заданной даты:
+date +'%Y-%m-%d %H:%M' -d@$(($(date -d'2024-03-01 12:10' +%s) - 10 * 60))
+```
+
 Arch, работа с `*.pacnew`:
 
 ```bash

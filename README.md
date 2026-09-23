@@ -14,6 +14,7 @@
   - [firefox-policies](browsers/firefox-policies/README.md) — пример киоск-политики (доступ только к разрешённым сайтам).
 - [docker](docker/README.md) — минимальные примеры Docker и Docker Compose: cron-таймеры на bash и Python, Django dev-сервер, связка Django + gunicorn + cron.
 - [encryption](encryption/README.md) — шифрование: бэкап хранилища pass, GPG, OpenSSL, cryptsetup.
+- [gist](gist/README.md) — короткие сниппеты и шаблоны на bash и Python (цветной вывод, ffmpeg, pip, logging, декораторы).
 - [git](git/README.md) — шпаргалка по основным командам и настройкам Git.
 - [mouse-mover](mouse-mover/README.md) — сервис против AFK-статуса: периодически двигает курсор (systemd + скрипт управления).
 - [packaging/hello-world-pkgbuild](packaging/hello-world-pkgbuild/README.md) — минимальный учебный PKGBUILD для Arch Linux.

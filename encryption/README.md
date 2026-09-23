@@ -69,3 +69,19 @@
    * *или* `udisksctl unmount -b /dev/mapper/crypto`
 6. *Закрытие раздела:*
    * `sudo cryptsetup close crypto`
+
+## 6. DBeaver: расшифровка credentials-config.json
+
+DBeaver хранит пароли в `credentials-config.json`, зашифрованные своим
+встроенным статическим ключом (не вашим паролем — ключ публичный, зашит
+в сам DBeaver, поэтому ниже нет ничего секретного):
+
+* Путь (Windows): `..\AppData\Roaming\DBeaverData\workspace6\General\.dbeaver\credentials-config.json`
+* Расшифровка:
+
+```bash
+openssl aes-128-cbc -d \
+  -K babb4a9f774ab853c96c2d653dfe544a \
+  -iv 00000000000000000000000000000000 \
+  -in credentials-config.json -out output.txt
+```
