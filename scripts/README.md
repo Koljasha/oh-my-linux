@@ -2,16 +2,8 @@
 
 Коллекция небольших утилит на Python и Bash: сетевые проверки, мониторинг цен,
 работа с закладками, обоями, Steam, Twitter, Lightroom и пакетная работа с git.
-Отдельный сервис — `../mouse-mover/` (шевеление мышкой против AFK).
 
 Команды ниже даны от корня репозитория.
-
-## Структура
-
-```text
-scripts/           # одиночные скрипты (каждый запускается сам по себе)
-../mouse-mover/    # сервис «шевелитель мышки» (systemd + скрипт управления)
-```
 
 ## Скрипты `scripts/`
 
@@ -30,26 +22,6 @@ scripts/           # одиночные скрипты (каждый запус�
 | `time_replay_counter.sh` | Генерирует временные метки `MM:SS.ss` с дробными шагами (`--step` или `--count`, взаимоисключающие) | bash + GNU `getopt` (util-linux), `bc` |
 | `twitter_del_tweets.py` | Список (и удаление с `--no-dry-run`) твитов через legacy Twitter API v1.1 | `requests`, `requests_oauthlib`, локальный `config.py` с ключами Twitter (не коммитить, шаблон в начале скрипта) |
 
-## mouse-mover
-
-Сервис, который периодически двигает курсор в случайную точку, чтобы не
-срабатывал idle/AFK-статус. Подробная установка (venv, systemd-юнит, автозапуск) —
-в [../mouse-mover/README.md](../mouse-mover/README.md).
-
-Кратко:
-
-```bash
-./mouse-mover/mouse-mover-ctl.sh           # интерактивное меню (статус + лог)
-./mouse-mover/mouse-mover-ctl.sh status    # статус сервиса
-./mouse-mover/mouse-mover-ctl.sh start     # запустить
-./mouse-mover/mouse-mover-ctl.sh stop      # остановить
-./mouse-mover/mouse-mover-ctl.sh restart   # перезапустить
-./mouse-mover/mouse-mover-ctl.sh logs      # последние строки лога (--follow: следить)
-```
-
-Зависимости: `python3`, `pyautogui` (`pip install pyautogui`), для сборки venv —
-`python3-venv`, `python3-tk` (см. [../mouse-mover/README.md](../mouse-mover/README.md)).
-
 ## Требования
 
 - `python3`, `bash`, `git`
@@ -58,8 +30,7 @@ scripts/           # одиночные скрипты (каждый запус�
   - `lightroom_rename_images.sh` — `identify` (пакет ImageMagick)
   - `time_replay_counter.sh` — GNU `getopt` (util-linux), `bc`
   - `opencode_ollama_cloud_free.sh` — CLI `opencode`
-  - Python-пакеты: `pip install requests beautifulsoup4` (монитор, Steam),
-    `pip install pyautogui` (mouse-mover)
+  - Python-пакеты: `pip install requests beautifulsoup4` (монитор, Steam)
 
 ## Как запускать
 
@@ -98,10 +69,10 @@ python3 scripts/twitter_del_tweets.py --screen-name Koljasha
 ## Проверки
 
 ```bash
-ruff check scripts/*.py mouse-mover/*.py
-ty check scripts/*.py mouse-mover/*.py
-shellcheck -x scripts/*.sh mouse-mover/*.sh
-shfmt -d -i 4 scripts/*.sh mouse-mover/*.sh
+ruff check scripts/*.py
+ty check scripts/*.py
+shellcheck -x scripts/*.sh
+shfmt -d -i 4 scripts/*.sh
 ```
 
 ## Лицензия
