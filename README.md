@@ -6,18 +6,20 @@
 
 ## Структура
 
-- [handbook](handbook/README.md) — заметки по установке и настройке Linux (окружение, systemd, Samba, монтирование, оболочки, сборка Python из исходников).
+- **[handbook](handbook/README.md)** — основной раздел: заметки по установке и настройке Linux (окружение, systemd, Samba, монтирование, оболочки, сборка Python из исходников, Termux на Android).
+
+Остальное — по алфавиту:
+
 - [browsers](browsers/README.md) — настройки Firefox через `about:config`.
   - [firefox-policies](browsers/firefox-policies/README.md) — пример киоск-политики (доступ только к разрешённым сайтам).
+- [docker](docker/README.md) — минимальные примеры Docker и Docker Compose: cron-таймеры на bash и Python, Django dev-сервер, связка Django + gunicorn + cron.
 - [encryption](encryption/README.md) — шифрование: бэкап хранилища pass, GPG, OpenSSL, cryptsetup.
 - [git](git/README.md) — шпаргалка по основным командам и настройкам Git.
+- [mouse-mover](mouse-mover/README.md) — сервис против AFK-статуса: периодически двигает курсор (systemd + скрипт управления).
 - [packaging/hello-world-pkgbuild](packaging/hello-world-pkgbuild/README.md) — минимальный учебный PKGBUILD для Arch Linux.
 - [packaging/python-pypi-pkgbuild](packaging/python-pypi-pkgbuild/README.md) — упаковка Python-пакетов из PyPI в PKGBUILD.
-- [sublime](sublime/README.md) — базовые плагины Sublime Text.
-- [termux](termux/README.md) — настройка Termux на Android.
-- [docker](docker/README.md) — минимальные примеры Docker и Docker Compose: cron-таймеры на bash и Python, Django dev-сервер, связка Django + gunicorn + cron.
 - [scripts](scripts/README.md) — коллекция утилит на Python и Bash: сетевые проверки, мониторинг цен, закладки, Steam, Twitter, Lightroom, пакетная работа с git.
-- [mouse-mover](mouse-mover/README.md) — сервис против AFK-статуса: периодически двигает курсор (systemd + скрипт управления).
+- [sublime](sublime/README.md) — базовые плагины Sublime Text.
 
 ## Как пользоваться
 

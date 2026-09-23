@@ -22,6 +22,7 @@
 - [16. Скрипты Nemo (WireGuard)](#16-скрипты-nemo-wireguard)
 - [17. Система и мелочи](#17-система-и-мелочи)
 - [18. Сборка Python из исходников](#18-сборка-python-из-исходников)
+- [19. Настройка Termux (Android)](#19-настройка-termux-android)
 
 ---
 
@@ -422,3 +423,31 @@ make install
 
 После этого собранный интерпретатор живёт в `$HOME/bin/python-3.12`
 и системному Python не мешает.
+
+## 19. Настройка Termux (Android)
+
+* [Shells](https://wiki.termux.dev/wiki/Shells)
+* [Remote Access](https://wiki.termux.dev/wiki/Remote_Access)
+
+### Первоначальная настройка
+
+* `termux-change-repo`
+* `termux-setup-storage`
+
+### Обновление и установка пакетов
+
+* `pkg update && pkg upgrade`
+* `pkg install fish openssh pass vim`
+
+### Настройка
+
+* `chsh -s fish`
+* `passwd`
+* `vim ~/.config/fish/config.fish`
+* `vim ~/.ssh/config`
+
+### Использование как ssh-сервера
+
+* `sshd` — запуск ssh-сервера
+* `ssh USER@HOST -p 8022` — подключение с другой машины
+* `pkill sshd` — остановка ssh-сервера
