@@ -6,12 +6,11 @@
 
 ## Структура
 
-- [install](install/README.md) — заметки по установке и настройке Linux (окружение, systemd, Samba, монтирование, оболочки).
+- [handbook](handbook/README.md) — заметки по установке и настройке Linux (окружение, systemd, Samba, монтирование, оболочки, сборка Python из исходников).
 - [browsers](browsers/README.md) — настройки Firefox через `about:config`.
   - [firefox-policies](browsers/firefox-policies/README.md) — пример киоск-политики (доступ только к разрешённым сайтам).
 - [encryption](encryption/README.md) — шифрование: бэкап хранилища pass, GPG, OpenSSL, cryptsetup.
-- [git](git/readme.md) — шпаргалка по основным командам и настройкам Git.
-- [dev/python-from-source](dev/python-from-source/README.md) — сборка Python из исходников в отдельный префикс.
+- [git](git/README.md) — шпаргалка по основным командам и настройкам Git.
 - [packaging/hello-world-pkgbuild](packaging/hello-world-pkgbuild/README.md) — минимальный учебный PKGBUILD для Arch Linux.
 - [packaging/python-pypi-pkgbuild](packaging/python-pypi-pkgbuild/README.md) — упаковка Python-пакетов из PyPI в PKGBUILD.
 - [sublime](sublime/README.md) — базовые плагины Sublime Text.
