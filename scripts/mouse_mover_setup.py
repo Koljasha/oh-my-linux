@@ -11,12 +11,18 @@
 КОМАНДЫ (CLI)
     python3 mouse_mover_setup.py [--dry-run] [сабкоманда]
         install      установка: проверка окружения, venv, pip install pyautogui,
-                     запись скрипта и юнита, daemon-reload + enable + start
+                     запись шевелителя, юнита и управляющей копии менеджера,
+                     daemon-reload + start; автозапуск не включается (при желании
+                     `systemctl --user enable mouse-mover.service`)
         start        запустить сервис
         stop         остановить сервис
         restart      перезапустить сервис
         status       состояние сервиса (read-only)
         logs [-f]    последние 15 строк лога (--follow: следить)
+        upgrade      обновить сам скрипт с RAW_URL и перегенерировать вшитые файлы
+                     (ведёт к converge); один вопрос в начале (по умолчанию — да)
+        converge     служебная, вызывается upgrade: привести шевелитель и юнит к
+                     текущим шаблонам, перезапустить сервис при изменениях
         remove       удаление (подтверждение, по умолчанию НЕТ)
         run          ручной запуск шевелителя (для отладки, не для сервиса)
     Без сабкоманды — тумблер: не установлен → install; установлен → stop/start.
@@ -24,9 +30,11 @@
 ПРИМЕРЫ
     ./mouse_mover_setup.py install
     ./mouse_mover_setup.py                 # тумблер
+    ./mouse_mover_setup.py upgrade
     ./mouse_mover_setup.py status
     ./mouse_mover_setup.py logs --follow
     ./mouse_mover_setup.py --dry-run install
+    ./mouse_mover_setup.py converge --yes
     ./mouse_mover_setup.py remove
 
 ПАКЕТЫ ПО ДИСТРИБУТИВАМ (если venv/tkinter отсутствуют)
@@ -36,12 +44,36 @@
     openSUSE            sudo zypper install python3-tk
 
 ПРИВЯЗКА К СЕССИИ
-    Автозапуск — WantedBy=default.target: она активна в любом пользовательском
-    менеджере, тогда как graphical-session.target стартует не во всех WM
-    (в лёгких оконных менеджерах часто неактивна). Дополнительно заданы
-    After/PartOf graphical-session.target: если цель активна, сервис
-    упорядочивается после неё и гаснет вместе с ней; если неактивна —
-    эти директивы просто ничего не делают.
+    Автозапуск (по желанию; install его не включает) — WantedBy=default.target:
+    она активна в любом пользовательском менеджере, тогда как
+    graphical-session.target стартует не во всех WM (в лёгких оконных
+    менеджерах часто неактивна). Дополнительно заданы After/PartOf
+    graphical-session.target: если цель активна, сервис упорядочивается после
+    неё и гаснет вместе с ней; если неактивна — эти директивы просто ничего
+    не делают. Включить автозапуск вручную:
+    `systemctl --user enable mouse-mover.service`.
+
+ОБНОВЛЕНИЕ СКРИПТА И ВШИТЫХ ФАЙЛОВ (upgrade / converge)
+    upgrade обновляет сам менеджер: скачивает RAW_URL
+    (https://raw.githubusercontent.com/Koljasha/oh-my-linux/refs/heads/master/scripts/mouse_mover_setup.py),
+    проверяет sanity (начинается с #!, есть маркер mouse_mover_setup, компилируется)
+    и атомарно заменяет управляющую копию ~/.local/share/mouse-mover/mouse_mover_setup.py
+    (mkstemp в той же директории + os.replace; при побайтовом совпадении — только
+    INFO «скрипт уже актуальной версии»). Затем запускает converge уже новой версией:
+    [sys.executable, <управляющая копия>, converge, --yes]. Запущенная копия из git
+    (__file__ в репозитории) не трогается — управление дальше через управляющую копию.
+    converge — служебная команда (в справке помечена, вызывается upgrade): сравнивает
+    ~/.local/share/mouse-mover/mouse-mover.py с текущим MOVER_SOURCE и unit-файл с
+    unit_template(). При отличии — бэкап <path>.bak-<epoch> и запись нового (0755/0644);
+    при изменениях делает daemon-reload и перезапускает сервис, только если он был
+    активен (остановленный не запускает). Идемпотентен; сообщает изменено/совпадало.
+    Bootstrap для старой установки (скрипт ещё без команды upgrade): один раз
+    обновить вручную (скачать RAW_URL и положить в ~/.local/share/mouse-mover/), либо
+    `remove` + `install`; дальше пользоваться upgrade/converge:
+        curl -fsSL <RAW_URL> -o /tmp/mouse_mover_setup.py && \
+            install -m 0755 /tmp/mouse_mover_setup.py \
+                ~/.local/share/mouse-mover/mouse_mover_setup.py
+    Версия скрипта печатается в заголовке --help.
 
 ЗАВИСИМОСТЬ pyautogui
     pyautogui внедряется в venv и управляет указателем через X11/XWayland.
@@ -52,7 +84,9 @@ DRY-RUN
     --dry-run (глобальный флаг до сабкоманды): ни одного системного эффекта —
     mkdir, создание venv, pip, запись файлов, systemctl и удаления только
     печатаются с префиксом [dry-run]. Проверки окружения (venv/tkinter/os-release)
-    реальны: они read-only.
+    реальны: они read-only. В upgrade fetch RAW_URL реален (чтение), замена
+    управляющей копии и converge идут в лог, subprocess НИКОГДА не запускается —
+    converge-логика выполняется в текущем процессе.
 
 Exit-коды: 0 успех/отмена; 1 ошибка операции; 2 неверные аргументы;
 130 Ctrl-C вне цикла run (внутри run Ctrl+C — штатная остановка, код 0).
@@ -67,8 +101,11 @@ import random
 import shutil
 import subprocess
 import sys
+import tempfile
 import textwrap
 import time
+import urllib.error
+import urllib.request
 from pathlib import Path
 
 # ---------------------------------------------------------------------------
@@ -77,11 +114,17 @@ from pathlib import Path
 SERVICE_NAME = "mouse-mover.service"
 SERVICE_TITLE = "Mouse Mover"
 LOG_LINES = 15
+SCRIPT_VERSION = "1.1.0"
+RAW_URL = (
+    "https://raw.githubusercontent.com/Koljasha/oh-my-linux/"
+    "refs/heads/master/scripts/mouse_mover_setup.py"
+)
 
 SHARE_DIR = Path.home() / ".local" / "share" / "mouse-mover"
 VENV_DIR = SHARE_DIR / ".venv"
 VENV_PY = VENV_DIR / "bin" / "python"
 MOVER_PY = SHARE_DIR / "mouse-mover.py"
+MANAGER_PY = SHARE_DIR / "mouse_mover_setup.py"
 UNIT_DIR = Path.home() / ".config" / "systemd" / "user"
 UNIT = UNIT_DIR / SERVICE_NAME
 
@@ -102,7 +145,7 @@ C_DIM = "2"
 MOVER_SOURCE = (
     textwrap.dedent(
         r'''
-    #!/usr/bin/env python
+    #!/usr/bin/env python3
     """Случайно двигать курсор мыши против определения простоя/AFK.
 
     Каждые ``interval`` секунд двигает курсор в случайную точку внутри
@@ -207,6 +250,14 @@ class StepError(Exception):
     """Ошибка операции (subprocess/файлы) — exit 1."""
 
 
+class NetError(Exception):
+    """Сетевая ошибка (fetch RAW_URL) — exit 1."""
+
+
+class VerifyError(Exception):
+    """Ошибка sanity скачанного скрипта — exit 1."""
+
+
 # ---------------------------------------------------------------------------
 # Утилиты вывода
 # ---------------------------------------------------------------------------
@@ -238,13 +289,13 @@ def log(level: str, msg: str) -> None:
 
 
 def confirm(prompt: str, default: bool = False) -> bool:
-    """Подтверждение y/N. Пустой ввод/EOF → default. Только «y/да» = да."""
+    """Подтверждение y/N. Пустой ввод (Enter) → default. EOF → отмена (безопасный дефолт)."""
     sys.stdout.write(c(C_CYAN, prompt) + " ")
     sys.stdout.flush()
     line = sys.stdin.readline()
     if line == "":
-        log("WARN", "ввод недоступен (EOF) — принят ответ по умолчанию")
-        return default
+        log("WARN", "ввод недоступен (EOF) — трактуется как отказ")
+        return False
     raw = line.strip().lower()
     if raw == "":
         return default
@@ -313,6 +364,40 @@ class Runner:
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(content, encoding="utf-8")
         os.chmod(target, mode)
+
+    def replace_script(self, content: bytes) -> None:
+        """Атомарная замена управляющей копии менеджера (upgrade).
+
+        mkstemp в той же директории + os.replace: безопасно и когда процесс
+        запущен из целевого пути (подмена инода). В dry-run — только лог.
+        """
+        target = MANAGER_PY
+        if self.dry_run:
+            log("DRY", f"атомарная замена скрипта -> {target} (mkstemp + os.replace, chmod 0755)")
+            return
+        target.parent.mkdir(parents=True, exist_ok=True)
+        fd, tmp = tempfile.mkstemp(prefix=".mouse_mover_setup_", dir=str(target.parent))
+        try:
+            with os.fdopen(fd, "wb") as handle:
+                handle.write(content)
+            os.chmod(tmp, 0o755)
+            os.replace(tmp, target)
+        except OSError:
+            Path(tmp).unlink(missing_ok=True)
+            raise
+
+    def backup_file(self, path: str) -> str | None:
+        """Бэкап <path> -> <path>.bak-<epoch>; None, если файла нет. В dry-run — только лог."""
+        target = Path(path)
+        if not target.exists():
+            return None
+        backup = f"{path}.bak-{int(time.time())}"
+        if self.dry_run:
+            log("DRY", f"бэкап {path} -> {backup}")
+        else:
+            shutil.copy2(path, backup)
+            log("INFO", f"бэкап {path}: {backup}")
+        return backup
 
     def remove_file(self, path: str) -> None:
         if self.dry_run:
@@ -419,7 +504,7 @@ def unit_template() -> str:
     return (
         "[Unit]\n"
         "Description=Mouse Mover (anti-AFK)\n"
-        "# graphical-session.target стартует не во всех WM — автозапуск даёт default.target,\n"
+        "# graphical-session.target стартует не во всех WM — при enable автозапуск даёт default.target,\n"
         "# а After/PartOf лишь упорядочивают и гасят сервис вместе с сессией, если цель активна.\n"
         "After=graphical-session.target\n"
         "PartOf=graphical-session.target\n"
@@ -434,6 +519,35 @@ def unit_template() -> str:
         "[Install]\n"
         "WantedBy=default.target\n"
     )
+
+
+# ---------------------------------------------------------------------------
+# Raw-скрипт (upgrade): реальный fetch даже в dry-run
+# ---------------------------------------------------------------------------
+def fetch_raw(url: str, timeout: int = 15) -> bytes:
+    """Скачать сырой файл по URL. raises NetError."""
+    try:
+        with urllib.request.urlopen(url, timeout=timeout) as response:
+            return response.read()
+    except (urllib.error.URLError, OSError) as exc:
+        raise NetError(f"не удалось скачать {url}: {exc}") from exc
+
+
+def validate_script(raw: bytes) -> str:
+    """Sanity скачанного скрипта: #!, маркер mouse_mover_setup, компиляция.
+
+    Только проверка — никакого exec/importlib. raises VerifyError.
+    """
+    source = raw.decode("utf-8", errors="replace")
+    if not source.startswith("#!"):
+        raise VerifyError("скачанный скрипт не начинается с #! (shebang)")
+    if "mouse_mover_setup" not in source:
+        raise VerifyError("в скачанном скрипте нет маркера mouse_mover_setup")
+    try:
+        compile(source, "<remote>", "exec")
+    except SyntaxError as exc:
+        raise VerifyError(f"скачанный скрипт не компилируется: {exc}") from exc
+    return source
 
 
 # ---------------------------------------------------------------------------
@@ -470,13 +584,19 @@ def cmd_install(runner: Runner, _args) -> int:
             print(detail)
         return EXIT_ERR
 
-    log("INFO", "=== Шаг 4/5: скрипт-шевелитель и юнит ===")
+    log("INFO", "=== Шаг 4/5: шевелитель, юнит и управляющая копия менеджера ===")
+    try:
+        manager_src = Path(__file__).read_bytes().decode("utf-8")
+    except OSError as exc:
+        log("ERR", f"не удалось прочитать собственный скрипт ({exc}) — установка прервана")
+        return EXIT_ERR
     runner.write_file(str(MOVER_PY), MOVER_SOURCE, mode=0o755, dump=False)
     runner.write_file(str(UNIT), unit_template(), mode=0o644)
+    # Управляющая копия: пользователь управляет сервисом через неё, не имея репо.
+    runner.write_file(str(MANAGER_PY), manager_src, mode=0o755, dump=False)
 
     log("INFO", "=== Шаг 5/5: systemd --user ===")
     runner.run(["systemctl", "--user", "daemon-reload"], mutates=True, check=False)
-    runner.run(["systemctl", "--user", "enable", SERVICE_NAME], mutates=True, check=False)
     runner.run(["systemctl", "--user", "start", SERVICE_NAME], mutates=True, check=False)
     if runner.dry_run:
         log("DRY", "установка НЕ выполнена — это сухой прогон; запустите без --dry-run")
@@ -575,6 +695,140 @@ def cmd_remove(runner: Runner, _args) -> int:
     return EXIT_OK
 
 
+# ---------------------------------------------------------------------------
+# Converger — идемпотентная перегенерация вшитых файлов (upgrade / converge)
+# ---------------------------------------------------------------------------
+class Converger:
+    """Привести вшитые шевелитель и юнит к текущим шаблонам (upgrade / converge)."""
+
+    def __init__(self, runner: Runner):
+        self.runner = runner
+        self.changed: list[str] = []
+        self.same: list[str] = []
+
+    @staticmethod
+    def _differs(path: str, content: str) -> bool:
+        """True, если файла нет или его содержимое отличается от content."""
+        target = Path(path)
+        if not target.exists():
+            return True
+        try:
+            return target.read_text(encoding="utf-8") != content
+        except OSError:
+            return True
+
+    def run(self) -> int:
+        r = self.runner
+        active, _ = systemd_state(r)
+
+        # Шаг 1. Шевелитель
+        if self._differs(str(MOVER_PY), MOVER_SOURCE):
+            r.backup_file(str(MOVER_PY))
+            r.write_file(str(MOVER_PY), MOVER_SOURCE, mode=0o755, dump=False)
+            self.changed.append(f"шевелитель {MOVER_PY}")
+        else:
+            self.same.append(f"шевелитель {MOVER_PY}")
+
+        # Шаг 2. Юнит
+        if self._differs(str(UNIT), unit_template()):
+            r.backup_file(str(UNIT))
+            r.write_file(str(UNIT), unit_template(), mode=0o644)
+            self.changed.append(f"юнит {UNIT}")
+        else:
+            self.same.append(f"юнит {UNIT}")
+
+        # Шаг 3. daemon-reload при изменениях; restart — только активного сервиса.
+        if self.changed:
+            r.run(["systemctl", "--user", "daemon-reload"], mutates=True, check=False)
+            if active == "active":
+                r.run(["systemctl", "--user", "restart", SERVICE_NAME], mutates=True, check=False)
+                self.changed.append(f"перезапуск {SERVICE_NAME}")
+            else:
+                log("INFO", "сервис остановлен, перезапуск не требуется")
+        else:
+            log("INFO", "изменений нет — daemon-reload и перезапуск не требуются")
+
+        # Шаг 4. Отчёт
+        print("Итог converge:")
+        for item in self.changed:
+            print(f"  изменено : {item}")
+        for item in self.same:
+            print(f"  совпадало: {item}")
+        return EXIT_OK
+
+
+# ---------------------------------------------------------------------------
+# Upgrade — самообновление управляющей копии + converge
+# ---------------------------------------------------------------------------
+class Upgrade:
+    def __init__(self, runner: Runner):
+        self.runner = runner
+
+    def run(self) -> int:
+        r = self.runner
+        raw = fetch_raw(RAW_URL)
+        validate_script(raw)
+        try:
+            current = Path(__file__).read_bytes()
+            current_path = Path(__file__).resolve()
+        except OSError as exc:
+            log("WARN", f"не удалось прочитать собственный скрипт ({exc})")
+            current = b""
+            current_path = None
+        if current == raw:
+            log("INFO", "скрипт уже актуальной версии")
+        else:
+            if current_path is not None and current_path != MANAGER_PY.resolve():
+                log(
+                    "INFO",
+                    f"запущенная копия {current_path} не обновляется — она живёт в git; "
+                    f"управление дальше через {MANAGER_PY}",
+                )
+            r.replace_script(raw)
+            log("INFO", f"скрипт обновлён: {MANAGER_PY}")
+
+        if r.dry_run:
+            log("DRY", f"converge: {sys.executable} {MANAGER_PY} converge --yes")
+            log("DRY", "subprocess не запускается в dry-run — converge-логика в текущем процессе")
+            rc = Converger(r).run()
+        else:
+            cp = subprocess.run([sys.executable, str(MANAGER_PY), "converge", "--yes"], check=False)
+            if cp.returncode != 0:
+                log("ERR", f"converge завершился с кодом {cp.returncode}")
+                return EXIT_ERR
+            rc = EXIT_OK
+        print("upgrade завершён: менеджер и вшитые файлы в актуальном состоянии")
+        return rc
+
+
+def cmd_upgrade(runner: Runner, _args) -> int:
+    if not is_installed():
+        log("ERR", "сервис не установлен — сначала выполните install")
+        return EXIT_ERR
+    if not confirm(
+        f"Скрипт будет обновлён с {RAW_URL}, вшитые файлы перегенерированы, "
+        "активный сервис перезапущен. Продолжить? [да]:",
+        True,
+    ):
+        log("INFO", "обновление отменено")
+        return EXIT_OK
+    return Upgrade(runner).run()
+
+
+def cmd_converge(runner: Runner, args) -> int:
+    if not is_installed():
+        log("ERR", "сервис не установлен — converge невозможен")
+        return EXIT_ERR
+    if not args.yes and not confirm(
+        "Converge приведёт вшитые шевелитель и юнит к текущим шаблонам; сервис "
+        "перезапустится, только если что-то изменилось. Продолжить? [да]:",
+        True,
+    ):
+        log("INFO", "converge отменён")
+        return EXIT_OK
+    return Converger(runner).run()
+
+
 def cmd_run(_runner: Runner, args) -> int:
     """Ручной запуск шевелителя (для отладки; сервис использует свой файл)."""
     if args.interval <= 0:
@@ -611,6 +865,8 @@ COMMANDS = {
     "restart": cmd_restart,
     "status": cmd_status,
     "logs": cmd_logs,
+    "upgrade": cmd_upgrade,
+    "converge": cmd_converge,
     "remove": cmd_remove,
     "run": cmd_run,
 }
@@ -623,8 +879,8 @@ def build_argparse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="mouse_mover_setup.py",
         description=(
-            "Установщик и менеджер user-сервиса «шевелитель мышки» (Mouse Mover): "
-            "двигает курсор против AFK-статуса."
+            f"mouse_mover_setup v{SCRIPT_VERSION} — установщик и менеджер user-сервиса "
+            "«шевелитель мышки» (Mouse Mover): двигает курсор против AFK-статуса."
         ),
     )
     parser.add_argument("--dry-run", action="store_true", help="режим без изменений в системе")
@@ -636,6 +892,11 @@ def build_argparse() -> argparse.ArgumentParser:
     sub.add_parser("status", help="показать состояние сервиса")
     logs = sub.add_parser("logs", help=f"последние {LOG_LINES} строк лога")
     logs.add_argument("-f", "--follow", action="store_true", help="следить за логом")
+    sub.add_parser("upgrade", help="обновить сам скрипт с RAW_URL и перегенерировать вшитые файлы")
+    converge = sub.add_parser(
+        "converge", help="служебная (вызывается upgrade): перегенерировать вшитые файлы"
+    )
+    converge.add_argument("--yes", action="store_true", help="не спрашивать подтверждение")
     sub.add_parser("remove", help="удалить сервис, venv и каталог")
     runp = sub.add_parser("run", help="ручной запуск шевелителя (для сервиса, отладка)")
     runp.add_argument(
@@ -680,6 +941,9 @@ def main(argv: list[str]) -> int:
     except StepError as exc:
         log("ERR", str(exc))
         rc = EXIT_ERR
+    except (NetError, VerifyError) as exc:
+        log("ERR", str(exc))
+        rc = EXIT_ERR
     except KeyboardInterrupt:
         log("WARN", "прервано (Ctrl-C)")
         rc = EXIT_SIGINT
@@ -705,6 +969,11 @@ if __name__ == "__main__":
 #     printf 'n\n' | ./mouse_mover_setup.py --dry-run remove
 #     ./mouse_mover_setup.py run --help          # headless
 #     ./mouse_mover_setup.py run                 # без pyautogui -> подсказка
+#     ./mouse_mover_setup.py --dry-run upgrade   # не установлен -> exit 1, fetch не начат
+#     ./mouse_mover_setup.py --dry-run converge  # не установлен -> exit 1
+#     printf 'y\n' | HOME=<fake> ./mouse_mover_setup.py --dry-run upgrade   # fetch+sanity+converge
+#     printf 'y\n' | HOME=<fake> ./mouse_mover_setup.py --dry-run converge  # план, --yes пропускает
+#     printf 'n\n' | HOME=<fake> ./mouse_mover_setup.py --dry-run upgrade   # отмена, 0 мутаций
 # ---------------------------------------------------------------------------
 # ИНВАРИАНТЫ: MOVER_SOURCE (записываемый автономный шевелитель) и cmd_run
 #   (ручной запуск) ДЕРЖАТЬ СИНХРОННЫМИ по логике/дефолтам/текстам; удаление
@@ -713,4 +982,8 @@ if __name__ == "__main__":
 #   ~/.local/share/mouse-mover; root не требуется и не проверяется; remove
 #   всегда требует подтверждения (дефолт НЕТ); Runner — единственное место
 #   outward-эффектов: в dry-run он печатает их и ничего не делает.
+#   upgrade трогает ТОЛЬКО управляющую копию SHARE_DIR/mouse_mover_setup.py —
+#   __file__ в репо не перезаписывается; fetch в dry-run реален (чтение), а
+#   subprocess converge в dry-run НИКОГДА не запускается (converge в текущем
+#   процессе); validate_script только компилирует, не исполняет (exec запрещён).
 # ===========================================================================

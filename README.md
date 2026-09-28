@@ -16,7 +16,7 @@
 - [encryption](encryption/README.md) — шифрование: бэкап хранилища pass, GPG, OpenSSL, cryptsetup.
 - [gist](gist/README.md) — короткие сниппеты и шаблоны на bash и Python (цветной вывод, ffmpeg, pip, logging, декораторы).
 - [git](git/README.md) — шпаргалка по основным командам и настройкам Git.
-- [mouse_mover_setup.py](scripts/mouse_mover_setup.py) — установщик/менеджер сервиса против AFK-статуса: периодически двигает курсор (systemd --user, venv с pyautogui, `--dry-run`).
+- [mouse_mover_setup.py](scripts/mouse_mover_setup.py) — установщик/менеджер сервиса против AFK-статуса: периодически двигает курсор (systemd --user, venv с pyautogui, `upgrade` для самообновления, `--dry-run`).
 - [packaging/hello-world-pkgbuild](packaging/hello-world-pkgbuild/README.md) — минимальный учебный PKGBUILD для Arch Linux.
 - [packaging/python-pypi-pkgbuild](packaging/python-pypi-pkgbuild/README.md) — упаковка Python-пакетов из PyPI в PKGBUILD.
 - [scripts](scripts/README.md) — коллекция утилит на Python и Bash: сетевые проверки, мониторинг цен, закладки, Steam, Twitter, Lightroom, пакетная работа с git.
