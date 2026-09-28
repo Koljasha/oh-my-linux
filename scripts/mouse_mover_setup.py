@@ -12,8 +12,9 @@
     python3 mouse_mover_setup.py [--dry-run] [сабкоманда]
         install      установка: проверка окружения, venv, pip install pyautogui,
                      запись шевелителя, юнита и управляющей копии менеджера,
-                     daemon-reload + start; автозапуск не включается (при желании
-                     `systemctl --user enable mouse-mover.service`)
+                     daemon-reload. Сервис НЕ запускается: запуск — через меню
+                     (no-arg) или явный `start`. Автозапуск не включается (при
+                     желании `systemctl --user enable mouse-mover.service`)
         start        запустить сервис
         stop         остановить сервис
         restart      перезапустить сервис
@@ -25,11 +26,14 @@
                      текущим шаблонам, перезапустить сервис при изменениях
         remove       удаление (подтверждение, по умолчанию НЕТ)
         run          ручной запуск шевелителя (для отладки, не для сервиса)
-    Без сабкоманды — тумблер: не установлен → install; установлен → stop/start.
+    Без сабкоманды — интерактивное меню по состоянию: показать статус, пункты
+    (Установить / Запустить / Остановить / Перезапустить / Показать лог / Выйти);
+    один выбор, после действия с сервисом — статус, затем выход. Выбор «1» при
+    отсутствии установки делает install и предлагает сразу запустить сервис [Y/n].
 
 ПРИМЕРЫ
     ./mouse_mover_setup.py install
-    ./mouse_mover_setup.py                 # тумблер
+    ./mouse_mover_setup.py                 # интерактивное меню
     ./mouse_mover_setup.py upgrade
     ./mouse_mover_setup.py status
     ./mouse_mover_setup.py logs --follow
@@ -595,13 +599,12 @@ def cmd_install(runner: Runner, _args) -> int:
     # Управляющая копия: пользователь управляет сервисом через неё, не имея репо.
     runner.write_file(str(MANAGER_PY), manager_src, mode=0o755, dump=False)
 
-    log("INFO", "=== Шаг 5/5: systemd --user ===")
+    log("INFO", "=== Шаг 5/5: systemd --user (daemon-reload) ===")
     runner.run(["systemctl", "--user", "daemon-reload"], mutates=True, check=False)
-    runner.run(["systemctl", "--user", "start", SERVICE_NAME], mutates=True, check=False)
     if runner.dry_run:
         log("DRY", "установка НЕ выполнена — это сухой прогон; запустите без --dry-run")
         return EXIT_OK
-    log("INFO", "установлено и запущено")
+    log("INFO", "установлено (сервис не запущен)")
     show_status(runner)
     return EXIT_OK
 
@@ -634,22 +637,33 @@ def cmd_status(runner: Runner, _args) -> int:
     return show_status(runner)
 
 
-def cmd_logs(runner: Runner, args) -> int:
+def _print_logs(runner: Runner, follow: bool = False) -> None:
+    """Напечатать последние LOG_LINES строк лога (--follow: следить)."""
     cmd = ["journalctl", "--user", "-u", SERVICE_NAME, "-n", str(LOG_LINES), "--no-pager"]
-    follow = getattr(args, "follow", False)
     if follow:
         cmd.append("-f")
     # journalctl -f стримит бесконечно — таймаут по умолчанию (300 c) убил бы его молча.
     runner.run(cmd, check=False, capture=False, timeout=None if follow else 300)
+
+
+def cmd_logs(runner: Runner, args) -> int:
+    _print_logs(runner, getattr(args, "follow", False))
     return EXIT_OK
 
 
 def cmd_default(runner: Runner, args) -> int:
-    """Без сабкоманды: не установлен → install; иначе тумблер stop/start."""
+    """Без сабкоманды: в dry-run — прежний неинтерактивный план; иначе интерактивное меню."""
+    if runner.dry_run:
+        return _default_noninteractive(runner, args)
+    return interactive_menu(runner)
+
+
+def _default_noninteractive(runner: Runner, _args) -> int:
+    """Без сабкоманды (dry-run): не установлен → план install; иначе план start/stop."""
     if not is_installed():
-        return cmd_install(runner, args)
+        return cmd_install(runner, _args)
     active, _ = systemd_state(runner)
-    action = "stop" if active == "active" else "start"
+    action = "stop" if active in ("active", "reloading") else "start"
     cp = runner.run(["systemctl", "--user", action, SERVICE_NAME], mutates=True, check=False)
     if cp.returncode != 0:
         log("ERR", f"systemctl --user {action} завершился с кодом {cp.returncode}")
@@ -657,6 +671,62 @@ def cmd_default(runner: Runner, args) -> int:
         return EXIT_ERR
     log("INFO", "остановлено" if action == "stop" else "запущено")
     show_status(runner)
+    return EXIT_OK
+
+
+def _menu_choice() -> str:
+    """Одна строка ввода меню. EOF (закрытый stdin) → пустая строка (без traceback)."""
+    try:
+        return input("  Выбор: ").strip()
+    except EOFError:
+        return ""
+
+
+def _menu_line(installed: bool, active: str) -> str:
+    """Строка пунктов меню по состоянию сервиса."""
+    if not installed:
+        return "  [1] Установить  │  [0] Выйти"
+    if active in ("active", "reloading"):
+        return "  [1] Остановить  │  [2] Перезапустить  │  [3] Показать лог  │  [0] Выйти"
+    return "  [1] Запустить  │  [2] Показать лог  │  [0] Выйти"
+
+
+def interactive_menu(runner: Runner) -> int:
+    """No-arg интерактивное меню: статус, пункты по состоянию, одно действие, выход.
+
+    Пустой ввод/Enter, «0» и EOF — выход без изменений (rc 0). Неизвестный ввод —
+    «выход без изменений». Лог в начале не показывается (пункт «Показать лог»).
+    """
+    show_status(runner)
+    installed = is_installed()
+    active = systemd_state(runner)[0] if installed else ""
+    print(_menu_line(installed, active))
+    print()
+    choice = _menu_choice()
+
+    if choice in ("", "0"):
+        return EXIT_OK
+
+    if not installed:
+        if choice == "1":
+            rc = cmd_install(runner, None)
+            if rc == EXIT_OK and is_installed():
+                if confirm("Запустить сейчас? [Y/n]:", True):
+                    return _service_action(runner, "start")
+                log("INFO", "запуск отложен — позже: start или меню")
+            return rc
+        log("INFO", "выход без изменений")
+        return EXIT_OK
+
+    active_up = active in ("active", "reloading")
+    if choice == "1":
+        return _service_action(runner, "stop" if active_up else "start")
+    if active_up and choice == "2":
+        return _service_action(runner, "restart")
+    if (not active_up and choice == "2") or (active_up and choice == "3"):
+        _print_logs(runner)
+        return EXIT_OK
+    log("INFO", "выход без изменений")
     return EXIT_OK
 
 
@@ -885,7 +955,7 @@ def build_argparse() -> argparse.ArgumentParser:
     )
     parser.add_argument("--dry-run", action="store_true", help="режим без изменений в системе")
     sub = parser.add_subparsers(dest="command")
-    sub.add_parser("install", help="установить и запустить сервис")
+    sub.add_parser("install", help="установить сервис (запуск — отдельно: start или меню)")
     sub.add_parser("start", help="запустить сервис")
     sub.add_parser("stop", help="остановить сервис")
     sub.add_parser("restart", help="перезапустить сервис")
@@ -962,8 +1032,11 @@ if __name__ == "__main__":
 #   ty check --output-format=concise mouse_mover_setup.py.
 #   smoke (все безопасны, 0 следов):
 #     ./mouse_mover_setup.py --help
-#     ./mouse_mover_setup.py --dry-run install   # план: venv, pip, файлы, systemctl
-#     ./mouse_mover_setup.py --dry-run           # не установлен -> план install
+#     ./mouse_mover_setup.py --dry-run install   # план: venv, pip, файлы, daemon-reload (без start)
+#     ./mouse_mover_setup.py --dry-run           # не установлен -> план install (меню нет)
+#     printf '\n' | HOME=<fake> ./mouse_mover_setup.py   # меню: Enter -> выход rc 0
+#     printf '9\n' | HOME=<fake> ./mouse_mover_setup.py  # меню: неизвестный ввод -> выход rc 0
+#     HOME=<fake> ./mouse_mover_setup.py </dev/null       # EOF в меню -> выход rc 0, без traceback
 #     ./mouse_mover_setup.py status              # read-only
 #     ./mouse_mover_setup.py --dry-run logs
 #     printf 'n\n' | ./mouse_mover_setup.py --dry-run remove
@@ -976,7 +1049,10 @@ if __name__ == "__main__":
 #     printf 'n\n' | HOME=<fake> ./mouse_mover_setup.py --dry-run upgrade   # отмена, 0 мутаций
 # ---------------------------------------------------------------------------
 # ИНВАРИАНТЫ: MOVER_SOURCE (записываемый автономный шевелитель) и cmd_run
-#   (ручной запуск) ДЕРЖАТЬ СИНХРОННЫМИ по логике/дефолтам/текстам; удаление
+#   (ручной запуск) ДЕРЖАТЬ СИНХРОННЫМИ по логике/дефолтам/текстам; EOF в
+#   интерактивном меню (закрытый stdin) = выход без изменений, rc 0, без
+#   traceback; пустой ввод и «0» — тоже выход; install больше НЕ запускает
+#   сервис (запуск — через меню/start); удаление
 #   каталога — rmtree только для зафиксированного SHARE_DIR (проверка
 #   _guard_share_dir обязательна); venv и pip — только внутри
 #   ~/.local/share/mouse-mover; root не требуется и не проверяется; remove

@@ -15,7 +15,7 @@
 | `git_pull_all.sh` | Делает `git pull UPSTREAM BRANCH` в каждом подкаталоге с таким remote | bash + `git` |
 | `git_push_all.sh` | Делает `git push UPSTREAM BRANCH` в каждом подкаталоге с таким remote | bash + `git` |
 | `lightroom_rename_images.sh` | Переименовывает `LRM_*.jpeg` по дате съёмки из EXIF в `IMG_YYYYMMDD_HHMMSS.jpeg` | bash + `identify` (ImageMagick) |
-| `mouse_mover_setup.py` | Установщик/менеджер user-сервиса «шевелитель мышки» против AFK: install/start/stop/restart/status/logs/upgrade/converge/remove/run, без аргументов — тумблер (не установлен → install; иначе stop/start); ставит venv с pyautogui, user-unit и управляющую копию менеджера (install включает только start; WantedBy default.target в юните оставлен для ручного enable) | только stdlib Python; Python 3.10+, systemd --user, X11/XWayland для pyautogui |
+| `mouse_mover_setup.py` | Установщик/менеджер user-сервиса «шевелитель мышки» против AFK: install/start/stop/restart/status/logs/upgrade/converge/remove/run, без аргументов — интерактивное меню по состоянию; install не запускает сервис (запуск через меню или start); ставит venv с pyautogui, user-unit и управляющую копию менеджера (WantedBy default.target в юните оставлен для ручного enable) | только stdlib Python; Python 3.10+, systemd --user, X11/XWayland для pyautogui |
 | `opencode_ollama_cloud_free.sh` | Проверяет все модели `ollama-cloud` в opencode тестовым запросом, выводит таблицу «кто ответил / кому нужен upgrade» | bash + CLI `opencode` |
 | `opencode_limits_prices.py` | Печатает отчёт по OpenCode: цены Zen и лимиты/цены Go (парсит docs.opencode.ai) | только stdlib Python |
 | `opencode_monitor.py` | Мониторит таблицы OpenCode Go/Zen по cron, хранит снапшот в `state.json`, шлёт изменения в Telegram | `requests`, `beautifulsoup4`, файл `.env` с `TG_BOT_TOKEN` и `TG_CHAT_ID` (не коммитить!) |
@@ -85,14 +85,20 @@ python3 scripts/twitter_del_tweets.py --screen-name Koljasha
 `mouse_mover_setup.py` ставит и обслуживает user-сервис, который периодически
 двигает курсор мыши против AFK-статуса. Root не нужен: всё живёт в
 `~/.local/share/mouse-mover` (venv с `pyautogui` + скрипт) и
-`~/.config/systemd/user/mouse-mover.service`. Без аргументов — тумблер:
-не установлен → `install`, установлен → `stop`/`start`.
+`~/.config/systemd/user/mouse-mover.service`. Без аргументов — интерактивное
+меню по состоянию: показать статус и пункты (Установить / Запустить /
+Остановить / Перезапустить / Показать лог / Выйти); после действия — статус.
+`install` сам сервис не запускает — запуск через меню или `start`.
 
 ```bash
 cd scripts
 
-# Установка и запуск сервиса
+# Установка (сервис не запускается — запуск через меню или start)
 ./mouse_mover_setup.py install
+./mouse_mover_setup.py start
+
+# Интерактивное меню по состоянию
+./mouse_mover_setup.py
 
 # Статус, логи, удаление
 ./mouse_mover_setup.py status
