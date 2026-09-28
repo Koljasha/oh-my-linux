@@ -2353,16 +2353,6 @@ if __name__ == "__main__":
 # ===========================================================================
 # AGENT NOTES (кратко, для правок агентом; больше агентского не добавлять)
 # ---------------------------------------------------------------------------
-# КАРТА: docstring ~1-118; константы ~150-180; лог/ask/confirm ~225-320;
-#   валидаторы+client_mss_profile/format_mss/_ephemeral_warning ~335-490;
-#   State ~500; Runner ~515-825 (единственная точка мутаций; replace_script,
-#   backup_file); Checks ~829-1075 (read_config, read_client_mss, ufw_state,
-#   ufw_port_allowed, firewalld_active, update_timer_*); GitHub ~1075-1085;
-#   fetch_raw/validate_script ~1087-1111; шаблоны ~1113-1230; Installer
-#   ~1235-1445; Updater ~1447-1499; Converger ~1501-1676; Upgrade ~1678-1716;
-#   DomainChanger ~1720-1757; Remover ~1759-1900 (residue-report);
-#   cmd_* ~1919-2148; Menu ~2150; build_argparse ~2226; main ~2278.
-# ---------------------------------------------------------------------------
 # ПРОВЕРКИ: python3 -m py_compile telemt_setup.py; ruff check --output-format=
 #   concise telemt_setup.py; ty check --output-format=concise telemt_setup.py.
 #   smoke dry-run (без root, 0 следов):
