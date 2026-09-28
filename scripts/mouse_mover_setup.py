@@ -28,8 +28,9 @@
         run          ручной запуск шевелителя (для отладки, не для сервиса)
     Без сабкоманды — интерактивное меню по состоянию: показать статус, пункты
     (Установить / Запустить / Остановить / Перезапустить / Показать лог / Выйти);
-    один выбор, после действия с сервисом — статус, затем выход. Выбор «1» при
-    отсутствии установки делает install и предлагает сразу запустить сервис [Y/n].
+    после действия с сервисом — статус, затем выход; после показа лога меню
+    выводится снова. Выбор «1» при отсутствии установки делает install и
+    предлагает сразу запустить сервис [Y/n].
 
 ПРИМЕРЫ
     ./mouse_mover_setup.py install
@@ -695,39 +696,41 @@ def interactive_menu(runner: Runner) -> int:
     """No-arg интерактивное меню: статус, пункты по состоянию, одно действие, выход.
 
     Пустой ввод/Enter, «0» и EOF — выход без изменений (rc 0). Неизвестный ввод —
-    «выход без изменений». Лог в начале не показывается (пункт «Показать лог»).
+    «выход без изменений». Лог в начале не показывается (пункт «Показать лог»);
+    после показа лога меню выводится снова, остальные действия завершают работу.
     """
     show_status(runner)
     installed = is_installed()
     active = systemd_state(runner)[0] if installed else ""
-    print(_menu_line(installed, active))
-    print()
-    choice = _menu_choice()
+    while True:
+        print(_menu_line(installed, active))
+        print()
+        choice = _menu_choice()
 
-    if choice in ("", "0"):
-        return EXIT_OK
+        if choice in ("", "0"):
+            return EXIT_OK
 
-    if not installed:
+        if not installed:
+            if choice == "1":
+                rc = cmd_install(runner, None)
+                if rc == EXIT_OK and is_installed():
+                    if confirm("Запустить сейчас? [Y/n]:", True):
+                        return _service_action(runner, "start")
+                    log("INFO", "запуск отложен — позже: start или меню")
+                return rc
+            log("INFO", "выход без изменений")
+            return EXIT_OK
+
+        active_up = active in ("active", "reloading")
         if choice == "1":
-            rc = cmd_install(runner, None)
-            if rc == EXIT_OK and is_installed():
-                if confirm("Запустить сейчас? [Y/n]:", True):
-                    return _service_action(runner, "start")
-                log("INFO", "запуск отложен — позже: start или меню")
-            return rc
+            return _service_action(runner, "stop" if active_up else "start")
+        if active_up and choice == "2":
+            return _service_action(runner, "restart")
+        if (not active_up and choice == "2") or (active_up and choice == "3"):
+            _print_logs(runner)
+            continue  # после лога — снова меню выбора
         log("INFO", "выход без изменений")
         return EXIT_OK
-
-    active_up = active in ("active", "reloading")
-    if choice == "1":
-        return _service_action(runner, "stop" if active_up else "start")
-    if active_up and choice == "2":
-        return _service_action(runner, "restart")
-    if (not active_up and choice == "2") or (active_up and choice == "3"):
-        _print_logs(runner)
-        return EXIT_OK
-    log("INFO", "выход без изменений")
-    return EXIT_OK
 
 
 def _guard_share_dir() -> None:
@@ -1036,6 +1039,7 @@ if __name__ == "__main__":
 #     ./mouse_mover_setup.py --dry-run           # не установлен -> план install (меню нет)
 #     printf '\n' | HOME=<fake> ./mouse_mover_setup.py   # меню: Enter -> выход rc 0
 #     printf '9\n' | HOME=<fake> ./mouse_mover_setup.py  # меню: неизвестный ввод -> выход rc 0
+#     printf '2\n\n' | HOME=<fake> ./mouse_mover_setup.py  # лог -> меню снова -> выход rc 0
 #     HOME=<fake> ./mouse_mover_setup.py </dev/null       # EOF в меню -> выход rc 0, без traceback
 #     ./mouse_mover_setup.py status              # read-only
 #     ./mouse_mover_setup.py --dry-run logs
