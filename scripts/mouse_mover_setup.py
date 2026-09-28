@@ -35,9 +35,13 @@
     Fedora/RHEL         sudo dnf install python3-tkinter
     openSUSE            sudo zypper install python3-tk
 
-ПРИВЯЗКА К ГРАФИЧЕСКОЙ СЕССИИ
-    Юнит привязан к graphical-session.target (PartOf/After/WantedBy): шевелитель
-    стартует вместе с графической сессией и останавливается вместе с ней.
+ПРИВЯЗКА К СЕССИИ
+    Автозапуск — WantedBy=default.target: она активна в любом пользовательском
+    менеджере, тогда как graphical-session.target стартует не во всех WM
+    (в лёгких оконных менеджерах часто неактивна). Дополнительно заданы
+    After/PartOf graphical-session.target: если цель активна, сервис
+    упорядочивается после неё и гаснет вместе с ней; если неактивна —
+    эти директивы просто ничего не делают.
 
 ЗАВИСИМОСТЬ pyautogui
     pyautogui внедряется в venv и управляет указателем через X11/XWayland.
@@ -410,8 +414,10 @@ def unit_template() -> str:
     return (
         "[Unit]\n"
         "Description=Mouse Mover (anti-AFK)\n"
-        "PartOf=graphical-session.target\n"
+        "# graphical-session.target стартует не во всех WM — автозапуск даёт default.target,\n"
+        "# а After/PartOf лишь упорядочивают и гасят сервис вместе с сессией, если цель активна.\n"
         "After=graphical-session.target\n"
+        "PartOf=graphical-session.target\n"
         "\n"
         "[Service]\n"
         "Type=simple\n"
@@ -421,7 +427,7 @@ def unit_template() -> str:
         "RestartSec=3\n"
         "\n"
         "[Install]\n"
-        "WantedBy=graphical-session.target\n"
+        "WantedBy=default.target\n"
     )
 
 
