@@ -15,7 +15,7 @@
 | `git_pull_all.sh` | Делает `git pull UPSTREAM BRANCH` в каждом подкаталоге с таким remote | bash + `git` |
 | `git_push_all.sh` | Делает `git push UPSTREAM BRANCH` в каждом подкаталоге с таким remote | bash + `git` |
 | `lightroom_rename_images.sh` | Переименовывает `LRM_*.jpeg` по дате съёмки из EXIF в `IMG_YYYYMMDD_HHMMSS.jpeg` | bash + `identify` (ImageMagick) |
-| `mouse_mover_setup.py` | Установщик/менеджер user-сервиса «шевелитель мышки» против AFK: install/start/stop/status/logs/remove, ставит venv с pyautogui и user-unit (автозапуск через default.target) | только stdlib Python; Python 3.10+, systemd --user, X11/XWayland для pyautogui |
+| `mouse_mover_setup.py` | Установщик/менеджер user-сервиса «шевелитель мышки» против AFK: install/start/stop/restart/status/logs/remove/run, без аргументов — тумблер (не установлен → install; иначе stop/start); ставит venv с pyautogui и user-unit (автозапуск через default.target) | только stdlib Python; Python 3.10+, systemd --user, X11/XWayland для pyautogui |
 | `opencode_ollama_cloud_free.sh` | Проверяет все модели `ollama-cloud` в opencode тестовым запросом, выводит таблицу «кто ответил / кому нужен upgrade» | bash + CLI `opencode` |
 | `opencode_limits_prices.py` | Печатает отчёт по OpenCode: цены Zen и лимиты/цены Go (парсит docs.opencode.ai) | только stdlib Python |
 | `opencode_monitor.py` | Мониторит таблицы OpenCode Go/Zen по cron, хранит снапшот в `state.json`, шлёт изменения в Telegram | `requests`, `beautifulsoup4`, файл `.env` с `TG_BOT_TOKEN` и `TG_CHAT_ID` (не коммитить!) |

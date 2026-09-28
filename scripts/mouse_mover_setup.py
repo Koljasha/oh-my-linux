@@ -54,7 +54,8 @@ DRY-RUN
     печатаются с префиксом [dry-run]. Проверки окружения (venv/tkinter/os-release)
     реальны: они read-only.
 
-Exit-коды: 0 успех/отмена; 1 ошибка операции; 2 неверные аргументы; 130 Ctrl-C.
+Exit-коды: 0 успех/отмена; 1 ошибка операции; 2 неверные аргументы;
+130 Ctrl-C вне цикла run (внутри run Ctrl+C — штатная остановка, код 0).
 """
 
 from __future__ import annotations
@@ -89,7 +90,7 @@ EXIT_ERR = 1
 EXIT_ARGS = 2
 EXIT_SIGINT = 130
 
-# ANSI-цвета (как в mouse-mover-ctl.sh)
+# ANSI-цвета
 C_GREEN = "1;32"
 C_RED = "1;31"
 C_YELLOW = "1;33"
@@ -135,7 +136,7 @@ MOVER_SOURCE = (
         parser.add_argument(
             "--interval",
             type=float,
-            default=5.0,
+            default=60.0,
             help="Секунд между движениями (по умолчанию: %(default)s).",
         )
         parser.add_argument(
@@ -323,7 +324,11 @@ class Runner:
         if self.dry_run:
             log("DRY", f"rm -rf {path}")
             return
-        shutil.rmtree(path, ignore_errors=True)
+        try:
+            shutil.rmtree(path)
+        except OSError as exc:
+            # Не молчим: частичный демонтаж хуже честного WARN.
+            log("WARN", f"не всё удалось удалить из {path}: {exc}")
 
 
 # ---------------------------------------------------------------------------
@@ -554,8 +559,13 @@ def cmd_remove(runner: Runner, _args) -> int:
         log("INFO", "удаление отменено")
         return EXIT_OK
     _guard_share_dir()
-    runner.run(["systemctl", "--user", "disable", "--now", SERVICE_NAME], mutates=True, check=False)
-    log("INFO", "сервис остановлен и отключён")
+    cp = runner.run(
+        ["systemctl", "--user", "disable", "--now", SERVICE_NAME], mutates=True, check=False
+    )
+    if cp.returncode != 0:
+        log("WARN", f"disable --now завершился с кодом {cp.returncode} (продолжаю демонтаж)")
+    else:
+        log("INFO", "сервис остановлен и отключён")
     runner.remove_file(str(UNIT))
     log("INFO", f"удалён {UNIT}")
     runner.rmtree(SHARE_DIR)
@@ -631,7 +641,7 @@ def build_argparse() -> argparse.ArgumentParser:
     runp.add_argument(
         "--interval",
         type=float,
-        default=5.0,
+        default=60.0,
         help="секунд между движениями (по умолчанию: %(default)s)",
     )
     runp.add_argument(
