@@ -14,8 +14,12 @@
     Глобальные опции: --dry-run, --yes, --quiet, --port N, --domain D.
     Сабкоманды (без сабкоманды открывается интерактивное меню):
         install      полная установка (вопросы: порт, домен, автообновление, сводка)
-        update       проверка и замена бинарника по GitHub (--yes не спрашивает, --quiet —
+        update       обновление БИНАРНИКА telemt по GitHub (--yes не спрашивает, --quiet —
                      только результат; при отсутствии новой версии exit 0)
+        upgrade      обновление САМОГО СКРИПТА с RAW_URL + перегенерация конфигов/юнитов
+                     (в конце вызывает converge); один вопрос в начале, --yes пропускает
+        converge     служебная: перегенерировать конфиг/юниты/ufw/sysctl по текущим
+                     шаблонам, перезапустить сервис при изменениях (вызывает upgrade)
         restart      перезапуск сервиса telemt (таймер не трогает)
         set-domain   смена домена-маски, рестарт, новая ссылка (профиль client_mss не меняет)
         link         печать клиентской ссылки tg://proxy?...
@@ -33,6 +37,8 @@
     sudo python3 telemt_setup.py link
     sudo python3 telemt_setup.py set-domain --domain www.cloudflare.com
     sudo python3 telemt_setup.py update --yes --quiet
+    sudo python3 telemt_setup.py upgrade
+    sudo python3 telemt_setup.py converge --yes
     sudo python3 telemt_setup.py remove
 
 АВТООБНОВЛЕНИЕ (systemd-таймер)
@@ -46,6 +52,27 @@
     недоступен — WARN, таймер не ставится. update без новой версии завершается exit 0
     («обновление не требуется»), поэтому ночной прогон не трогает сервис впустую.
     remove останавливает и удаляет таймер и оба юнита; restart таймер не затрагивает.
+
+ОБНОВЛЕНИЕ СКРИПТА И КОНФИГОВ (upgrade / converge)
+    update  — обновляет только бинарник telemt из релиза GitHub.
+    upgrade — обновляет сам скрипт: скачивает RAW_URL
+        (https://raw.githubusercontent.com/Koljasha/oh-my-linux/refs/heads/master/scripts/telemt_setup.py),
+        проверяет sanity (начинается с #!, есть маркер telemt_setup, компилируется) и атомарно
+        заменяет /usr/local/bin/telemt_setup.py (mkstemp в той же директории + os.replace;
+        при побайтовом совпадении со скачанным — только INFO «скрипт уже актуальной версии»).
+        Затем запускает converge уже новой версией:
+        [sys.executable, /usr/local/bin/telemt_setup.py, converge, --yes].
+    converge — служебная команда (в меню не показывается, вызывается upgrade): перегенерирует
+        конфиг, юниты, правило ufw + rate-limit, sysctl/modules-load по текущим шаблонам,
+        сравнивая с существующим (при отличии — бэкап и запись). Перезапускает сервис, только
+        если менялись конфиг или юнит сервиса. Идемпотентен; сообщает изменено/совпадало/пропущено.
+    В dry-run fetch реален (чтение), замена и converge идут в зеркало, subprocess НИКОГДА не
+    запускается — converge-логика выполняется в текущем процессе.
+    Bootstrap для старых установок (скрипт ещё без команды upgrade): один раз обновить вручную
+    (curl + install) и дальше пользоваться upgrade/converge:
+        curl -fsSL <RAW_URL> -o /tmp/telemt_setup.py && \
+            sudo install -m 0755 /tmp/telemt_setup.py /usr/local/bin/telemt_setup.py
+    Версия скрипта печатается строкой «версия скрипта» в info, в заголовке меню и в --help.
 
 ПРОФИЛЬ client_mss
     server.client_mss выбирается по порту: порт 5223 → "" (мягкий профиль, ниже пинг), любой
@@ -148,6 +175,8 @@ IP_PLACEHOLDER = "SERVER_IP"
 
 # Автообновление (systemd-таймер) — Задача B.
 SELF_PATH = "/usr/local/bin/telemt_setup.py"
+SCRIPT_VERSION = "1.1.0"
+RAW_URL = "https://raw.githubusercontent.com/Koljasha/oh-my-linux/refs/heads/master/scripts/telemt_setup.py"
 UPDATE_SERVICE_NAME = "telemt-update.service"
 UPDATE_TIMER_NAME = "telemt-update.timer"
 UPDATE_SERVICE = f"/etc/systemd/system/{UPDATE_SERVICE_NAME}"
@@ -644,6 +673,56 @@ class Runner:
             log("WARN", f"setcap не применился для {BIN}: {cp.stderr.strip() or cp.stdout.strip()}")
         return True
 
+    def replace_script(self, content: bytes) -> None:
+        """Атомарная замена /usr/local/bin/telemt_setup.py (upgrade).
+
+        mkstemp в той же директории + os.replace: безопасно и когда процесс запущен
+        из целевого пути (подмена инода), и когда таймер исполняет файл в момент замены.
+        В dry-run — запись в зеркало, без реальных следов.
+        """
+        target = Path(SELF_PATH)
+        if self.dry_run:
+            self._count()
+            log(
+                "DRY", f"атомарная замена скрипта -> {SELF_PATH} (mkstemp + os.replace, chmod 0755)"
+            )
+            mirror = self._mirror(SELF_PATH)
+            if mirror is not None:
+                mirror.parent.mkdir(parents=True, exist_ok=True)
+                mirror.write_bytes(content)
+                os.chmod(mirror, 0o755)
+            return
+        target.parent.mkdir(parents=True, exist_ok=True)
+        fd, tmp = tempfile.mkstemp(prefix=".telemt_setup_", dir=str(target.parent))
+        try:
+            with os.fdopen(fd, "wb") as handle:
+                handle.write(content)
+            os.chmod(tmp, 0o755)
+            os.replace(tmp, target)
+        except OSError:
+            Path(tmp).unlink(missing_ok=True)
+            raise
+
+    def backup_file(self, path: str) -> str | None:
+        """Бэкап <path> -> <path>.bak-<epoch>; None, если файла нет. В dry-run — только лог/зеркало."""
+        target = Path(path)
+        if not target.exists():
+            return None
+        backup = f"{path}.bak-{int(time.time())}"
+        if self.dry_run:
+            self._count()
+            log("DRY", f"бэкап {path} -> {backup}")
+            mirror = self._mirror(backup)
+            if mirror is not None:
+                content = target.read_text(encoding="utf-8", errors="replace")
+                if path == CFG:
+                    content = "\n".join(redact_secret_line(line) for line in content.splitlines())
+                mirror.write_text(content, encoding="utf-8")
+        else:
+            shutil.copy2(path, backup)
+            log("INFO", f"бэкап {path}: {backup}")
+        return backup
+
     def edit_before_rules(self, port: int, op: str, *, reload: bool = True) -> None:
         """Правка /etc/ufw/before.rules: вставка/удаление блока по маркерам.
 
@@ -816,6 +895,15 @@ class Checks:
             return False, False
         cp = self._quiet(["ufw", "status"])
         return True, ("Status: active" in cp.stdout)
+
+    def ufw_port_allowed(self, port: int) -> bool:
+        """Есть ли в ufw активное правило allow <port>/tcp (по выводу `ufw status`)."""
+        cp = self._quiet(["ufw", "status"])
+        for line in cp.stdout.splitlines():
+            parts = line.split()
+            if parts and parts[0] == f"{port}/tcp" and "ALLOW" in line.upper():
+                return True
+        return False
 
     def firewalld_active(self) -> bool:
         cp = self._quiet(["systemctl", "is-active", "firewalld"])
@@ -994,6 +1082,32 @@ class GitHub:
         actual = digest.hexdigest()
         if actual != expected.lower():
             raise VerifyError("скачанный файл не совпал со сборкой на GitHub (sha256 mismatch)")
+
+
+# ---------------------------------------------------------------------------
+# Raw-скрипт (upgrade): реальный fetch даже в dry-run
+# ---------------------------------------------------------------------------
+def fetch_raw(url: str, timeout: int = 15) -> bytes:
+    """Скачать сырой файл по URL. raises NetError."""
+    try:
+        with urllib.request.urlopen(url, timeout=timeout) as response:
+            return response.read()
+    except (urllib.error.URLError, OSError) as exc:
+        raise NetError(f"не удалось скачать {url}: {exc}") from exc
+
+
+def validate_script(raw: bytes) -> str:
+    """Sanity скачанного скрипта: #!, маркер telemt_setup, компиляция. raises VerifyError."""
+    source = raw.decode("utf-8", errors="replace")
+    if not source.startswith("#!"):
+        raise VerifyError("скачанный скрипт не начинается с #! (shebang)")
+    if "telemt_setup" not in source:
+        raise VerifyError("в скачанном скрипте нет маркера telemt_setup")
+    try:
+        compile(source, "<remote>", "exec")
+    except SyntaxError as exc:
+        raise VerifyError(f"скачанный скрипт не компилируется: {exc}") from exc
+    return source
 
 
 # ---------------------------------------------------------------------------
@@ -1385,6 +1499,226 @@ class Updater:
 
 
 # ---------------------------------------------------------------------------
+# Converger — идемпотентная перегенерация конфига/юнитов (upgrade / converge)
+# ---------------------------------------------------------------------------
+class Converger:
+    """Привести систему к текущим шаблонам: конфиг, юниты, ufw, sysctl/modules-load."""
+
+    def __init__(self, runner: Runner, checks: Checks, state: State):
+        self.runner = runner
+        self.checks = checks
+        self.state = state
+        self.changed: list[str] = []
+        self.same: list[str] = []
+        self.skipped: list[str] = []
+
+    @staticmethod
+    def _differs(path: str, content: str) -> bool:
+        """True, если файла нет или его содержимое отличается от content."""
+        target = Path(path)
+        if not target.exists():
+            return True
+        try:
+            return target.read_text(encoding="utf-8") != content
+        except OSError:
+            return True
+
+    def run(self) -> int:
+        r = self.runner
+        port, domain, secret = self.checks.read_config()
+        if port is None or domain is None or secret is None:
+            log(
+                "ERR",
+                f"конфиг {CFG} не читается — секрет терять нельзя, восстановите конфиг из бэкапа",
+            )
+            return EXIT_ERR
+
+        config_changed = False
+        unit_changed = False
+        service_restart = False
+
+        # Шаг 1. Конфиг
+        desired_cfg = config_template(port, domain, secret)
+        if self._differs(CFG, desired_cfg):
+            r.backup_file(CFG)
+            r.write_file(CFG, desired_cfg, mode=0o640, owner=f"root:{SERVICE_USER}")
+            self.changed.append(f"конфиг {CFG}")
+            config_changed = True
+            service_restart = True
+        else:
+            self.same.append(f"конфиг {CFG}")
+
+        # Шаг 2. Юниты
+        if self._differs(UNIT, unit_template()):
+            r.write_file(UNIT, unit_template(), mode=0o644, owner="root:root")
+            self.changed.append(f"юнит {UNIT}")
+            unit_changed = True
+            service_restart = True
+        else:
+            self.same.append(f"юнит {UNIT}")
+        timer_installed = self.checks.update_timer_present()
+        if timer_installed:
+            for path, template in (
+                (UPDATE_SERVICE, update_service_template()),
+                (UPDATE_TIMER, update_timer_template()),
+            ):
+                if self._differs(path, template):
+                    r.write_file(path, template, mode=0o644, owner="root:root")
+                    self.changed.append(f"юнит {path}")
+                    unit_changed = True
+                else:
+                    self.same.append(f"юнит {path}")
+        if (config_changed or unit_changed) and self.checks.systemd_present():
+            r.run(["systemctl", "daemon-reload"], mutates=True)
+
+        # Шаг 3. ufw и rate-limit
+        ufw_changed = False
+        present, active = self.checks.ufw_state()
+        if not present:
+            if self.checks.firewalld_active():
+                log(
+                    "WARN",
+                    "обнаружен firewalld — добавьте порт вручную: "
+                    f"firewall-cmd --permanent --add-port={port}/tcp && firewall-cmd --reload",
+                )
+            else:
+                log(
+                    "WARN",
+                    "ufw не установлен — правило и rate-limit не применяются. "
+                    f"Добавьте вручную: sudo ufw allow {port}/tcp",
+                )
+            self.skipped.append(f"ufw allow {port}/tcp (ufw отсутствует)")
+        else:
+            if self.checks.ufw_port_allowed(port):
+                self.same.append(f"ufw allow {port}/tcp")
+            else:
+                r.run(["ufw", "allow", f"{port}/tcp"], mutates=True)
+                self.changed.append(f"ufw allow {port}/tcp")
+                ufw_changed = True
+            if self.checks.before_rules_block():
+                self.same.append("блок rate-limit в before.rules")
+            else:
+                loaded = r.run(["modprobe", "xt_recent"], check=False, mutates=True)
+                if loaded.returncode != 0:
+                    log(
+                        "WARN",
+                        "модуль xt_recent не загрузился — rate-limit в before.rules не пишется",
+                    )
+                    self.skipped.append("блок rate-limit в before.rules")
+                elif not Path(BEFORE_RULES).exists():
+                    log("WARN", f"{BEFORE_RULES} не найден — блок rate-limit не добавлен")
+                    self.skipped.append("блок rate-limit в before.rules")
+                else:
+                    r.edit_before_rules(port, "insert", reload=False)
+                    self.changed.append("блок rate-limit в before.rules")
+                    ufw_changed = True
+            if ufw_changed and active:
+                r.run(["ufw", "reload"], check=False, mutates=True)
+            elif not active:
+                log(
+                    "WARN",
+                    "ufw неактивен — правило и before.rules записаны, но не действуют; "
+                    "включите: sudo ufw enable",
+                )
+
+        # Шаг 4. Сетевой тюнинг и modules-load
+        sysctl_changed = False
+        for path, content in (
+            (SYSCTL_FILE, sysctl_template()),
+            (MODULES_RECENT, MODULES_RECENT_CONTENT),
+            (MODULES_BBR, MODULES_BBR_CONTENT),
+        ):
+            if self._differs(path, content):
+                r.write_file(path, content, mode=0o644, owner="root:root")
+                self.changed.append(f"файл {path}")
+                sysctl_changed = True
+            else:
+                self.same.append(f"файл {path}")
+        if sysctl_changed:
+            r.run(["sysctl", "--system"], check=False, mutates=True)
+
+        # Шаг 5. Рестарт сервиса — только если менялись конфиг/юнит сервиса
+        if service_restart and self.checks.systemd_present():
+            r.run(["systemctl", "restart", SERVICE], mutates=True)
+            self.changed.append(f"перезапуск {SERVICE}")
+        elif service_restart:
+            self.skipped.append(f"перезапуск {SERVICE} (systemd отсутствует)")
+        else:
+            self.skipped.append("перезапуск сервиса (конфиг и юнит не менялись)")
+
+        # Шаг 6. Таймер — re-enable --now, если был установлен
+        if timer_installed and self.checks.systemd_present():
+            cp = r.run(
+                ["systemctl", "enable", "--now", UPDATE_TIMER_NAME], check=False, mutates=True
+            )
+            if cp.returncode != 0:
+                log(
+                    "WARN",
+                    f"не удалось включить таймер {UPDATE_TIMER_NAME}: "
+                    f"{cp.stderr.strip() or cp.stdout.strip()}",
+                )
+                self.skipped.append(f"таймер {UPDATE_TIMER_NAME}")
+            else:
+                self.changed.append(f"таймер {UPDATE_TIMER_NAME} (enable --now)")
+        elif timer_installed:
+            self.skipped.append(f"таймер {UPDATE_TIMER_NAME} (systemd отсутствует)")
+        else:
+            self.skipped.append("таймер автообновления (не установлен)")
+
+        # Шаг 7. Отчёт
+        print("Итог converge:")
+        for item in self.changed:
+            print(f"  изменено : {item}")
+        for item in self.same:
+            print(f"  совпадало: {item}")
+        for item in self.skipped:
+            print(f"  пропущено: {item}")
+        if not service_restart:
+            log("WARN", "рестарт сервиса не потребовался (конфиг и юнит не менялись)")
+        return EXIT_OK
+
+
+# ---------------------------------------------------------------------------
+# Upgrade — самообновление скрипта + converge
+# ---------------------------------------------------------------------------
+class Upgrade:
+    def __init__(self, runner: Runner, checks: Checks, state: State):
+        self.runner = runner
+        self.checks = checks
+        self.state = state
+
+    def run(self) -> int:
+        r = self.runner
+        raw = fetch_raw(RAW_URL)
+        validate_script(raw)
+        try:
+            current = Path(__file__).read_bytes()
+            current_path = Path(__file__).resolve()
+        except OSError as exc:
+            log("WARN", f"не удалось прочитать собственный скрипт ({exc})")
+            current = b""
+            current_path = None
+        if current == raw:
+            log("INFO", "скрипт уже актуальной версии")
+        else:
+            if current_path is not None and current_path == Path(SELF_PATH).resolve():
+                log("INFO", "обновление запущено из целевого пути — замена через атомарный rename")
+            r.replace_script(raw)
+            log("INFO", f"скрипт обновлён: {SELF_PATH}")
+
+        if r.dry_run:
+            r.dry_note(f"converge: {sys.executable} {SELF_PATH} converge --yes")
+            log("DRY", "subprocess не запускается в dry-run — converge-логика в текущем процессе")
+            return Converger(r, self.checks, self.state).run()
+
+        cp = subprocess.run([sys.executable, SELF_PATH, "converge", "--yes"], check=False)
+        if cp.returncode != 0:
+            log("ERR", f"converge завершился с кодом {cp.returncode}")
+            return EXIT_ERR
+        return EXIT_OK
+
+
+# ---------------------------------------------------------------------------
 # DomainChanger
 # ---------------------------------------------------------------------------
 class DomainChanger:
@@ -1663,6 +1997,34 @@ def cmd_update(runner: Runner, checks: Checks, _args) -> int:
     return EXIT_OK
 
 
+def cmd_upgrade(runner: Runner, checks: Checks, _args) -> int:
+    state = checks.collect()
+    if not state.installed:
+        log("WARN", f"{SERVICE} не установлен — сначала выполните install")
+        return EXIT_ERR
+    if not confirm(
+        f"Скрипт будет обновлён с {RAW_URL}, конфиги/юниты перегенерированы, "
+        "сервис будет перезапущен. Продолжить? [да]:",
+        True,
+    ):
+        raise Abort("обновление скрипта отменено")
+    return Upgrade(runner, checks, state).run()
+
+
+def cmd_converge(runner: Runner, checks: Checks, _args) -> int:
+    state = checks.collect()
+    if not state.installed:
+        log("WARN", f"{SERVICE} не установлен — converge невозможен")
+        return EXIT_ERR
+    if not confirm(
+        "Converge перегенерирует конфиг и юниты по текущим шаблонам; сервис "
+        "перезапустится, только если что-то изменилось. Продолжить? [да]:",
+        True,
+    ):
+        raise Abort("converge отменён")
+    return Converger(runner, checks, state).run()
+
+
 def cmd_restart(runner: Runner, checks: Checks, _args) -> int:
     state = checks.collect()
     if not state.installed:
@@ -1718,6 +2080,7 @@ def cmd_info(runner: Runner, checks: Checks, _args) -> int:
     state = checks.collect()
     _port, _domain, secret = checks.read_config()
     print("Информация о telemt:")
+    print(f"  версия скрипта  : {SCRIPT_VERSION}")
     print(f"  установлен      : {'да' if state.installed else 'нет'}")
     print(f"  версия          : {state.version or 'неизвестно'}")
     print(
@@ -1771,6 +2134,8 @@ def cmd_remove(runner: Runner, checks: Checks, _args) -> int:
 COMMANDS = {
     "install": cmd_install,
     "update": cmd_update,
+    "upgrade": cmd_upgrade,
+    "converge": cmd_converge,
     "restart": cmd_restart,
     "set-domain": cmd_set_domain,
     "link": cmd_link,
@@ -1797,7 +2162,7 @@ class Menu:
             status = f"установлено v{state.version or '?'}, порт {state.port or '?'}, домен {state.domain or '?'}"
         else:
             status = "не установлено"
-        return f"telemt_setup — {status}"
+        return f"telemt_setup v{SCRIPT_VERSION} — {status}"
 
     def run(self) -> int:
         while True:
@@ -1813,7 +2178,8 @@ class Menu:
                     ("Информация", "info"),
                     ("Сменить домен-маску", "set-domain"),
                     ("Показать ссылку", "link"),
-                    ("Обновить", "update"),
+                    ("Обновить telemt (бинарник)", "update"),
+                    ("Обновить скрипт и конфиги", "upgrade"),
                     ("Перезапустить сервис", "restart"),
                     ("Удалить", "remove"),
                 ]
@@ -1886,7 +2252,10 @@ def build_argparse() -> argparse.ArgumentParser:
 
     parser = argparse.ArgumentParser(
         prog="telemt_setup.py",
-        description="Установщик и менеджер MTProto-прокси telemt (экземпляр telemt).",
+        description=(
+            "Установщик и менеджер MTProto-прокси telemt "
+            f"(экземпляр telemt). Версия скрипта {SCRIPT_VERSION}."
+        ),
     )
     parser.add_argument("--dry-run", action="store_true", help="режим без изменений в системе")
     parser.add_argument("--yes", action="store_true", help="подтверждать все действия")
@@ -1894,8 +2263,19 @@ def build_argparse() -> argparse.ArgumentParser:
     parser.add_argument("--domain", default=None, help="домен-маска")
     parser.add_argument("--quiet", action="store_true", help="минимум вывода (только результат)")
     sub = parser.add_subparsers(dest="command")
-    for name in ("install", "update", "restart", "set-domain", "link", "info", "remove", "menu"):
-        sub.add_parser(name, parents=[common])
+    for name, help_text in (
+        ("install", "полная установка"),
+        ("update", "обновить бинарник telemt из GitHub"),
+        ("upgrade", "обновить сам скрипт с RAW_URL и перегенерировать конфиги/юниты"),
+        ("converge", "служебная: перегенерировать конфиг/юниты по текущим шаблонам"),
+        ("restart", "перезапустить сервис telemt"),
+        ("set-domain", "сменить домен-маску"),
+        ("link", "показать клиентскую ссылку"),
+        ("info", "информация о состоянии"),
+        ("remove", "полный демонтаж"),
+        ("menu", "интерактивное меню"),
+    ):
+        sub.add_parser(name, parents=[common], help=help_text)
     return parser
 
 
@@ -1973,13 +2353,15 @@ if __name__ == "__main__":
 # ===========================================================================
 # AGENT NOTES (кратко, для правок агентом; больше агентского не добавлять)
 # ---------------------------------------------------------------------------
-# КАРТА: docstring ~1-95; константы ~119-165; лог/ask/confirm ~194-300;
-#   валидаторы+client_mss_profile/format_mss/_ephemeral_warning ~305-457;
-#   State ~462; Runner ~480-733 (единственная точка мутаций); Checks ~737-897
-#   (read_config, read_client_mss, ufw_state, firewalld_active, update_timer_*);
-#   GitHub ~901-984 (resolve — фолбэк по тегу); шаблоны ~988-1091; Installer
-#   ~1095-1311; Updater ~1315-1367; DomainChanger ~1371-1406; Remover
-#   ~1410-1549 (residue-report); cmd_* ~1553-1742; Menu ~1750; main ~1853.
+# КАРТА: docstring ~1-118; константы ~150-180; лог/ask/confirm ~225-320;
+#   валидаторы+client_mss_profile/format_mss/_ephemeral_warning ~335-490;
+#   State ~500; Runner ~515-825 (единственная точка мутаций; replace_script,
+#   backup_file); Checks ~829-1075 (read_config, read_client_mss, ufw_state,
+#   ufw_port_allowed, firewalld_active, update_timer_*); GitHub ~1075-1085;
+#   fetch_raw/validate_script ~1087-1111; шаблоны ~1113-1230; Installer
+#   ~1235-1445; Updater ~1447-1499; Converger ~1501-1676; Upgrade ~1678-1716;
+#   DomainChanger ~1720-1757; Remover ~1759-1900 (residue-report);
+#   cmd_* ~1919-2148; Menu ~2150; build_argparse ~2226; main ~2278.
 # ---------------------------------------------------------------------------
 # ПРОВЕРКИ: python3 -m py_compile telemt_setup.py; ruff check --output-format=
 #   concise telemt_setup.py; ty check --output-format=concise telemt_setup.py.
@@ -1989,14 +2371,20 @@ if __name__ == "__main__":
 #     ./telemt_setup.py --dry-run --yes install
 #     printf 'n\n' | ./telemt_setup.py --dry-run install   # отказ от таймера
 #     ./telemt_setup.py --dry-run --yes --quiet update
+#     ./telemt_setup.py --dry-run upgrade      # не установлен -> exit 1
+#     printf 'y\n' | ./telemt_setup.py --dry-run upgrade   # install-состояние: fetch+sanity+converge
+#     printf 'y\n' | ./telemt_setup.py --dry-run converge  # служебная, подтверждение
 #     printf 'y\n' | ./telemt_setup.py --dry-run remove
 #     ./telemt_setup.py --dry-run info; printf 'q\n' | ./telemt_setup.py --dry-run menu
 # ---------------------------------------------------------------------------
 # ИНВАРИАНТЫ DRY-RUN: Runner — единственная точка outward-эффектов; ветвление
 #   только внутри Runner и ОС-гейта; мутации пишут зеркало tmp_mirror (mkdtemp,
 #   удаляется в cleanup); никаких "if dry_run" в Installer/Updater/Remover/Menu.
+#   Исключение: Upgrade.run — в dry-run subprocess converge не запускается,
+#   вместо него вызывается Converger в текущем процессе (требование задачи).
 # НЕ ТРОГАТЬ (безопасность): redact_secret_line (секрет не печатать); маркеры
 #   MARK_BEGIN/MARK_END и вставку после якорной conntrack-строки; exit-коды
 #   0/1/2/3/4/130; `--yes` НЕ подтверждает remove (Q5 default=нет); ufw reload
-#   ровно один раз (install — в edit_before_rules, remove — в конце).
+#   ровно один раз (install — в edit_before_rules, remove — в конце; converge —
+#   накопительно, один раз при изменениях).
 # ===========================================================================

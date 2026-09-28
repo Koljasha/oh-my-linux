@@ -19,7 +19,7 @@
 | `opencode_limits_prices.py` | Печатает отчёт по OpenCode: цены Zen и лимиты/цены Go (парсит docs.opencode.ai) | только stdlib Python |
 | `opencode_monitor.py` | Мониторит таблицы OpenCode Go/Zen по cron, хранит снапшот в `state.json`, шлёт изменения в Telegram | `requests`, `beautifulsoup4`, файл `.env` с `TG_BOT_TOKEN` и `TG_CHAT_ID` (не коммитить!) |
 | `steam_discount.py` | Парсит распродажу Steam: `-p` пишет `steam.csv`, `-s 1/2` показывает игры со 100% скидкой | `requests`, `beautifulsoup4` |
-| `telemt_setup.py` | Установщик/менеджер приватного MTProto-прокси telemt: install/update/link/remove, таймер автообновления, безопасный `--dry-run` | только stdlib Python; Debian/Ubuntu, root, `ufw` |
+| `telemt_setup.py` | Установщик/менеджер приватного MTProto-прокси telemt: install/update/upgrade (самообновление + converge)/link/remove, таймер автообновления, безопасный `--dry-run` | только stdlib Python; Debian/Ubuntu, root, `ufw` |
 | `time_replay_counter.sh` | Генерирует временные метки `MM:SS.ss` с дробными шагами (`--step` или `--count`, взаимоисключающие) | bash + GNU `getopt` (util-linux), `bc` |
 | `twitter_del_tweets.py` | Список (и удаление с `--no-dry-run`) твитов через legacy Twitter API v1.1 | `requests`, `requests_oauthlib`, локальный `config.py` с ключами Twitter (не коммитить, шаблон в начале скрипта) |
 
@@ -66,6 +66,12 @@ python3 scripts/steam_discount.py -p
 
 # Dry-run установки MTProto-прокси (ничего не меняет в системе)
 sudo python3 scripts/telemt_setup.py --dry-run
+
+# Обновление самого скрипта и перегенерация конфигов/юнитов (upgrade -> converge)
+sudo python3 scripts/telemt_setup.py upgrade
+
+# Только бинарник telemt из релиза GitHub
+sudo python3 scripts/telemt_setup.py update --yes --quiet
 
 # Dry-run удаления твитов (без --no-dry-run ничего не удаляет)
 python3 scripts/twitter_del_tweets.py --screen-name Koljasha
