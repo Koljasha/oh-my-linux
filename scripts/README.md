@@ -15,6 +15,7 @@
 | `git_pull_all.sh` | Делает `git pull UPSTREAM BRANCH` в каждом подкаталоге с таким remote | bash + `git` |
 | `git_push_all.sh` | Делает `git push UPSTREAM BRANCH` в каждом подкаталоге с таким remote | bash + `git` |
 | `lightroom_rename_images.sh` | Переименовывает `LRM_*.jpeg` по дате съёмки из EXIF в `IMG_YYYYMMDD_HHMMSS.jpeg` | bash + `identify` (ImageMagick) |
+| `mouse_mover_setup.py` | Установщик/менеджер user-сервиса «шевелитель мышки» против AFK: install/start/stop/status/logs/remove, ставит venv с pyautogui и unit на graphical-session.target | только stdlib Python; Python 3.10+, systemd --user, X11/XWayland для pyautogui |
 | `opencode_ollama_cloud_free.sh` | Проверяет все модели `ollama-cloud` в opencode тестовым запросом, выводит таблицу «кто ответил / кому нужен upgrade» | bash + CLI `opencode` |
 | `opencode_limits_prices.py` | Печатает отчёт по OpenCode: цены Zen и лимиты/цены Go (парсит docs.opencode.ai) | только stdlib Python |
 | `opencode_monitor.py` | Мониторит таблицы OpenCode Go/Zen по cron, хранит снапшот в `state.json`, шлёт изменения в Telegram | `requests`, `beautifulsoup4`, файл `.env` с `TG_BOT_TOKEN` и `TG_CHAT_ID` (не коммитить!) |
@@ -29,6 +30,7 @@
 - Для отдельных скриптов (только то, что реально используется):
   - `dns_check.py` — `curl`, `dig` или `kdig`
   - `lightroom_rename_images.sh` — `identify` (пакет ImageMagick)
+  - `mouse_mover_setup.py` — Python 3.10+, systemd --user, X11/XWayland (pyautogui)
   - `time_replay_counter.sh` — GNU `getopt` (util-linux), `bc`
   - `opencode_ollama_cloud_free.sh` — CLI `opencode`
   - `telemt_setup.py` — Debian 12/13 или Ubuntu 22.04+, запуск через `sudo`, `ufw`
@@ -46,6 +48,7 @@ python3 scripts/steam_discount.py --help
 python3 scripts/twitter_del_tweets.py --help
 bash scripts/delete_random_file.sh --help
 bash scripts/lightroom_rename_images.sh --help
+python3 scripts/mouse_mover_setup.py --help
 bash scripts/opencode_ollama_cloud_free.sh --help
 bash scripts/time_replay_counter.sh --time=1:30 --step=10
 python3 scripts/opencode_limits_prices.py
@@ -75,6 +78,29 @@ sudo python3 scripts/telemt_setup.py update --yes --quiet
 
 # Dry-run удаления твитов (без --no-dry-run ничего не удаляет)
 python3 scripts/twitter_del_tweets.py --screen-name Koljasha
+```
+
+## Шевелитель мышки
+
+`mouse_mover_setup.py` ставит и обслуживает user-сервис, который периодически
+двигает курсор мыши против AFK-статуса. Root не нужен: всё живёт в
+`~/.local/share/mouse-mover` (venv с `pyautogui` + скрипт) и
+`~/.config/systemd/user/mouse-mover.service`. Без аргументов — тумблер:
+не установлен → `install`, установлен → `stop`/`start`.
+
+```bash
+cd scripts
+
+# Установка и запуск сервиса
+./mouse_mover_setup.py install
+
+# Статус, логи, удаление
+./mouse_mover_setup.py status
+./mouse_mover_setup.py logs --follow
+./mouse_mover_setup.py remove
+
+# План без изменений в системе
+./mouse_mover_setup.py --dry-run install
 ```
 
 ## Проверки
