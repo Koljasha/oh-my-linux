@@ -13,12 +13,14 @@ from urllib.request import Request, urlopen
 URL_GO = "https://opencode.ai/docs/en/go/"
 URL_ZEN = "https://opencode.ai/docs/en/zen/"
 
-# Таблицы ищутся по шапке: берётся первая таблица, чьи колонки включают весь набор.
+# Таблицы ищутся по шапке: собираются все таблицы, чьи колонки включают весь
+# набор. На странице Go ожидается по две такие таблицы каждого типа: первая
+# относится к плану Go, вторая — к Go Plus.
 GO_REQUESTS_HEADERS = {
     "Model",
-    "requests per 5 hour",
-    "requests per week",
-    "requests per month",
+    "Requests per 5 hours",
+    "Requests per week",
+    "Requests per month",
 }
 GO_PRICING_HEADERS = {"Model", "Input", "Output", "Cached Read", "Cached Write"}
 ZEN_PRICING_HEADERS = {"Model", "Input", "Output", "Cached Read", "Cached Write"}
@@ -29,7 +31,9 @@ UA = {
     )
 }
 
-GO_SORT_DESCENDING = True  # запросы Go: True — от большего к меньшему, False — наоборот
+GO_SORT_DESCENDING = (
+    True  # запросы плана Go в месяц: True — от большего к меньшему, False — наоборот
+)
 
 # Теги зачёркнутого текста (старое значение) и мелкого шрифта (примечание).
 STRIKE_TAGS = frozenset({"del", "s", "strike"})
@@ -149,20 +153,28 @@ class PageParser:
                 if depth == 0:
                     yield page[start : match.end()]
 
-    def find_table(self, expected: set[str]) -> list[list[str]]:
-        """Возвращает строки первой таблицы, чья шапка включает все колонки expected.
+    def find_tables(self, expected: set[str]) -> list[list[list[str]]]:
+        """Возвращает все таблицы, чья шапка включает все колонки expected.
 
         Ожидаемые колонки — подмножество реальной шапки, поэтому дополнительные
         колонки (например, "Monthly limit") поиску не мешают.
         """
+        tables = []
         for fragment in self._iter_tables(self._page):
             parser = HtmlTableParser()
             parser.feed(fragment)
             if parser.rows and expected <= set(parser.rows[0]):
-                return parser.rows
-        raise RuntimeError(
-            f"Не найдена таблица с колонками {sorted(expected)} — структура страницы изменилась"
-        )
+                tables.append(parser.rows)
+        return tables
+
+    def find_table(self, expected: set[str]) -> list[list[str]]:
+        """Возвращает строки первой таблицы, чья шапка включает колонки expected."""
+        tables = self.find_tables(expected)
+        if not tables:
+            raise RuntimeError(
+                f"Не найдена таблица с колонками {sorted(expected)} — структура страницы изменилась"
+            )
+        return tables[0]
 
 
 class ModelNameMapper:
@@ -239,25 +251,64 @@ class TableRenderer:
 
 
 class GoLimits:
-    """Данные обеих таблиц и логика их сортировки и сопоставления."""
+    """Данные таблиц запросов (Go и Go Plus) и цен, логика их сопоставления.
+
+    Первая таблица запросов относится к плану Go, вторая — к Go Plus. Цены
+    берутся из первой (Go) таблицы цен: они совпадают у обоих планов.
+    """
+
+    # Подписи колонок запросов в единой таблице: план + окно лимита.
+    _REQUESTS_5H = "Requests per 5 hours"
+    _REQUESTS_WEEK = "Requests per week"
+    _REQUESTS_MONTH = "Requests per month"
 
     def __init__(
         self,
-        requests_table: list[list[str]],
+        go_requests_table: list[list[str]],
+        plus_requests_table: list[list[str]],
         pricing_table: list[list[str]],
         descending: bool = True,
     ):
-        self.requests_header = requests_table[0]
+        self.go_requests_header = go_requests_table[0]
+        self.plus_requests_header = plus_requests_table[0]
         self.pricing_header = pricing_table[0]
         self._output_idx = self.pricing_header.index("Output")
-        self._month_idx = self.requests_header.index("requests per month")
-        self._requests = requests_table[1:]
+        self._month_idx = self.go_requests_header.index(self._REQUESTS_MONTH)
+        self._go_requests = go_requests_table[1:]
+        self._plus_requests = plus_requests_table[1:]
         self._pricing = pricing_table[1:]
         self._descending = descending
+        self._go_by_name = self._index_by_name(self._go_requests, "Go")
+        self._plus_by_name = self._index_by_name(self._plus_requests, "Go Plus")
+        self._pricing_by_name: dict[str, list[list[str]]] = {}
+        for row in self._pricing:
+            self._pricing_by_name.setdefault(ModelNameMapper.normalize(row[0]), []).append(row)
+
+    @staticmethod
+    def _index_by_name(rows: list[list[str]], plan: str) -> dict[str, list[str]]:
+        """Индексирует строки запросов по нормализованному имени модели.
+
+        Совпадение двух моделей внутри одного плана делает сопоставление
+        неоднозначным — это признак изменившейся структуры страницы.
+        """
+        indexed: dict[str, list[str]] = {}
+        counts: dict[str, int] = {}
+        for row in rows:
+            key = ModelNameMapper.normalize(row[0])
+            counts[key] = counts.get(key, 0) + 1
+            indexed[key] = row
+        duplicates = sorted(key for key, count in counts.items() if count > 1)
+        if duplicates:
+            raise RuntimeError(
+                f"В таблице запросов ({plan}) несколько моделей совпадают после"
+                f" нормализации ({', '.join(duplicates)}) — сопоставление"
+                " с ценами неоднозначно, структура страницы изменилась"
+            )
+        return indexed
 
     _UNLIMITED = re.compile(r"\bunlimited\b", re.IGNORECASE)
 
-    def _month_value(self, row: list[str]) -> tuple[int, int]:
+    def _month_value(self, row: list[str], month_idx: int) -> tuple[int, int]:
         """Ключ сортировки по числу запросов в месяц.
 
         Числовые значения сравниваются по величине. «Unlimited» числа не
@@ -265,7 +316,7 @@ class GoLimits:
         по убыванию такие модели идут первыми, при возрастании — последними.
         """
         try:
-            cell = row[self._month_idx]
+            cell = row[month_idx]
         except IndexError:
             raise RuntimeError(
                 f"Не удалось прочитать количество запросов в месяц в строке: {row!r}"
@@ -304,64 +355,83 @@ class GoLimits:
             raise RuntimeError(f"Не удалось прочитать цену Output в строке: {row!r}")
 
     def sorted_requests(self) -> list[list[str]]:
-        """Строки запросов, отсортированные по запросам в месяц.
+        """Строки запросов плана Go, отсортированные по запросам в месяц.
 
         Направление задаётся параметром descending: True — убывание,
         False — возрастание.
         """
-        return sorted(self._requests, key=self._month_value, reverse=self._descending)
+        return sorted(
+            self._go_requests,
+            key=lambda row: self._month_value(row, self._month_idx),
+            reverse=self._descending,
+        )
 
-    def sorted_model_names(self) -> list[str]:
-        """Имена моделей в порядке отсортированных запросов."""
-        return [row[0] for row in self.sorted_requests()]
+    def _ordered_keys(self) -> list[str]:
+        """Порядок моделей единой таблицы.
+
+        Сначала модели плана Go по запросам в месяц с учётом направления
+        сортировки, затем модели, найденные только в Go Plus, затем строки
+        цен без строк запросов — несовпадающие строки обоих типов идут в конце.
+        """
+        keys = [ModelNameMapper.normalize(row[0]) for row in self.sorted_requests()]
+        keys += sorted(key for key in self._plus_by_name if key not in self._go_by_name)
+        keys += sorted(
+            key
+            for key in self._pricing_by_name
+            if key not in self._go_by_name and key not in self._plus_by_name
+        )
+        seen: set[str] = set()
+        unique: list[str] = []
+        for key in keys:
+            if key not in seen:
+                seen.add(key)
+                unique.append(key)
+        return unique
 
     def combined_header(self) -> list[str]:
-        """Шапка единой таблицы: колонки запросов, затем колонки цен."""
-        return [*self.requests_header, *self.pricing_header[1:]]
+        """Шапка единой таблицы: запросы Go, запросы Go Plus, затем цены."""
+        return [
+            "Model",
+            "Go: 5 hours",
+            "Go: week",
+            "Go: month",
+            "Plus: 5 hours",
+            "Plus: week",
+            "Plus: month",
+            *self.pricing_header[1:],
+        ]
 
     def combined_rows(self) -> list[list[str]]:
-        """Строки единой таблицы в порядке, заданном sorted_model_names().
+        """Строки единой таблицы в порядке, заданном _ordered_keys().
 
         Колонки запросов повторяются для каждой строки цен одной модели.
-        Модель без строк цен получает "-" в колонках цен; строка цен без
-        соответствия в запросах выводится в конце с "-" в колонках запросов.
+        Модель без строк цен получает "-" в колонках цен; модель без строки
+        запросов в одном из планов — "-" в трёх колонках этого плана.
         """
-        counts: dict[str, int] = {}
-        for row in self._requests:
-            key = ModelNameMapper.normalize(row[0])
-            counts[key] = counts.get(key, 0) + 1
-        duplicates = sorted(key for key, count in counts.items() if count > 1)
-        if duplicates:
-            raise RuntimeError(
-                "В таблице запросов несколько моделей совпадают после"
-                f" нормализации ({', '.join(duplicates)}) — сопоставление"
-                " с ценами неоднозначно, структура страницы изменилась"
-            )
-
-        grouped: dict[str, list[list[str]]] = {}
-        for row in self._pricing:
-            grouped.setdefault(ModelNameMapper.normalize(row[0]), []).append(row)
-
-        requests_by_name = {row[0]: row for row in self._requests}
+        go_empty = ["-"] * (len(self.go_requests_header) - 1)
+        plus_empty = ["-"] * (len(self.plus_requests_header) - 1)
         pricing_empty = ["-"] * (len(self.pricing_header) - 1)
-        requests_empty = ["-"] * (len(self.requests_header) - 1)
 
         result: list[list[str]] = []
-        for model in self.sorted_model_names():
-            req_row = requests_by_name[model]
-            req_vals = [NumberFormatter.with_thousands(c) for c in req_row[1:]]
-            price_rows = sorted(
-                grouped.pop(ModelNameMapper.normalize(model), []), key=self._price_value
+        for key in self._ordered_keys():
+            go_row = self._go_by_name.get(key)
+            plus_row = self._plus_by_name.get(key)
+            go_vals = (
+                [NumberFormatter.with_thousands(c) for c in go_row[1:]] if go_row else go_empty
             )
+            plus_vals = (
+                [NumberFormatter.with_thousands(c) for c in plus_row[1:]]
+                if plus_row
+                else plus_empty
+            )
+            price_rows = sorted(self._pricing_by_name.get(key, []), key=self._price_value)
             if price_rows:
                 for price_row in price_rows:
-                    result.append([price_row[0], *req_vals, *price_row[1:]])
+                    result.append([price_row[0], *go_vals, *plus_vals, *price_row[1:]])
             else:
-                result.append([model, *req_vals, *pricing_empty])
-
-        for price_rows in grouped.values():
-            for price_row in sorted(price_rows, key=self._price_value):
-                result.append([price_row[0], *requests_empty, *price_row[1:]])
+                source = go_row if go_row is not None else plus_row
+                name = source[0] if source is not None else "-"
+                result.append([name, *go_vals, *plus_vals, *pricing_empty])
         return result
 
 
@@ -394,7 +464,7 @@ class ZenPricing:
 
 
 class OpenCodeReport:
-    """Собирает итоговый отчёт: таблица цен Zen, затем единая таблица Go."""
+    """Собирает итоговый отчёт: таблица цен Zen, затем единая таблица Go и Go Plus."""
 
     COLUMN_SEPARATOR = " | "
     GROUP_SEPARATOR = " || "
@@ -402,27 +472,41 @@ class OpenCodeReport:
     def __init__(self, go_page: str, zen_page: str):
         go_parser = PageParser(go_page)
         zen_parser = PageParser(zen_page)
-        requests_table = go_parser.find_table(GO_REQUESTS_HEADERS)
-        pricing_table = go_parser.find_table(GO_PRICING_HEADERS)
-        self._limits = GoLimits(requests_table, pricing_table, GO_SORT_DESCENDING)
+        requests_tables = go_parser.find_tables(GO_REQUESTS_HEADERS)
+        pricing_tables = go_parser.find_tables(GO_PRICING_HEADERS)
+        if len(requests_tables) != 2 or len(pricing_tables) != 2:
+            raise RuntimeError(
+                "Ожидались по две таблицы запросов и цен Go"
+                f" (найдено {len(requests_tables)} и {len(pricing_tables)})"
+                " — структура страницы изменилась"
+            )
+        self._limits = GoLimits(
+            requests_tables[0],
+            requests_tables[1],
+            pricing_tables[0],
+            GO_SORT_DESCENDING,
+        )
         self._zen = ZenPricing(zen_parser.find_table(ZEN_PRICING_HEADERS))
 
     def _separators(self) -> list[str]:
-        """Разделители колонок: групповой между лимитами и ценами."""
+        """Разделители колонок: групповой между запросами и ценами."""
         header = self._limits.combined_header()
         separators = [self.COLUMN_SEPARATOR] * (len(header) - 1)
-        separators[len(self._limits.requests_header) - 1] = self.GROUP_SEPARATOR
+        separators[len(header) - len(self._limits.pricing_header)] = self.GROUP_SEPARATOR
         return separators
 
     def _render_go(self) -> str:
-        """Возвращает единую таблицу Go с заголовком."""
+        """Возвращает единую таблицу Go и Go Plus с заголовком."""
         table = TableRenderer.render(
             self._limits.combined_header(),
             self._limits.combined_rows(),
             separators=self._separators(),
         )
         order = "по убыванию" if GO_SORT_DESCENDING else "по возрастанию"
-        title = f"Go: лимиты запросов и цены за 1M токенов ({order} запросов в месяц):"
+        title = (
+            "Go и Go Plus: лимиты запросов и цены за 1M токенов"
+            f" ({order} запросов в месяц, план Go):"
+        )
         return f"{title}\n{table}"
 
     def _render_zen(self) -> str:
@@ -431,7 +515,7 @@ class OpenCodeReport:
         return f"{title}\n{TableRenderer.render(self._zen.header, self._zen.sorted_rows())}"
 
     def render(self) -> str:
-        """Возвращает полный отчёт: таблица Zen, затем единая таблица Go."""
+        """Возвращает полный отчёт: таблица Zen, затем единая таблица Go и Go Plus."""
         return f"{self._render_zen()}\n\n{self._render_go()}"
 
 

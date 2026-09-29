@@ -17,8 +17,8 @@
 | `lightroom_rename_images.sh` | Переименовывает `LRM_*.jpeg` по дате съёмки из EXIF в `IMG_YYYYMMDD_HHMMSS.jpeg` | bash + `identify` (ImageMagick) |
 | `mouse_mover_setup.py` | Установщик/менеджер user-сервиса «шевелитель мышки» против AFK: install/start/stop/restart/status/logs/upgrade/converge/remove/run, без аргументов — интерактивное меню по состоянию; install не запускает сервис (запуск через меню или start); ставит venv с pyautogui, user-unit и управляющую копию менеджера (WantedBy default.target в юните оставлен для ручного enable) | только stdlib Python; Python 3.10+, systemd --user, X11/XWayland для pyautogui |
 | `opencode_ollama_cloud_free.sh` | Проверяет все модели `ollama-cloud` в opencode тестовым запросом, выводит таблицу «кто ответил / кому нужен upgrade» | bash + CLI `opencode` |
-| `opencode_limits_prices.py` | Печатает отчёт по OpenCode: цены Zen и лимиты/цены Go (парсит docs.opencode.ai) | только stdlib Python |
-| `opencode_monitor.py` | Мониторит таблицы OpenCode Go/Zen по cron, хранит снапшот в `state.json`, шлёт изменения в Telegram | `requests`, `beautifulsoup4`, файл `.env` с `TG_BOT_TOKEN` и `TG_CHAT_ID` (не коммитить!) |
+| `opencode_limits_prices.py` | Печатает отчёт по OpenCode: цены Zen и единая таблица лимитов/цен Go и Go Plus (парсит docs.opencode.ai) | только stdlib Python |
+| `opencode_monitor.py` | Мониторит таблицы OpenCode Go, Go Plus и Zen по cron, хранит снапшот в `state.json`, шлёт изменения в Telegram | `requests`, `beautifulsoup4`, файл `.env` с `TG_BOT_TOKEN` и `TG_CHAT_ID` (не коммитить!) |
 | `steam_discount.py` | Парсит распродажу Steam: `-p` пишет `steam.csv`, `-s 1/2` показывает игры со 100% скидкой | `requests`, `beautifulsoup4` |
 | `telemt_setup.py` | Установщик/менеджер приватного MTProto-прокси telemt: install/update/upgrade (самообновление + converge)/link/remove, таймер автообновления, безопасный `--dry-run` | только stdlib Python; Debian/Ubuntu, root, `ufw` |
 | `time_replay_counter.sh` | Генерирует временные метки `MM:SS.ss` с дробными шагами (`--step` или `--count`, взаимоисключающие) | bash + GNU `getopt` (util-linux), `bc` |
