@@ -389,24 +389,26 @@ class GoLimits:
         return unique
 
     def combined_header(self) -> list[str]:
-        """Шапка единой таблицы: запросы Go, запросы Go Plus, затем цены."""
+        """Шапка единой таблицы: запросы по периодам (Go, Go Plus), затем цены."""
         return [
             "Model",
             "Go: 5 hours",
+            "Go Plus: 5 hours",
             "Go: week",
+            "Go Plus: week",
             "Go: month",
-            "Plus: 5 hours",
-            "Plus: week",
-            "Plus: month",
+            "Go Plus: month",
             *self.pricing_header[1:],
         ]
 
     def combined_rows(self) -> list[list[str]]:
         """Строки единой таблицы в порядке, заданном _ordered_keys().
 
-        Колонки запросов повторяются для каждой строки цен одной модели.
-        Модель без строк цен получает "-" в колонках цен; модель без строки
-        запросов в одном из планов — "-" в трёх колонках этого плана.
+        Колонки запросов группируются по периодам: для каждого периода
+        сначала значения плана Go, затем Go Plus. Колонки запросов
+        повторяются для каждой строки цен одной модели. Модель без строк цен
+        получает "-" в колонках цен; модель без строки запросов в одном из
+        планов — "-" в колонках этого плана.
         """
         go_empty = ["-"] * (len(self.go_requests_header) - 1)
         plus_empty = ["-"] * (len(self.plus_requests_header) - 1)
@@ -424,14 +426,23 @@ class GoLimits:
                 if plus_row
                 else plus_empty
             )
+            # По периодам: 5 часов (Go, Go Plus), неделя (Go, Go Plus), месяц.
+            period_vals = [
+                go_vals[0],
+                plus_vals[0],
+                go_vals[1],
+                plus_vals[1],
+                go_vals[2],
+                plus_vals[2],
+            ]
             price_rows = sorted(self._pricing_by_name.get(key, []), key=self._price_value)
             if price_rows:
                 for price_row in price_rows:
-                    result.append([price_row[0], *go_vals, *plus_vals, *price_row[1:]])
+                    result.append([price_row[0], *period_vals, *price_row[1:]])
             else:
                 source = go_row if go_row is not None else plus_row
                 name = source[0] if source is not None else "-"
-                result.append([name, *go_vals, *plus_vals, *pricing_empty])
+                result.append([name, *period_vals, *pricing_empty])
         return result
 
 
