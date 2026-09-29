@@ -39,7 +39,7 @@ GO_SORT_DESCENDING = (
     True  # запросы плана Go в месяц: True — от большего к меньшему, False — наоборот
 )
 
-# Теги зачёркнутого текста (старое значение) и мелкого шрифта (примечание).
+# Теги зачёркнутого текста (старое значение) и мелкого шрифта (служебное).
 STRIKE_TAGS = frozenset({"del", "s", "strike"})
 SMALL_TAGS = frozenset({"small"})
 
@@ -48,8 +48,10 @@ class HtmlTableParser(HTMLParser):
     """Парсит фрагмент HTML, содержащий одну таблицу, в список строк.
 
     Зачёркнутый текст (<del>, <s>, <strike>) — устаревшее значение, в ячейку
-    не попадает. Мелкий шрифт (<small>) — примечание, выводится в скобках
-    после основного текста, например "$60 (4x · Ends Sep 20)".
+    не попадает. Мелкий шрифт (<small>) — служебная пометка (например,
+    «limited time» при промо-лимите «Unlimited»), в значение тоже не
+    попадает: таблица остаётся узкой и стабильной (монитор такие пометки
+    также игнорирует).
     """
 
     def __init__(self):
@@ -58,7 +60,6 @@ class HtmlTableParser(HTMLParser):
         self._row: list[str] | None = None
         self._cell: bool = False
         self._cell_text: list[str] = []
-        self._cell_note: list[str] = []
         self._strike_depth = 0
         self._small_depth = 0
 
@@ -69,7 +70,6 @@ class HtmlTableParser(HTMLParser):
         elif tag in ("td", "th") and self._row is not None:
             self._cell = True
             self._cell_text = []
-            self._cell_note = []
             self._strike_depth = 0
             self._small_depth = 0
         elif tag in STRIKE_TAGS:
@@ -80,18 +80,15 @@ class HtmlTableParser(HTMLParser):
             self._append(" ")
 
     def handle_data(self, data: str):
-        """Текстовые данные внутри ячейки (с учётом strike/small)."""
+        """Текстовые данные внутри ячейки (strike и small пропускаются)."""
         if self._cell:
             self._append(data)
 
     def _append(self, data: str) -> None:
-        """Добавляет текст в тело ячейки или в примечание (small), игнорит strike."""
-        if self._strike_depth:
+        """Добавляет текст в ячейку, игнорируя strike и small."""
+        if self._strike_depth or self._small_depth:
             return
-        if self._small_depth:
-            self._cell_note.append(data)
-        else:
-            self._cell_text.append(data)
+        self._cell_text.append(data)
 
     def handle_endtag(self, tag: str):
         """Закрывающий тег: финализирует ячейку/строку, выходит из strike/small."""
@@ -101,9 +98,6 @@ class HtmlTableParser(HTMLParser):
             self._small_depth = max(0, self._small_depth - 1)
         elif tag in ("td", "th") and self._cell and self._row is not None:
             text = " ".join(" ".join(self._cell_text).split())
-            note = " ".join(" ".join(self._cell_note).split())
-            if note:
-                text = f"{text} ({note})".strip()
             self._row.append(text)
             self._cell = False
         elif tag == "tr" and self._row is not None:
@@ -212,9 +206,9 @@ class NumberFormatter:
         """Форматирует число, только если вся ячейка — целое число.
 
         Разделители тысяч (запятая, пробел, узкий/неразрывный пробел) и
-        окружающие пробелы допускаются. Если в ячейке есть текст примечания
-        (например, "26,000 (4x · Ends Sep 20)"), значение возвращается без
-        изменений, чтобы не собрать число из посторонних цифр.
+        окружающие пробелы допускаются. Если в ячейке есть посторонний текст
+        (например, склеенное "26,000 26,000"), значение возвращается без
+        изменений, чтобы не собрать число из чужих цифр.
         """
         if not NumberFormatter._PLAIN_INT.match(value):
             return value
