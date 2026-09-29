@@ -24,6 +24,10 @@ GO_REQUESTS_HEADERS = {
 }
 GO_PRICING_HEADERS = {"Model", "Input", "Output", "Cached Read", "Cached Write"}
 ZEN_PRICING_HEADERS = {"Model", "Input", "Output", "Cached Read", "Cached Write"}
+# Таблица тарифов («$10/month», «$40/month») — для заголовка секции Go.
+PLAN_HEADERS = {"Plan", "Price"}
+PLAN_MONTH_SUFFIX = "/month"
+PLAN_MONTH_LABEL = "/мес"
 UA = {
     "User-Agent": (
         "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
@@ -274,6 +278,7 @@ class GoLimits:
         self.pricing_header = pricing_table[0]
         self._output_idx = self.pricing_header.index("Output")
         self._month_idx = self.go_requests_header.index(self._REQUESTS_MONTH)
+        self._plus_month_idx = self.plus_requests_header.index(self._REQUESTS_MONTH)
         self._go_requests = go_requests_table[1:]
         self._plus_requests = plus_requests_table[1:]
         self._pricing = pricing_table[1:]
@@ -329,6 +334,29 @@ class GoLimits:
                 f"Не удалось прочитать количество запросов в месяц в строке: {row!r}"
             )
         return (0, int(digits))
+
+    def _ratio(self, go_cell: str, plus_cell: str) -> str:
+        """Кратность месячных запросов Go Plus к Go («3x»).
+
+        Число берётся из ячеек обеих планов; «Unlimited» или нечисловая ячейка
+        (включая пустую) даёт «-» — кратность не определена. Нецелые значения
+        округляются до одного знака («2.5x»).
+        """
+        go = self._month_value_only(go_cell)
+        plus = self._month_value_only(plus_cell)
+        if go is None or plus is None or go == 0:
+            return "-"
+        ratio = plus / go
+        if abs(ratio - round(ratio)) < 1e-9:
+            return f"{round(ratio)}x"
+        return f"{ratio:.1f}x"
+
+    def _month_value_only(self, cell: str) -> int | None:
+        """Число месячных запросов из ячейки; «Unlimited»/нечисловое → None."""
+        if self._UNLIMITED.search(cell):
+            return None
+        digits = re.sub(r"[^\d]", "", cell)
+        return int(digits) if digits else None
 
     _FREE = re.compile(r"\bfree\b", re.IGNORECASE)
 
@@ -389,7 +417,7 @@ class GoLimits:
         return unique
 
     def combined_header(self) -> list[str]:
-        """Шапка единой таблицы: запросы по периодам (Go, Go Plus), затем цены."""
+        """Шапка единой таблицы: запросы по периодам (Go, Go Plus), кратность, цены."""
         return [
             "Model",
             "Go: 5 hours",
@@ -398,6 +426,7 @@ class GoLimits:
             "Go Plus: week",
             "Go: month",
             "Go Plus: month",
+            "Кратность",
             *self.pricing_header[1:],
         ]
 
@@ -435,14 +464,21 @@ class GoLimits:
                 go_vals[2],
                 plus_vals[2],
             ]
+            go_requests = self._go_by_name.get(key)
+            plus_requests = self._plus_by_name.get(key)
+            ratio = (
+                "-"
+                if go_requests is None or plus_requests is None
+                else self._ratio(go_requests[self._month_idx], plus_requests[self._plus_month_idx])
+            )
             price_rows = sorted(self._pricing_by_name.get(key, []), key=self._price_value)
             if price_rows:
                 for price_row in price_rows:
-                    result.append([price_row[0], *period_vals, *price_row[1:]])
+                    result.append([price_row[0], *period_vals, ratio, *price_row[1:]])
             else:
                 source = go_row if go_row is not None else plus_row
                 name = source[0] if source is not None else "-"
-                result.append([name, *period_vals, *pricing_empty])
+                result.append([name, *period_vals, ratio, *pricing_empty])
         return result
 
 
@@ -497,7 +533,29 @@ class OpenCodeReport:
             pricing_tables[0],
             GO_SORT_DESCENDING,
         )
+        self._plan_prices = self._plan_prices_from(go_parser)
         self._zen = ZenPricing(zen_parser.find_table(ZEN_PRICING_HEADERS))
+
+    @staticmethod
+    def _plan_prices_from(go_parser: PageParser) -> dict[str, str]:
+        """Читает цены тарифов из таблицы «Plan | Price | Included usage».
+
+        Возвращает {"Go": "$10/мес", "Go Plus": "$40/мес"} — подписи для
+        заголовка секции Go. Отсутствие таблицы или одного из планов — это
+        изменившаяся структура страницы, ошибка сообщается вызывающему коду.
+        """
+        rows = go_parser.find_table(PLAN_HEADERS)
+        prices = {row[0].strip(): row[1].strip() for row in rows[1:] if len(row) >= 2}
+        missing = [plan for plan in ("Go", "Go Plus") if plan not in prices]
+        if missing:
+            raise RuntimeError(
+                "В таблице тарифов не хватает планов «" + ", ".join(missing) + "»"
+                " — структура страницы изменилась"
+            )
+        return {
+            plan: prices[plan].replace(PLAN_MONTH_SUFFIX, PLAN_MONTH_LABEL)
+            for plan in ("Go", "Go Plus")
+        }
 
     def _separators(self) -> list[str]:
         """Разделители колонок: групповой между запросами и ценами."""
@@ -515,7 +573,8 @@ class OpenCodeReport:
         )
         order = "по убыванию" if GO_SORT_DESCENDING else "по возрастанию"
         title = (
-            "Go и Go Plus: лимиты запросов и цены за 1M токенов"
+            f"Go ({self._plan_prices['Go']}) и Go Plus ({self._plan_prices['Go Plus']}):"
+            " лимиты запросов и цены за 1M токенов"
             f" ({order} запросов в месяц, план Go):"
         )
         return f"{title}\n{table}"
