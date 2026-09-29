@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Мониторинг таблиц OpenCode Go (лимиты запросов и цены) и Zen (цены, устаревание).
+"""Мониторинг таблиц OpenCode Go/Go Plus (лимиты запросов и цены) и Zen (цены, устаревание).
 
 Скрипт периодически (cron) проверяет:
 https://opencode.ai/docs/en/go/
@@ -20,7 +20,7 @@ LOG_KEEP_LINES (1000).
 
 Пример cron (запуск каждые 4 часа); в cron.err попадает только stderr — ошибки
 и необработанные краши, обычный лог пишется скриптом в opencode_monitor.log:
-0 */4 * * * /usr/bin/python3 /opt/opencode-monitor/opencode_monitor.py 2>> /opt/opencode-monitor/cron.err
+0 */4 * * * cd /opt/opencode-monitor && /usr/bin/python3 opencode_monitor.py 2>> cron.err
 """
 
 import json
@@ -52,24 +52,38 @@ PAGES = {
     "Zen": "https://opencode.ai/docs/en/zen/",
 }
 
-GO_HEADERS = {"Model", "requests per 5 hour"}
+GO_HEADERS = {"Model", "Requests per 5 hours"}
 GO_PRICE_HEADERS = {"Model", "Cached Read", "Monthly limit"}
 ZEN_HEADERS = {"Model", "Cached Read"}
 DEPRECATED_HEADERS = {"Model", "Deprecation date"}
 
 # Порядок источников в уведомлении и их подписи.
-SOURCE_ORDER = ("Go", "GoPrices", "Zen")
-SOURCE_NAMES = {"Go": "Go (запросы)", "GoPrices": "Go (цены)", "Zen": "Zen"}
+SOURCE_ORDER = ("Go", "GoPlus", "GoPrices", "GoPlusPrices", "Zen")
+SOURCE_NAMES = {
+    "Go": "Go (запросы)",
+    "GoPlus": "Go Plus (запросы)",
+    "GoPrices": "Go (цены)",
+    "GoPlusPrices": "Go Plus (цены)",
+    "Zen": "Zen",
+}
 
+_GO_REQUEST_LABELS = {
+    "за 5 часов": "за 5 часов",
+    "в неделю": "в неделю",
+    "в месяц": "в месяц",
+}
+_GO_PRICE_LABELS = {
+    "вход": "Вход",
+    "выход": "Выход",
+    "cached_read": "Cached Read",
+    "cached_write": "Cached Write",
+    "monthly_limit": "Monthly limit",
+}
 FIELD_LABELS = {
-    "Go": {"за 5 часов": "за 5 часов", "в неделю": "в неделю", "в месяц": "в месяц"},
-    "GoPrices": {
-        "вход": "Вход",
-        "выход": "Выход",
-        "cached_read": "Cached Read",
-        "cached_write": "Cached Write",
-        "monthly_limit": "Monthly limit",
-    },
+    "Go": _GO_REQUEST_LABELS,
+    "GoPlus": _GO_REQUEST_LABELS,
+    "GoPrices": _GO_PRICE_LABELS,
+    "GoPlusPrices": _GO_PRICE_LABELS,
     "Zen": {
         "вход": "Вход",
         "выход": "Выход",
@@ -77,6 +91,19 @@ FIELD_LABELS = {
         "cached_write": "Cached Write",
     },
 }
+
+# Короткие подписи значений для блоков «Появились»/«Пропали».
+_REQUEST_SHORT = {"за 5 часов": "за 5 ч", "в неделю": "неделя", "в месяц": "месяц"}
+_PRICE_DISPLAY = {
+    "вход": "вход",
+    "выход": "выход",
+    "cached_read": "cached read",
+    "cached_write": "cached write",
+    "monthly_limit": "monthly limit",
+}
+
+# Завершающий суффикс в скобках, например «(≤ 272K tokens)».
+_PAREN_SUFFIX_RE = re.compile(r"\s*\([^()]*\)\s*$")
 
 ModelTable = dict[str, dict[str, str]]
 TariffEvent = tuple[str, str, str]
@@ -232,6 +259,27 @@ def _cell_text(cell: Tag) -> str:
     return _normalize("".join(chunks))
 
 
+def _find_tables(soup: BeautifulSoup, expected_headers: set[str]) -> list[Tag]:
+    """Ищет все таблицы, чей заголовок содержит все ожидаемые колонки.
+
+    Args:
+        soup: распарсенный HTML страницы.
+        expected_headers: подмножество имён колонок, идентифицирующих таблицу.
+
+    Returns:
+        Список найденных таблиц в порядке появления на странице.
+    """
+    tables = []
+    for table in soup.find_all("table"):
+        header_row = table.find("tr")
+        if header_row is None:
+            continue
+        cells = [_cell_text(c) for c in header_row.find_all(["th", "td"])]
+        if set(expected_headers) <= set(cells):
+            tables.append(table)
+    return tables
+
+
 def _find_table(soup: BeautifulSoup, expected_headers: set[str]) -> Tag | None:
     """Ищет первую таблицу, чей заголовок содержит все ожидаемые колонки.
 
@@ -242,14 +290,8 @@ def _find_table(soup: BeautifulSoup, expected_headers: set[str]) -> Tag | None:
     Returns:
         Элемент таблицы или None, если таблица не найдена.
     """
-    for table in soup.find_all("table"):
-        header_row = table.find("tr")
-        if header_row is None:
-            continue
-        cells = [_cell_text(c) for c in header_row.find_all(["th", "td"])]
-        if set(expected_headers) <= set(cells):
-            return table
-    return None
+    tables = _find_tables(soup, expected_headers)
+    return tables[0] if tables else None
 
 
 def _table_rows(table: Tag) -> list[list[str]]:
@@ -298,65 +340,39 @@ def _column_indexes(headers: list[str], names: tuple[str, ...]) -> dict[str, int
     return indexes
 
 
-def parse_go(soup: BeautifulSoup) -> ModelTable:
-    """Парсит таблицу лимитов запросов Go.
+def _parse_request_table(table: Tag) -> ModelTable:
+    """Парсит одну таблицу лимитов запросов.
 
     Returns:
         Словарь {модель: {"за 5 часов": ..., "в неделю": ..., "в месяц": ...}}.
-
-    Raises:
-        RuntimeError: таблица не найдена или пуста (структура страницы изменилась).
     """
-    table = _find_table(soup, GO_HEADERS)
-    if table is None:
-        raise RuntimeError("Не найдена таблица запросов Go на странице")
     headers = _header_indexes(table)
     idx = _column_indexes(
         headers,
-        (
-            "Model",
-            "requests per 5 hour",
-            "requests per week",
-            "requests per month",
-        ),
+        ("Model", "Requests per 5 hours", "Requests per week", "Requests per month"),
     )
     models = {}
     for cells in _table_rows(table):
         if len(cells) <= max(idx.values()):
             continue
         models[cells[idx["Model"]]] = {
-            "за 5 часов": cells[idx["requests per 5 hour"]],
-            "в неделю": cells[idx["requests per week"]],
-            "в месяц": cells[idx["requests per month"]],
+            "за 5 часов": cells[idx["Requests per 5 hours"]],
+            "в неделю": cells[idx["Requests per week"]],
+            "в месяц": cells[idx["Requests per month"]],
         }
-    if not models:
-        raise RuntimeError("Таблица запросов Go пуста — возможно, изменилась структура страницы")
     return models
 
 
-def parse_go_pricing(soup: BeautifulSoup) -> ModelTable:
-    """Парсит таблицу цен Go (за 1M токенов и месяцной лимит).
+def _parse_price_table(table: Tag) -> ModelTable:
+    """Парсит одну таблицу цен (за 1M токенов и месячный лимит).
 
     Returns:
         Словарь {модель: {вход, выход, cached_read, cached_write, monthly_limit}}.
-
-    Raises:
-        RuntimeError: таблица не найдена или пуста (структура страницы изменилась).
     """
-    table = _find_table(soup, GO_PRICE_HEADERS)
-    if table is None:
-        raise RuntimeError("Не найдена таблица цен Go на странице")
     headers = _header_indexes(table)
     idx = _column_indexes(
         headers,
-        (
-            "Model",
-            "Input",
-            "Output",
-            "Cached Read",
-            "Cached Write",
-            "Monthly limit",
-        ),
+        ("Model", "Input", "Output", "Cached Read", "Cached Write", "Monthly limit"),
     )
     models = {}
     for cells in _table_rows(table):
@@ -369,9 +385,54 @@ def parse_go_pricing(soup: BeautifulSoup) -> ModelTable:
             "cached_write": cells[idx["Cached Write"]],
             "monthly_limit": cells[idx["Monthly limit"]],
         }
-    if not models:
-        raise RuntimeError("Таблица цен Go пуста — возможно, изменилась структура страницы")
     return models
+
+
+def parse_go(soup: BeautifulSoup) -> tuple[ModelTable, ModelTable]:
+    """Парсит обе таблицы лимитов запросов Go (Go и Go Plus).
+
+    Returns:
+        Кортеж (Go, Go Plus): словари {модель: {"за 5 часов", "в неделю", "в месяц"}}.
+
+    Raises:
+        RuntimeError: найдено не ровно две таблицы или таблица пуста
+            (структура страницы изменилась).
+    """
+    tables = _find_tables(soup, GO_HEADERS)
+    if len(tables) != 2:
+        raise RuntimeError(
+            f"Ожидалось 2 таблицы запросов Go (Go и Go Plus), найдено {len(tables)} — "
+            "структура страницы изменилась"
+        )
+    go_models = _parse_request_table(tables[0])
+    goplus_models = _parse_request_table(tables[1])
+    if not go_models or not goplus_models:
+        raise RuntimeError("Таблица запросов Go пуста — возможно, изменилась структура страницы")
+    return go_models, goplus_models
+
+
+def parse_go_pricing(soup: BeautifulSoup) -> tuple[ModelTable, ModelTable]:
+    """Парсит обе таблицы цен Go (Go и Go Plus).
+
+    Returns:
+        Кортеж (Go, Go Plus): словари
+        {модель: {вход, выход, cached_read, cached_write, monthly_limit}}.
+
+    Raises:
+        RuntimeError: найдено не ровно две таблицы или таблица пуста
+            (структура страницы изменилась).
+    """
+    tables = _find_tables(soup, GO_PRICE_HEADERS)
+    if len(tables) != 2:
+        raise RuntimeError(
+            f"Ожидалось 2 таблицы цен Go (Go и Go Plus), найдено {len(tables)} — "
+            "структура страницы изменилась"
+        )
+    go_prices = _parse_price_table(tables[0])
+    goplus_prices = _parse_price_table(tables[1])
+    if not go_prices or not goplus_prices:
+        raise RuntimeError("Таблица цен Go пуста — возможно, изменилась структура страницы")
+    return go_prices, goplus_prices
 
 
 def parse_zen(soup: BeautifulSoup) -> tuple[ModelTable, dict[str, str] | None]:
@@ -469,36 +530,144 @@ def diff_models(
     return sorted(removed), sorted(added), sorted(tariff), price_changes
 
 
-def build_message(changes: dict[str, SourceDiff], now_str: str) -> str:
-    """Собирает текст уведомления для Telegram.
+def _model_base(name: str) -> str:
+    """Возвращает имя модели без завершающего суффикса в скобках.
+
+    Нужно для группировки меж-источниковых строк: запросы называют модель
+    коротко («GPT 6 Luna»), а цены — с уточнением тарифа
+    («GPT 6 Luna (≤ 272K tokens)»). «X Free» ↔ «X» — смена тарифа
+    (обрабатывается в diff_models, здесь не участвует).
+    """
+    base = _PAREN_SUFFIX_RE.sub("", name).strip()
+    return base or name
+
+
+def _group_title(display: str, base: str) -> str:
+    """Собирает заголовок блока модели: «Имя (суффикс) [нормализованное имя]:»."""
+    if display == base:
+        return f"  {base}:"
+    return f"  {display} [{base}]:"
+
+
+def _render_values(source: str, values: dict[str, str]) -> str:
+    """Человекочитаемые лимиты/цены модели для блоков «Появились»/«Пропали»."""
+    if source in ("Go", "GoPlus"):
+        keys = ("за 5 часов", "в неделю", "в месяц")
+        parts = [f"{_REQUEST_SHORT[k]} — {values[k]}" for k in keys if k in values]
+    else:
+        keys = ("вход", "выход", "cached_read", "cached_write", "monthly_limit")
+        parts = [f"{_PRICE_DISPLAY[k]} {values[k]}" for k in keys if k in values]
+    return ", ".join(parts) if parts else "(нет)"
+
+
+def _model_blocks(
+    changes: dict[str, SourceDiff],
+    order: list[str],
+    kind: str,
+    tables: dict[str, ModelTable],
+    was: str = "",
+) -> list[str]:
+    """Строит блоки «Появились»/«Пропали» с группировкой по нормализованному имени.
 
     Args:
-        changes: обнаруженные изменения по источникам Go/GoPrices/Zen.
+        changes: изменения по источникам.
+        order: источники в порядке вывода.
+        kind: категория («added» или «removed»).
+        tables: снапшоты моделей (текущие для added, прежние для removed).
+        was: префикс значений в блоке («было: » для removed).
+
+    Returns:
+        Список готовых блоков (каждый — многострочная строка с отступами).
+    """
+    if kind == "removed":
+        events = [(s, n) for s in order for n in changes[s]["removed"]]
+    else:
+        events = [(s, n) for s in order for n in changes[s]["added"]]
+    groups: dict[str, list[tuple[str, str]]] = {}
+    for source, name in events:
+        groups.setdefault(_model_base(name), []).append((source, name))
+
+    blocks = []
+    for base in sorted(groups):
+        entries = groups[base]
+        display = max((n for _, n in entries), key=len)
+        block = [_group_title(display, base)]
+        for s in order:
+            names = sorted({n for src, n in entries if src == s})
+            for name in names:
+                values = tables.get(s, {}).get(name, {})
+                name_prefix = f"{name}: " if len(names) > 1 else ""
+                block.append(
+                    f"    {SOURCE_NAMES[s]}: {was}{name_prefix}{_render_values(s, values)}"
+                )
+        blocks.append("\n".join(block))
+    return blocks
+
+
+def _price_blocks(changes: dict[str, SourceDiff], order: list[str]) -> list[str]:
+    """Строит блоки «Изменены цены» с группировкой по нормализованному имени."""
+    events = [(s, n, fields) for s in order for (n, fields) in changes[s]["prices"]]
+    groups: dict[str, list[tuple[str, str, list[tuple[str, str | None, str | None]]]]] = {}
+    for source, name, fields in events:
+        groups.setdefault(_model_base(name), []).append((source, name, fields))
+
+    blocks = []
+    for base in sorted(groups):
+        entries = groups[base]
+        display = max((n for _, n, _ in entries), key=len)
+        block = [_group_title(display, base)]
+        for s in order:
+            sub = [(n, fields) for src, n, fields in entries if src == s]
+            for name, fields in sub:
+                bits = [
+                    f"{FIELD_LABELS[s][k]}: "
+                    f"{old if old is not None else '(нет)'} → "
+                    f"{new if new is not None else '(нет)'}"
+                    for k, old, new in fields
+                ]
+                name_prefix = f"{name}: " if len(sub) > 1 else ""
+                block.append(f"    {SOURCE_NAMES[s]}: {name_prefix}{', '.join(bits)}")
+        blocks.append("\n".join(block))
+    return blocks
+
+
+def build_message(
+    changes: dict[str, SourceDiff],
+    now_str: str,
+    curr: dict[str, SourceData] | None = None,
+    prev: dict[str, SourceSnapshot] | None = None,
+) -> str:
+    """Собирает текст уведомления для Telegram.
+
+    События группируются по нормализованному имени модели (без суффикса
+    в скобках), поэтому запросы и цены одной модели попадают в один блок
+    с деталями по каждому источнику.
+
+    Args:
+        changes: обнаруженные изменения по источникам.
         now_str: дата и время в человекочитаемом формате.
+        curr: текущий снапшот (для деталей появившихся моделей).
+        prev: прежний снапшот (для старых значений пропавших моделей).
 
     Returns:
         Текст сообщения, обрезанный до 4000 символов (лимит Telegram).
     """
+    curr_tables: dict[str, ModelTable] = {s: d["models"] for s, d in (curr or {}).items()}
+    prev_tables: dict[str, ModelTable] = {
+        s: snap.get("models", {}) for s, snap in (prev or {}).items()
+    }
+
     out = [f"📡 OpenCode-монитор — изменения ({now_str})", ""]
 
     order = [s for s in SOURCE_ORDER if s in changes]
-    removed = [f"{SOURCE_NAMES[s]}: {n}" for s in order for n in changes[s]["removed"]]
-    added = [f"{SOURCE_NAMES[s]}: {n}" for s in order for n in changes[s]["added"]]
+    removed = _model_blocks(changes, order, "removed", prev_tables, "было: ")
+    added = _model_blocks(changes, order, "added", curr_tables)
     tariff = [
         f"{SOURCE_NAMES[s]}: {old} → {new} (стала {label})"
         for s in order
         for (old, new, label) in changes[s]["tariff"]
     ]
-    prices = []
-    for s in order:
-        for name, fields in changes[s]["prices"]:
-            bits = [
-                f"{FIELD_LABELS[s][k]}: "
-                f"{old if old is not None else '(нет)'} → "
-                f"{new if new is not None else '(нет)'}"
-                for k, old, new in fields
-            ]
-            prices.append(f"{SOURCE_NAMES[s]}: {name} — {', '.join(bits)}")
+    prices = _price_blocks(changes, order)
     dep_events = []
     for name, new_date, old_date in changes.get("Zen", {}).get("deprecated", []):
         if new_date is None:
@@ -511,7 +680,7 @@ def build_message(changes: dict[str, SourceDiff], now_str: str) -> str:
         """Добавляет секцию с заголовком и строками, если строки есть."""
         if items:
             out.append(title)
-            out.extend(f"  {x}" for x in items)
+            out.extend(items)
             out.append("")
 
     add("❌ Пропали:", removed)
@@ -654,8 +823,12 @@ def main() -> int:
         html = fetch_html(url, HTTP_TIMEOUT)
         soup = BeautifulSoup(html, "html.parser")
         if source == "Go":
-            fresh["Go"] = {"models": parse_go(soup)}
-            fresh["GoPrices"] = {"models": parse_go_pricing(soup)}
+            go_models, goplus_models = parse_go(soup)
+            go_prices, goplus_prices = parse_go_pricing(soup)
+            fresh["Go"] = {"models": go_models}
+            fresh["GoPlus"] = {"models": goplus_models}
+            fresh["GoPrices"] = {"models": go_prices}
+            fresh["GoPlusPrices"] = {"models": goplus_prices}
         else:
             models, deprecated = parse_zen(soup)
             fresh["Zen"] = {"models": models, "deprecated": deprecated}
@@ -751,7 +924,8 @@ def main() -> int:
                 name,
                 old_dep[name],
             )
-    changes["Zen"]["deprecated"] = dep_events
+    if "Zen" in changes:
+        changes["Zen"]["deprecated"] = dep_events
     total += len(dep_events)
 
     state: dict[str, SourceSnapshot] = {s: {"fetched_at": now_iso, **fresh[s]} for s in fresh}
@@ -764,7 +938,7 @@ def main() -> int:
         return 0
 
     logger.info("Найдено изменений: %d", total)
-    send_tg(cfg, build_message(changes, now_human))
+    send_tg(cfg, build_message(changes, now_human, fresh, prev))
     return 0
 
 
@@ -772,8 +946,8 @@ if __name__ == "__main__":
     code = 0
     try:
         code = main()
-    except Exception as err:
-        logging.getLogger("opencode_monitor").exception("Фатальная ошибка: %s", err)
+    except Exception:
+        logging.getLogger("opencode_monitor").exception("Фатальная ошибка")
         code = 1
     trim_log()
     sys.exit(code)
