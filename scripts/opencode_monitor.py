@@ -814,6 +814,9 @@ def main() -> int:
 
     Returns:
         Код выхода: 0 — успех; 1 — фатальная ошибка (отрабатывается в __main__).
+    Errors:
+        Любое исключение всплывает в __main__ — там оно логируется со стеком
+        и уходит коротким сообщением в Telegram (см. report_fatal_error).
     """
     cfg = load_env()
     setup_logging()
@@ -942,12 +945,27 @@ def main() -> int:
     return 0
 
 
+def report_fatal_error(err: BaseException) -> None:
+    """Логирует фатальную ошибку со стеком и шлёт короткое уведомление в TG.
+
+    Стек трейсбека — только в лог (в Telegram он нечитаем); в TG уходит лишь
+    знак ошибки и тип с первым сообщением. Ошибки отправки в TG логируются,
+    но не меняют ход обработки ошибки: код выхода остаётся 1.
+    """
+    logger.exception("Фатальная ошибка")
+    cfg = load_env()
+    message = f"🚨 OpenCode-монитор — сбой запуска: {type(err).__name__}: {err}"
+    if len(message) > 4000:
+        message = message[:3997] + "..."
+    send_tg(cfg, message)
+
+
 if __name__ == "__main__":
     code = 0
     try:
         code = main()
-    except Exception:
-        logging.getLogger("opencode_monitor").exception("Фатальная ошибка")
+    except Exception as err:  # noqa: BLE001 — CLI-обёртка: любой сбой → лог+TG, код 1
+        report_fatal_error(err)
         code = 1
     trim_log()
     sys.exit(code)
