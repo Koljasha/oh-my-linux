@@ -1175,14 +1175,18 @@ def unit_template() -> str:
         # (recover_to_empty → cleanup_family: -F + -X), то есть удаляет их сам;
         # при следующем старте его же matcher (is_not_found_error) не понимает
         # формулировку iptables-nft "Chain '…' does not exist" и ретраит вечно.
-        # Решение: пересоздавать пустые цепочки перед стартом ('-' игнорирует
-        # Already exists, 2>/dev/null прячет шум; ufw таблицу raw не трогает).
-        "ExecStartPre=-/usr/sbin/iptables -t raw -N TELEMT_NOTRACK 2>/dev/null\n"
-        "ExecStartPre=-/usr/sbin/iptables -t raw -N TELEMT_NT_A 2>/dev/null\n"
-        "ExecStartPre=-/usr/sbin/iptables -t raw -N TELEMT_NT_B 2>/dev/null\n"
-        "ExecStartPre=-/usr/sbin/ip6tables -t raw -N TELEMT_NOTRACK 2>/dev/null\n"
-        "ExecStartPre=-/usr/sbin/ip6tables -t raw -N TELEMT_NT_A 2>/dev/null\n"
-        "ExecStartPre=-/usr/sbin/ip6tables -t raw -N TELEMT_NT_B 2>/dev/null\n"
+        # Решение: пересоздавать пустые цепочки перед стартом. systemd НЕ
+        # поддерживает перенаправления в Exec*-строках, поэтому через sh -c,
+        # и '-' гасит уже существующие цепочки (Chain already exists);
+        # ufw таблицу raw не использует.
+        "ExecStartPre=-/bin/sh -c "
+        "'/usr/sbin/iptables -t raw -N TELEMT_NOTRACK 2>/dev/null; "
+        "/usr/sbin/iptables -t raw -N TELEMT_NT_A 2>/dev/null; "
+        "/usr/sbin/iptables -t raw -N TELEMT_NT_B 2>/dev/null'\n"
+        "ExecStartPre=-/bin/sh -c "
+        "'/usr/sbin/ip6tables -t raw -N TELEMT_NOTRACK 2>/dev/null; "
+        "/usr/sbin/ip6tables -t raw -N TELEMT_NT_A 2>/dev/null; "
+        "/usr/sbin/ip6tables -t raw -N TELEMT_NT_B 2>/dev/null'\n"
         "Restart=on-failure\n"
         "RestartSec=5\n"
         "LimitNOFILE=65536\n"
