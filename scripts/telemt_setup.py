@@ -1124,6 +1124,10 @@ def config_template(port: int, domain: str, secret: str) -> str:
     mss = client_mss_profile(port)
     return (
         "[general]\n"
+        # Осознанное отличие от официального дефолта (install.sh ставит true):
+        # false = прямая маршрутизация к DC без Middle-End pool. Работает
+        # стабильно с самого первого деплоя. Не менять молча: true меняет
+        # трафик-паттерн (соединения через middle-proxy эндпоинты Telegram).
         "use_middle_proxy = false\n"
         "\n"
         "[general.modes]\n"
