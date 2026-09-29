@@ -258,7 +258,8 @@ class GoLimits:
     """Данные таблиц запросов (Go и Go Plus) и цен, логика их сопоставления.
 
     Первая таблица запросов относится к плану Go, вторая — к Go Plus. Цены
-    берутся из первой (Go) таблицы цен: они совпадают у обоих планов.
+    берутся из Go-таблицы цен (у обоих планов совпадают), а Monthly limit —
+    из Go- и Go Plus-таблиц: у планов он различается.
     """
 
     # Подписи колонок запросов в единой таблице: план + окно лимита.
@@ -271,6 +272,7 @@ class GoLimits:
         go_requests_table: list[list[str]],
         plus_requests_table: list[list[str]],
         pricing_table: list[list[str]],
+        plus_pricing_table: list[list[str]],
         descending: bool = True,
     ):
         self.go_requests_header = go_requests_table[0]
@@ -282,6 +284,17 @@ class GoLimits:
         self._go_requests = go_requests_table[1:]
         self._plus_requests = plus_requests_table[1:]
         self._pricing = pricing_table[1:]
+        self._plus_pricing_header = plus_pricing_table[0]
+        self._plus_monthly_idx = self._plus_pricing_header.index("Monthly limit")
+        # Monthly limit у планов различается (Go $60 → Go Plus $180), поэтому
+        # для строки цен с точным именем («GPT 6 Luna (≤ 272K tokens)») смотрим
+        # значение именно из Go Plus-таблицы по тому же имени.
+        self._plus_monthly_by_name: dict[str, str] = {}
+        for row in plus_pricing_table[1:]:
+            if len(row) > self._plus_monthly_idx:
+                self._plus_monthly_by_name[ModelNameMapper.normalize(row[0])] = row[
+                    self._plus_monthly_idx
+                ]
         self._descending = descending
         self._go_by_name = self._index_by_name(self._go_requests, "Go")
         self._plus_by_name = self._index_by_name(self._plus_requests, "Go Plus")
@@ -428,6 +441,7 @@ class GoLimits:
             "Go Plus: month",
             "Кратность",
             *self.pricing_header[1:],
+            self._plus_pricing_header[self._plus_monthly_idx] + " (Go Plus)",
         ]
 
     def combined_rows(self) -> list[list[str]]:
@@ -435,13 +449,14 @@ class GoLimits:
 
         Колонки запросов группируются по периодам: для каждого периода
         сначала значения плана Go, затем Go Plus. Колонки запросов
-        повторяются для каждой строки цен одной модели. Модель без строк цен
-        получает "-" в колонках цен; модель без строки запросов в одном из
-        планов — "-" в колонках этого плана.
+        повторяются для каждой строки цен одной модели. Monthly limit Go Plus
+        ищется по точному имени строки цен (имя с суффиксом окна токенов).
+        Модель без строк цен получает "-" в колонках цен; модель без строки
+        запросов в одном из планов — "-" в колонках этого плана.
         """
         go_empty = ["-"] * (len(self.go_requests_header) - 1)
         plus_empty = ["-"] * (len(self.plus_requests_header) - 1)
-        pricing_empty = ["-"] * (len(self.pricing_header) - 1)
+        pricing_empty = ["-"] * (len(self.pricing_header) - 1) + ["-"]
 
         result: list[list[str]] = []
         for key in self._ordered_keys():
@@ -474,7 +489,10 @@ class GoLimits:
             price_rows = sorted(self._pricing_by_name.get(key, []), key=self._price_value)
             if price_rows:
                 for price_row in price_rows:
-                    result.append([price_row[0], *period_vals, ratio, *price_row[1:]])
+                    plus_monthly = self._plus_monthly_by_name.get(
+                        ModelNameMapper.normalize(price_row[0]), "-"
+                    )
+                    result.append([price_row[0], *period_vals, ratio, *price_row[1:], plus_monthly])
             else:
                 source = go_row if go_row is not None else plus_row
                 name = source[0] if source is not None else "-"
@@ -531,6 +549,7 @@ class OpenCodeReport:
             requests_tables[0],
             requests_tables[1],
             pricing_tables[0],
+            pricing_tables[1],
             GO_SORT_DESCENDING,
         )
         self._plan_prices = self._plan_prices_from(go_parser)
@@ -561,7 +580,10 @@ class OpenCodeReport:
         """Разделители колонок: групповой между запросами и ценами."""
         header = self._limits.combined_header()
         separators = [self.COLUMN_SEPARATOR] * (len(header) - 1)
-        separators[len(header) - len(self._limits.pricing_header)] = self.GROUP_SEPARATOR
+        # Ценовая группа = колонки цен Go (len(pricing_header) - 1) плюс
+        # Monthly limit (Go Plus); разделитель стоит перед её первой колонкой.
+        price_columns = len(self._limits.pricing_header)
+        separators[len(header) - price_columns - 1] = self.GROUP_SEPARATOR
         return separators
 
     def _render_go(self) -> str:
