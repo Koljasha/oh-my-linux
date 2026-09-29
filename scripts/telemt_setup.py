@@ -1129,7 +1129,8 @@ def config_template(port: int, domain: str, secret: str) -> str:
         f'client_mss = "{mss}"\n'
         "\n"
         # Свой менеджер фаервола telemt требует CAP_NET_ADMIN и nft/iptables —
-        # у нас фильтрацию ведёт ufw, сервис работает без CAP_NET_ADMIN.
+        # у нас фильтрацию ведёт ufw, notrack-правила telemt не ставит
+        # (CAP_NET_ADMIN в юните нужен только его стартовому reconciler'у).
         "[server.conntrack_control]\n"
         "inline_conntrack_control = false\n"
         "\n"
@@ -1167,8 +1168,12 @@ def unit_template() -> str:
         "RestartSec=5\n"
         "LimitNOFILE=65536\n"
         "NoNewPrivileges=true\n"
-        "AmbientCapabilities=CAP_NET_BIND_SERVICE\n"
-        "CapabilityBoundingSet=CAP_NET_BIND_SERVICE\n"
+        # CAP_NET_BIND_SERVICE — слушать порт; CAP_NET_ADMIN — не для наших правил
+        # (фильтрацию ведёт ufw), а чтобы внутренний reconciler фаервола telemt
+        # меньше спамил "Operation not permitted": он при каждом старте всегда
+        # дергает nft/iptables (recover_to_empty), даже при inline=false.
+        "AmbientCapabilities=CAP_NET_BIND_SERVICE CAP_NET_ADMIN\n"
+        "CapabilityBoundingSet=CAP_NET_BIND_SERVICE CAP_NET_ADMIN\n"
         "\n"
         "[Install]\n"
         "WantedBy=multi-user.target\n"
