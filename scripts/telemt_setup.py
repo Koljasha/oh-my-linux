@@ -659,7 +659,7 @@ class Runner:
     def replace_binary(self, src: str | Path) -> bool:
         if self.dry_run:
             self._count()
-            log("DRY", f"замена бинарника {src} -> {BIN} (chmod 0755 + setcap)")
+            log("DRY", f"замена бинарника {src} -> {BIN} (chmod 0755 + setcap -r)")
             mirror = self._mirror(BIN)
             if mirror is not None:
                 mirror.write_text("")
@@ -668,9 +668,16 @@ class Runner:
             raise StepError(f"исходный бинарник не найден: {src}")
         shutil.copy2(src, BIN)
         os.chmod(BIN, 0o755)
-        cp = self.run(["setcap", "cap_net_bind_service=+ep", BIN], check=False, mutates=True)
+        # Файловые capabilities (xattr security.capability) на бинарнике нельзя
+        # совмещать с AmbientCapabilities юнита: execve файла с file caps сбрасывает
+        # ambient-набор процесса (man 7 capabilities), и сервис снова теряет
+        # CAP_NET_ADMIN → спам conntrack-reconciler'а. Юнит выдаёт обе capability
+        # через Ambient, поэтому xattr с бинарника снимаем (best-effort).
+        cp = self.run(["setcap", "-r", BIN], check=False, mutates=True)
         if cp.returncode != 0:
-            log("WARN", f"setcap не применился для {BIN}: {cp.stderr.strip() or cp.stdout.strip()}")
+            log(
+                "WARN", f"setcap -r не сработал для {BIN}: {cp.stderr.strip() or cp.stdout.strip()}"
+            )
         return True
 
     def replace_script(self, content: bytes) -> None:
