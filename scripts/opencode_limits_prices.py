@@ -5,6 +5,7 @@
 """
 
 import decimal
+import os
 import re
 import sys
 from html.parser import HTMLParser
@@ -38,6 +39,41 @@ UA = {
 GO_SORT_DESCENDING = (
     True  # запросы плана Go в месяц: True — от большего к меньшему, False — наоборот
 )
+
+# Цвета единой таблицы Go (ANSI): лимиты Go — приглушённый yellow (dim,
+# чтобы не был броским), все остальные колонки кроме Model — светло-серый.
+# Model — без цвета.
+RESET = "\033[0m"
+OTHER_COLOR = "\033[90m"
+GO_LIMIT_COLOR = "\033[2;33m"
+# Точное совпадение имён из combined_header(). "Monthly limit" — колонка цен
+# плана Go; "Monthly limit (Go Plus)" красится как "остальная" (серая).
+GO_LIMIT_HEADERS = frozenset({"Go: 5 hours", "Go: week", "Go: month", "Monthly limit"})
+
+
+def colors_enabled(force: bool = False) -> bool:
+    """True, если можно красить вывод ANSI.
+
+    NO_COLOR/TERM=dumb или вывод не в терминал (pipe/файл) — без цвета,
+    чтобы не мусорить escape-кодами. force (--color) перебивает проверку tty.
+    """
+    if os.environ.get("NO_COLOR") is not None:
+        return False
+    if os.environ.get("TERM") == "dumb":
+        return False
+    if force:
+        return True
+    return sys.stdout.isatty()
+
+
+def color_for_header(name: str) -> str:
+    """Цвет колонки Go-таблицы по имени шапки; "" — без цвета."""
+    if name in GO_LIMIT_HEADERS:
+        return GO_LIMIT_COLOR
+    if name == "Model":
+        return ""
+    return OTHER_COLOR
+
 
 # Теги зачёркнутого текста (старое значение) и мелкого шрифта (служебное).
 STRIKE_TAGS = frozenset({"del", "s", "strike"})
@@ -221,12 +257,17 @@ class TableRenderer:
 
     separators — список строк длиной n-1, задающий разделитель между каждой
     парой соседних колонок (позволяет вставить, например, " || " между
-    группами колонок).
+    группами колонок). column_colors — список длиной n: ANSI-код цвета для
+    каждой колонки или ""/None — без цвета. Цвет оборачивается поверх уже
+    выровненной ячейки, поэтому ширина колонок не разъезжается.
     """
 
     @staticmethod
     def render(
-        header: list[str], rows: list[list[str]], separators: list[str] | None = None
+        header: list[str],
+        rows: list[list[str]],
+        separators: list[str] | None = None,
+        column_colors: list[str | None] | None = None,
     ) -> str:
         n = len(header)
         for index, row in enumerate([header, *rows]):
@@ -237,15 +278,21 @@ class TableRenderer:
                 )
         if separators is None:
             separators = [" | "] * (n - 1)
+        if column_colors is None:
+            column_colors = [""] * n
         table = [header] + rows
         widths = [max(len(str(row[i])) for row in table) for i in range(n)]
+
+        def paint(cell: str, color: str | None) -> str:
+            return f"{color}{cell}{RESET}" if color else cell
 
         def join_row(cells: list[str]) -> str:
             return cells[0] + "".join(sep + cell for sep, cell in zip(separators, cells[1:]))
 
         padded = [[str(cell).ljust(widths[i]) for i, cell in enumerate(row)] for row in table]
-        sep_line = join_row(["-" * w for w in widths])
-        return "\n".join([join_row(padded[0]), sep_line, *(join_row(r) for r in padded[1:])])
+        colored = [[paint(cell, column_colors[i]) for i, cell in enumerate(row)] for row in padded]
+        sep_line = join_row([paint("-" * w, column_colors[i]) for i, w in enumerate(widths)])
+        return "\n".join([join_row(colored[0]), sep_line, *(join_row(r) for r in colored[1:])])
 
 
 class GoLimits:
@@ -528,7 +575,7 @@ class OpenCodeReport:
     COLUMN_SEPARATOR = " | "
     GROUP_SEPARATOR = " || "
 
-    def __init__(self, go_page: str, zen_page: str):
+    def __init__(self, go_page: str, zen_page: str, use_color: bool = False):
         go_parser = PageParser(go_page)
         zen_parser = PageParser(zen_page)
         requests_tables = go_parser.find_tables(GO_REQUESTS_HEADERS)
@@ -548,6 +595,7 @@ class OpenCodeReport:
         )
         self._plan_prices = self._plan_prices_from(go_parser)
         self._zen = ZenPricing(zen_parser.find_table(ZEN_PRICING_HEADERS))
+        self._use_color = use_color
 
     @staticmethod
     def _plan_prices_from(go_parser: PageParser) -> dict[str, str]:
@@ -582,10 +630,13 @@ class OpenCodeReport:
 
     def _render_go(self) -> str:
         """Возвращает единую таблицу Go и Go Plus с заголовком."""
+        header = self._limits.combined_header()
+        column_colors = [color_for_header(name) for name in header] if self._use_color else None
         table = TableRenderer.render(
-            self._limits.combined_header(),
+            header,
             self._limits.combined_rows(),
             separators=self._separators(),
+            column_colors=column_colors,
         )
         order = "по убыванию" if GO_SORT_DESCENDING else "по возрастанию"
         title = (
@@ -598,7 +649,12 @@ class OpenCodeReport:
     def _render_zen(self) -> str:
         """Возвращает таблицу цен Zen с заголовком."""
         title = "Zen: цены за 1M токенов (сначала бесплатные, затем по алфавиту):"
-        return f"{title}\n{TableRenderer.render(self._zen.header, self._zen.sorted_rows())}"
+        column_colors = (
+            ["" if name == "Model" else OTHER_COLOR for name in self._zen.header]
+            if self._use_color
+            else None
+        )
+        return f"{title}\n{TableRenderer.render(self._zen.header, self._zen.sorted_rows(), column_colors=column_colors)}"
 
     def render(self) -> str:
         """Возвращает полный отчёт: таблица Zen, затем единая таблица Go и Go Plus."""
@@ -608,10 +664,13 @@ class OpenCodeReport:
 def main() -> int:
     """Скачивает страницы Go/Zen, печатает отчёт; 0 — успех, 1 — ошибка."""
     try:
+        force_color = "--color" in sys.argv or "--color=always" in sys.argv
+        no_color = "--no-color" in sys.argv or "--no-colour" in sys.argv
+        use_color = colors_enabled(force=force_color) and not no_color
         fetcher = PageFetcher()
         go_page = fetcher.fetch(URL_GO)
         zen_page = fetcher.fetch(URL_ZEN)
-        print(OpenCodeReport(go_page, zen_page).render())
+        print(OpenCodeReport(go_page, zen_page, use_color=use_color).render())
         return 0
     except Exception as exc:  # noqa: BLE001 — CLI-обёртка: сбой сети или разбора → код 1
         print(f"Ошибка: {exc}", file=sys.stderr)
