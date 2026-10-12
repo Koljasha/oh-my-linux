@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-"""Отчёт по OpenCode: таблица цен Zen и единая таблица лимитов/цен Go.
+"""Отчёт по OpenCode: таблица цен Console Models (бывш. Zen)
+и единая таблица лимитов/цен Go.
 
-Источники: https://opencode.ai/docs/en/zen/ , https://opencode.ai/docs/en/go/
+Источники: https://opencode.ai/v2/docs/console/models/ , https://opencode.ai/v2/docs/console/go/
 """
 
 import decimal
@@ -11,8 +12,9 @@ import sys
 from html.parser import HTMLParser
 from urllib.request import Request, urlopen
 
-URL_GO = "https://opencode.ai/docs/en/go/"
-URL_ZEN = "https://opencode.ai/docs/en/zen/"
+URL_GO = "https://opencode.ai/v2/docs/console/go/"
+URL_MODELS = "https://opencode.ai/v2/docs/console/models/"
+URL_ZEN = URL_MODELS  # алиас для совместимости: страница Zen переехала на Console Models
 
 # Таблицы ищутся по шапке: собираются все таблицы, чьи колонки включают весь
 # набор. На странице Go ожидается по две такие таблицы каждого типа: первая
@@ -542,7 +544,7 @@ class GoLimits:
 
 
 class ZenPricing:
-    """Данные таблицы цен Zen, отсортированные по названию модели.
+    """Данные таблицы цен Console Models (бывш. Zen), отсортированные по названию модели.
 
     Бесплатные модели выводятся сверху, затем остальные. Строки одной модели
     (разные окна контекста) остаются рядом и в исходном порядке благодаря
@@ -570,7 +572,7 @@ class ZenPricing:
 
 
 class OpenCodeReport:
-    """Собирает итоговый отчёт: таблица цен Zen, затем единая таблица Go и Go Plus."""
+    """Собирает итоговый отчёт: таблица цен Models, затем единая таблица Go и Go Plus."""
 
     COLUMN_SEPARATOR = " | "
     GROUP_SEPARATOR = " || "
@@ -647,8 +649,8 @@ class OpenCodeReport:
         return f"{title}\n{table}"
 
     def _render_zen(self) -> str:
-        """Возвращает таблицу цен Zen с заголовком."""
-        title = "Zen: цены за 1M токенов (сначала бесплатные, затем по алфавиту):"
+        """Возвращает таблицу цен Models с заголовком."""
+        title = "Console Models (бывш. Zen): цены за 1M токенов (сначала бесплатные, затем по алфавиту):"
         column_colors = (
             ["" if name == "Model" else OTHER_COLOR for name in self._zen.header]
             if self._use_color
@@ -657,12 +659,12 @@ class OpenCodeReport:
         return f"{title}\n{TableRenderer.render(self._zen.header, self._zen.sorted_rows(), column_colors=column_colors)}"
 
     def render(self) -> str:
-        """Возвращает полный отчёт: таблица Zen, затем единая таблица Go и Go Plus."""
+        """Возвращает полный отчёт: таблица Models, затем единая таблица Go и Go Plus."""
         return f"{self._render_zen()}\n\n{self._render_go()}"
 
 
 def main() -> int:
-    """Скачивает страницы Go/Zen, печатает отчёт; 0 — успех, 1 — ошибка."""
+    """Скачивает страницы Go/Models, печатает отчёт; 0 — успех, 1 — ошибка."""
     try:
         force_color = "--color" in sys.argv or "--color=always" in sys.argv
         no_color = "--no-color" in sys.argv or "--no-colour" in sys.argv

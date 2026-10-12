@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Мониторинг таблиц OpenCode Go/Go Plus (лимиты запросов и цены) и Zen (цены, устаревание).
+"""Мониторинг таблиц OpenCode Go/Go Plus (лимиты запросов и цены) и Console Models
+(бывш. Zen: цены, устаревание).
 
 Скрипт периодически (cron) проверяет:
-https://opencode.ai/docs/en/go/
-https://opencode.ai/docs/en/zen/
+https://opencode.ai/v2/docs/console/go/
+https://opencode.ai/v2/docs/console/models/
 хранит снапшот в state.json и при изменениях
 (появление/пропажа моделей, смена Free → платная, изменение лимитов, цен,
 месячного лимита, устаревание) шлёт уведомление в Telegram.
@@ -48,8 +49,9 @@ HTTP_TIMEOUT = 30
 DEFAULT_UA = "Mozilla/5.0 (X11; Linux x86_64) opencode-price-monitor/1.0"
 
 PAGES = {
-    "Go": "https://opencode.ai/docs/en/go/",
-    "Zen": "https://opencode.ai/docs/en/zen/",
+    "Go": "https://opencode.ai/v2/docs/console/go/",
+    # Ключ "Zen" оставлен ради совместимости state.json; страница переехала на Console Models.
+    "Zen": "https://opencode.ai/v2/docs/console/models/",
 }
 
 GO_HEADERS = {"Model", "Requests per 5 hours"}
@@ -64,7 +66,7 @@ SOURCE_NAMES = {
     "GoPlus": "Go Plus (запросы)",
     "GoPrices": "Go (цены)",
     "GoPlusPrices": "Go Plus (цены)",
-    "Zen": "Zen",
+    "Zen": "Models (Zen)",
 }
 
 _GO_REQUEST_LABELS = {
@@ -436,7 +438,7 @@ def parse_go_pricing(soup: BeautifulSoup) -> tuple[ModelTable, ModelTable]:
 
 
 def parse_zen(soup: BeautifulSoup) -> tuple[ModelTable, dict[str, str] | None]:
-    """Парсит таблицу цен Zen и таблицу устаревания.
+    """Парсит таблицу цен Console Models (бывш. Zen) и таблицу устаревания.
 
     Returns:
         Кортеж (модели, deprecated): модели — {модель: {вход, выход, cached_read,
@@ -448,7 +450,7 @@ def parse_zen(soup: BeautifulSoup) -> tuple[ModelTable, dict[str, str] | None]:
     """
     table = _find_table(soup, ZEN_HEADERS)
     if table is None:
-        raise RuntimeError("Не найдена таблица цен Zen на странице")
+        raise RuntimeError("Не найдена таблица цен Console Models (Zen) на странице")
     headers = _header_indexes(table)
     idx = _column_indexes(headers, ("Model", "Input", "Output", "Cached Read", "Cached Write"))
     models = {}
@@ -462,7 +464,9 @@ def parse_zen(soup: BeautifulSoup) -> tuple[ModelTable, dict[str, str] | None]:
             "cached_write": cells[idx["Cached Write"]],
         }
     if not models:
-        raise RuntimeError("Таблица цен Zen пуста — возможно, изменилась структура страницы")
+        raise RuntimeError(
+            "Таблица цен Console Models (Zen) пуста — возможно, изменилась структура страницы"
+        )
 
     deprecated: dict[str, str] | None = None
     dtable = _find_table(soup, DEPRECATED_HEADERS)
@@ -671,10 +675,12 @@ def build_message(
     dep_events = []
     for name, new_date, old_date in changes.get("Zen", {}).get("deprecated", []):
         if new_date is None:
-            dep_events.append(f"Zen: {name} — исключена из списка устаревания (было: {old_date})")
+            dep_events.append(
+                f"{SOURCE_NAMES['Zen']}: {name} — исключена из списка устаревания (было: {old_date})"
+            )
         else:
             tail = f"{new_date}" if old_date is None else f"{new_date} (было: {old_date})"
-            dep_events.append(f"Zen: {name} — дата устаревания {tail}")
+            dep_events.append(f"{SOURCE_NAMES['Zen']}: {name} — дата устаревания {tail}")
 
     def add(title: str, items: list[str]) -> None:
         """Добавляет секцию с заголовком и строками, если строки есть."""
