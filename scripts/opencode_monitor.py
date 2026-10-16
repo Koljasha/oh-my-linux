@@ -686,7 +686,10 @@ def build_message(
         """Добавляет секцию с заголовком и строками, если строки есть."""
         if items:
             out.append(title)
-            out.extend(items)
+            for i, item in enumerate(items):
+                out.append(item)
+                if i < len(items) - 1 and "\n" in item:
+                    out.append("")
             out.append("")
 
     add("❌ Пропали:", removed)
