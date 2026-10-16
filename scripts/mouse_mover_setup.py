@@ -675,8 +675,37 @@ def _default_noninteractive(runner: Runner, _args) -> int:
     return EXIT_OK
 
 
+def _read_key() -> str:
+    """Прочитать одну клавишу без Enter (только tty)."""
+    import termios
+    import tty
+
+    fd = sys.stdin.fileno()
+    old = termios.tcgetattr(fd)
+    try:
+        tty.setraw(fd)
+        return sys.stdin.read(1)
+    finally:
+        termios.tcsetattr(fd, termios.TCSADRAIN, old)
+
+
 def _menu_choice() -> str:
-    """Одна строка ввода меню. EOF (закрытый stdin) → пустая строка (без traceback)."""
+    """Один символ меню без Enter. Не-tty/EOF → построчный ввод (без traceback)."""
+    if sys.stdin.isatty():
+        sys.stdout.write("  Выбор: ")
+        sys.stdout.flush()
+        try:
+            ch = _read_key()
+        except (OSError, ValueError, EOFError):
+            return ""
+        print(ch.strip() or "")
+        if ch in ("", "\x04"):
+            return ""
+        if ch == "\x03":
+            raise KeyboardInterrupt
+        if ch in ("\r", "\n"):
+            return ""
+        return ch.strip()
     try:
         return input("  Выбор: ").strip()
     except EOFError:
