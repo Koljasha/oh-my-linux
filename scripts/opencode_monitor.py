@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""Мониторинг таблиц OpenCode Go/Go Plus (лимиты запросов и цены) и Console Models
-(бывш. Zen: цены, устаревание).
+"""Мониторинг таблиц OpenCode Go/Go Plus/Go Teams (лимиты запросов и цены) и
+Console Models (бывш. Zen: цены, устаревание).
 
 Скрипт периодически (cron) проверяет:
 https://opencode.ai/v2/docs/console/go/
@@ -54,18 +54,22 @@ PAGES = {
     "Zen": "https://opencode.ai/v2/docs/console/models/",
 }
 
-GO_HEADERS = {"Model", "Requests per 5 hours"}
-GO_PRICE_HEADERS = {"Model", "Cached Read", "Monthly limit"}
 ZEN_HEADERS = {"Model", "Cached Read"}
 DEPRECATED_HEADERS = {"Model", "Deprecation date"}
 
+# Ключи вкладок планов на странице Go; таблицы каждого плана (лимиты и цены)
+# лежат в панели с aria-labelledby="go-requests|pricing-tab-<ключ>".
+GO_PLANS = ("go", "go-plus", "go-teams")
+
 # Порядок источников в уведомлении и их подписи.
-SOURCE_ORDER = ("Go", "GoPlus", "GoPrices", "GoPlusPrices", "Zen")
+SOURCE_ORDER = ("Go", "GoPlus", "GoTeams", "GoPrices", "GoPlusPrices", "GoTeamsPrices", "Zen")
 SOURCE_NAMES = {
     "Go": "Go (запросы)",
     "GoPlus": "Go Plus (запросы)",
+    "GoTeams": "Go Teams (запросы)",
     "GoPrices": "Go (цены)",
     "GoPlusPrices": "Go Plus (цены)",
+    "GoTeamsPrices": "Go Teams (цены)",
     "Zen": "Models (Zen)",
 }
 
@@ -84,8 +88,10 @@ _GO_PRICE_LABELS = {
 FIELD_LABELS = {
     "Go": _GO_REQUEST_LABELS,
     "GoPlus": _GO_REQUEST_LABELS,
+    "GoTeams": _GO_REQUEST_LABELS,
     "GoPrices": _GO_PRICE_LABELS,
     "GoPlusPrices": _GO_PRICE_LABELS,
+    "GoTeamsPrices": _GO_PRICE_LABELS,
     "Zen": {
         "вход": "Вход",
         "выход": "Выход",
@@ -390,51 +396,95 @@ def _parse_price_table(table: Tag) -> ModelTable:
     return models
 
 
-def parse_go(soup: BeautifulSoup) -> tuple[ModelTable, ModelTable]:
-    """Парсит обе таблицы лимитов запросов Go (Go и Go Plus).
+def _plan_panel_table(soup: BeautifulSoup, kind: str, plan: str) -> Tag:
+    """Находит таблицу вкладки плана в панели с aria-labelledby.
+
+    Args:
+        soup: распарсенный HTML страницы.
+        kind: тип таблицы на вкладке ("requests" или "pricing").
+        plan: ключ вкладки плана ("go", "go-plus", "go-teams").
 
     Returns:
-        Кортеж (Go, Go Plus): словари {модель: {"за 5 часов", "в неделю", "в месяц"}}.
+        Элемент таблицы этой вкладки.
 
     Raises:
-        RuntimeError: найдено не ровно две таблицы или таблица пуста
-            (структура страницы изменилась).
+        RuntimeError: панель или таблица не найдена (структура
+            страницы изменилась).
     """
-    tables = _find_tables(soup, GO_HEADERS)
-    if len(tables) != 2:
-        raise RuntimeError(
-            f"Ожидалось 2 таблицы запросов Go (Go и Go Plus), найдено {len(tables)} — "
-            "структура страницы изменилась"
+    label = f"go-{kind}-tab-{plan}"
+    panel = soup.select_one(f'[aria-labelledby="{label}"]')
+    if panel is None:
+        raise RuntimeError(f"Не найдена вкладка «{label}» — структура страницы изменилась")
+    table = panel.find("table")
+    if table is None:
+        raise RuntimeError(f"Вкладка «{label}» без таблицы — структура страницы изменилась")
+    return table
+
+
+def _warn_extra_plan_panels(soup: BeautifulSoup, kind: str) -> None:
+    """Предупреждает о вкладках планов за пределами GO_PLANS.
+
+    Новый план («go-max» и т.п.) не ломает разбор, но пока не отслеживается —
+    о его появлении нужно знать из лога.
+    """
+    prefix = f"go-{kind}-tab-"
+    panels = soup.select(f'[aria-labelledby^="{prefix}"]')
+    labels = [str(panel["aria-labelledby"]) for panel in panels]
+    extra = sorted({label[len(prefix) :] for label in labels} - set(GO_PLANS))
+    if extra:
+        logger.warning(
+            "Go: новые вкладки планов вне GO_PLANS (%s): %s — не отслеживаются",
+            kind,
+            ", ".join(extra),
         )
-    go_models = _parse_request_table(tables[0])
-    goplus_models = _parse_request_table(tables[1])
-    if not go_models or not goplus_models:
-        raise RuntimeError("Таблица запросов Go пуста — возможно, изменилась структура страницы")
-    return go_models, goplus_models
 
 
-def parse_go_pricing(soup: BeautifulSoup) -> tuple[ModelTable, ModelTable]:
-    """Парсит обе таблицы цен Go (Go и Go Plus).
+def parse_go(soup: BeautifulSoup) -> dict[str, ModelTable]:
+    """Парсит таблицы лимитов запросов всех планов Go (вкладки на странице).
 
     Returns:
-        Кортеж (Go, Go Plus): словари
-        {модель: {вход, выход, cached_read, cached_write, monthly_limit}}.
+        Словарь {ключ вкладки: {модель: {"за 5 часов", "в неделю", "в месяц"}}}.
 
     Raises:
-        RuntimeError: найдено не ровно две таблицы или таблица пуста
+        RuntimeError: вкладка или таблица не найдены, таблица пуста
             (структура страницы изменилась).
     """
-    tables = _find_tables(soup, GO_PRICE_HEADERS)
-    if len(tables) != 2:
-        raise RuntimeError(
-            f"Ожидалось 2 таблицы цен Go (Go и Go Plus), найдено {len(tables)} — "
-            "структура страницы изменилась"
-        )
-    go_prices = _parse_price_table(tables[0])
-    goplus_prices = _parse_price_table(tables[1])
-    if not go_prices or not goplus_prices:
-        raise RuntimeError("Таблица цен Go пуста — возможно, изменилась структура страницы")
-    return go_prices, goplus_prices
+    models = {}
+    _warn_extra_plan_panels(soup, "requests")
+    for plan in GO_PLANS:
+        table = _plan_panel_table(soup, "requests", plan)
+        data = _parse_request_table(table)
+        if not data:
+            raise RuntimeError(
+                f"Таблица запросов Go пуста для плана «{plan}» — "
+                "возможно, изменилась структура страницы"
+            )
+        models[plan] = data
+    return models
+
+
+def parse_go_pricing(soup: BeautifulSoup) -> dict[str, ModelTable]:
+    """Парсит таблицы цен всех планов Go (вкладки на странице).
+
+    Returns:
+        Словарь {ключ вкладки: {модель: {вход, выход, cached_read,
+        cached_write, monthly_limit}}}.
+
+    Raises:
+        RuntimeError: вкладка или таблица не найдены, таблица пуста
+            (структура страницы изменилась).
+    """
+    models = {}
+    _warn_extra_plan_panels(soup, "pricing")
+    for plan in GO_PLANS:
+        table = _plan_panel_table(soup, "pricing", plan)
+        data = _parse_price_table(table)
+        if not data:
+            raise RuntimeError(
+                f"Таблица цен Go пуста для плана «{plan}» — возможно, изменилась структура страницы"
+            )
+        models[plan] = data
+    return models
 
 
 def parse_zen(soup: BeautifulSoup) -> tuple[ModelTable, dict[str, str] | None]:
@@ -555,7 +605,7 @@ def _group_title(display: str, base: str) -> str:
 
 def _render_values(source: str, values: dict[str, str]) -> str:
     """Человекочитаемые лимиты/цены модели для блоков «Появились»/«Пропали»."""
-    if source in ("Go", "GoPlus"):
+    if source in ("Go", "GoPlus", "GoTeams"):
         keys = ("за 5 часов", "в неделю", "в месяц")
         parts = [f"{_REQUEST_SHORT[k]} — {values[k]}" for k in keys if k in values]
     else:
@@ -835,12 +885,15 @@ def main() -> int:
         html = fetch_html(url, HTTP_TIMEOUT)
         soup = BeautifulSoup(html, "html.parser")
         if source == "Go":
-            go_models, goplus_models = parse_go(soup)
-            go_prices, goplus_prices = parse_go_pricing(soup)
-            fresh["Go"] = {"models": go_models}
-            fresh["GoPlus"] = {"models": goplus_models}
-            fresh["GoPrices"] = {"models": go_prices}
-            fresh["GoPlusPrices"] = {"models": goplus_prices}
+            go_requests = parse_go(soup)
+            go_prices = parse_go_pricing(soup)
+            for plan, source, price_source in (
+                ("go", "Go", "GoPrices"),
+                ("go-plus", "GoPlus", "GoPlusPrices"),
+                ("go-teams", "GoTeams", "GoTeamsPrices"),
+            ):
+                fresh[source] = {"models": go_requests[plan]}
+                fresh[price_source] = {"models": go_prices[plan]}
         else:
             models, deprecated = parse_zen(soup)
             fresh["Zen"] = {"models": models, "deprecated": deprecated}

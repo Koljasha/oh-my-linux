@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Отчёт по OpenCode: таблица цен Console Models (бывш. Zen)
-и единая таблица лимитов/цен Go.
+и таблицы лимитов/цен планов Go, Go Plus и Go Teams.
 
 Источники: https://opencode.ai/v2/docs/console/models/ , https://opencode.ai/v2/docs/console/go/
 """
@@ -17,8 +17,9 @@ URL_MODELS = "https://opencode.ai/v2/docs/console/models/"
 URL_ZEN = URL_MODELS  # алиас для совместимости: страница Zen переехала на Console Models
 
 # Таблицы ищутся по шапке: собираются все таблицы, чьи колонки включают весь
-# набор. На странице Go ожидается по две такие таблицы каждого типа: первая
-# относится к плану Go, вторая — к Go Plus.
+# набор. На странице Go таблицы разложены по вкладкам планов — панелям с
+# aria-labelledby="go-requests|pricing-tab-<ключ плана>"; PageParser связывает
+# маркер вкладки со следующей за ним таблицей.
 GO_REQUESTS_HEADERS = {
     "Model",
     "Requests per 5 hours",
@@ -27,7 +28,15 @@ GO_REQUESTS_HEADERS = {
 }
 GO_PRICING_HEADERS = {"Model", "Input", "Output", "Cached Read", "Cached Write"}
 ZEN_PRICING_HEADERS = {"Model", "Input", "Output", "Cached Read", "Cached Write"}
-# Таблица тарифов («$10/month», «$40/month») — для заголовка секции Go.
+# Ключи вкладок планов на странице Go в порядке следования на сайте.
+GO_PLAN_KEYS = ("go", "go-plus", "go-teams")
+# Полные названия планов (как в таблице тарифов и в заголовках) и короткие
+# подписи для шапки колонок, чтобы таблица умещалась на одном окне.
+GO_PLAN_FULL = {"go": "Go", "go-plus": "Go Plus", "go-teams": "Go Teams"}
+GO_PLAN_SHORT = {"go": "Go", "go-plus": "Plus", "go-teams": "Teams"}
+PLAN_NAMES = ("Go", "Go Plus", "Go Teams")
+
+# Таблица тарифов («$10/month») — для заголовка секции Go.
 PLAN_HEADERS = {"Plan", "Price"}
 PLAN_MONTH_SUFFIX = "/month"
 PLAN_MONTH_LABEL = "/мес"
@@ -38,19 +47,14 @@ UA = {
     )
 }
 
-GO_SORT_DESCENDING = (
-    True  # запросы плана Go в месяц: True — от большего к меньшему, False — наоборот
-)
+GO_SORT_DESCENDING = True  # запросы плана Go в месяц: True — убывание, False — возрастание
 
-# Цвета единой таблицы Go (ANSI): лимиты Go — приглушённый yellow (dim,
-# чтобы не был броским), все остальные колонки кроме Model — светло-серый.
+# Цвета таблиц Go (ANSI): лимиты базового плана (Go) — приглушённый yellow
+# (dim, чтобы не был броским), все остальные колонки кроме Model — светло-серый.
 # Model — без цвета.
 RESET = "\033[0m"
 OTHER_COLOR = "\033[90m"
 GO_LIMIT_COLOR = "\033[2;33m"
-# Точное совпадение имён из combined_header(). "Monthly limit" — колонка цен
-# плана Go; "Monthly limit (Go Plus)" красится как "остальная" (серая).
-GO_LIMIT_HEADERS = frozenset({"Go: 5 hours", "Go: week", "Go: month", "Monthly limit"})
 
 
 def colors_enabled(force: bool = False) -> bool:
@@ -66,15 +70,6 @@ def colors_enabled(force: bool = False) -> bool:
     if force:
         return True
     return sys.stdout.isatty()
-
-
-def color_for_header(name: str) -> str:
-    """Цвет колонки Go-таблицы по имени шапки; "" — без цвета."""
-    if name in GO_LIMIT_HEADERS:
-        return GO_LIMIT_COLOR
-    if name == "Model":
-        return ""
-    return OTHER_COLOR
 
 
 # Теги зачёркнутого текста (старое значение) и мелкого шрифта (служебное).
@@ -160,12 +155,17 @@ class PageParser:
     """Находит в HTML-странице таблицы по составу колонок шапки."""
 
     _TABLE_TAG = re.compile(r"<(/?)table\b[^>]*>", re.IGNORECASE)
+    # Панель вкладки плана: div с aria-labelledby="go-<тип>-tab-<ключ плана>",
+    # сразу за ним идёт таблица этого плана.
+    _PLAN_PANEL = re.compile(
+        r'aria-labelledby="go-(requests|pricing)-tab-([a-z-]+)"', re.IGNORECASE
+    )
 
     def __init__(self, page: str):
         self._page = page
 
-    def _iter_tables(self, page: str):
-        """Отдаёт сбалансированные таблицы верхнего уровня из HTML-страницы.
+    def _iter_table_spans(self, page: str):
+        """Отдаёт (start, end) сбалансированных таблиц верхнего уровня.
 
         Глубина тегов <table>/</table> отслеживается, поэтому фрагмент не
         обрывается на </table>, встретившемся внутри ячейки. Вложенные таблицы
@@ -187,7 +187,12 @@ class PageParser:
             elif depth:
                 depth -= 1
                 if depth == 0:
-                    yield page[start : match.end()]
+                    yield start, match.end()
+
+    def _iter_tables(self, page: str):
+        """Отдаёт сбалансированные таблицы верхнего уровня из HTML-страницы."""
+        for start, end in self._iter_table_spans(page):
+            yield page[start:end]
 
     def find_tables(self, expected: set[str]) -> list[list[list[str]]]:
         """Возвращает все таблицы, чья шапка включает все колонки expected.
@@ -211,6 +216,31 @@ class PageParser:
                 f"Не найдена таблица с колонками {sorted(expected)} — структура страницы изменилась"
             )
         return tables[0]
+
+    def find_plan_tables(self, expected: set[str]) -> dict[tuple[str, str], list[list[str]]]:
+        """Таблицы вкладок планов: {(тип, ключ плана): строки таблицы}.
+
+        Каждый маркер вкладки (go-requests-tab-*, go-pricing-tab-*) относится
+        к ближайшей следующей за ним таблице; таблицы без подходящей шапки
+        молча пропускаются — отсутствие вкладки поймает проверка в отчёте.
+        """
+        markers = [
+            (m.start(), m.group(1), m.group(2)) for m in self._PLAN_PANEL.finditer(self._page)
+        ]
+        spans = list(self._iter_table_spans(self._page))
+        found: dict[tuple[str, str], list[list[str]]] = {}
+        for index, (pos, kind, plan) in enumerate(markers):
+            following = [(s, e) for s, e in spans if s > pos]
+            boundary = markers[index + 1][0] if index + 1 < len(markers) else None
+            candidates = [(s, e) for s, e in following if boundary is None or s < boundary]
+            if not candidates:
+                continue
+            start, end = candidates[0]
+            parser = HtmlTableParser()
+            parser.feed(self._page[start:end])
+            if parser.rows and expected <= set(parser.rows[0]):
+                found[(kind, plan)] = parser.rows
+        return found
 
 
 class ModelNameMapper:
@@ -269,7 +299,7 @@ class TableRenderer:
         header: list[str],
         rows: list[list[str]],
         separators: list[str] | None = None,
-        column_colors: list[str | None] | None = None,
+        column_colors: list[str] | None = None,
     ) -> str:
         n = len(header)
         for index, row in enumerate([header, *rows]):
@@ -298,49 +328,72 @@ class TableRenderer:
 
 
 class GoLimits:
-    """Данные таблиц запросов (Go и Go Plus) и цен, логика их сопоставления.
+    """Данные таблиц запросов и цен трёх планов: Go, Go Plus, Go Teams.
 
-    Первая таблица запросов относится к плану Go, вторая — к Go Plus. Цены
-    берутся из Go-таблицы цен (у обоих планов совпадают), а Monthly limit —
-    из Go- и Go Plus-таблиц: у планов он различается.
+    Таблицы передаются словарями по ключам вкладок (go / go-plus / go-teams).
+    Цены и окна токенов у планов совпадают, различаются месячные лимиты и
+    число запросов. Вывод разбит на две таблицы: «лимиты» (запросы трёх
+    планов + кратности к Go) и «цены» (цены за 1M токенов + месячный лимит
+    каждого плана). Порядок строк у обеих таблиц общий, задаётся _ordered_keys()
+    и зависит только от содержимого строк запросов/цен.
     """
 
-    # Подписи колонок запросов в единой таблице: план + окно лимита.
-    _REQUESTS_5H = "Requests per 5 hours"
-    _REQUESTS_WEEK = "Requests per week"
-    _REQUESTS_MONTH = "Requests per month"
+    # Колонки запросов в исходной таблице планов.
+    _REQUEST_COLS = (
+        "Requests per 5 hours",
+        "Requests per week",
+        "Requests per month",
+    )
+    # Базовый план: сортировка, кратности и имя строк по умолчанию берутся из него.
+    _BASE_PLAN = "go"
+    # Колонка месячного лимита в таблице цен каждого плана.
+    _MONTHLY = "Monthly limit"
 
     def __init__(
         self,
-        go_requests_table: list[list[str]],
-        plus_requests_table: list[list[str]],
-        pricing_table: list[list[str]],
-        plus_pricing_table: list[list[str]],
+        requests_tables: dict[str, list[list[str]]],
+        pricing_tables: dict[str, list[list[str]]],
         descending: bool = True,
     ):
-        self.go_requests_header = go_requests_table[0]
-        self.plus_requests_header = plus_requests_table[0]
-        self.pricing_header = pricing_table[0]
-        self._output_idx = self.pricing_header.index("Output")
-        self._month_idx = self.go_requests_header.index(self._REQUESTS_MONTH)
-        self._plus_month_idx = self.plus_requests_header.index(self._REQUESTS_MONTH)
-        self._go_requests = go_requests_table[1:]
-        self._plus_requests = plus_requests_table[1:]
-        self._pricing = pricing_table[1:]
-        self._plus_pricing_header = plus_pricing_table[0]
-        self._plus_monthly_idx = self._plus_pricing_header.index("Monthly limit")
-        # Monthly limit у планов различается (Go $60 → Go Plus $180), поэтому
-        # для строки цен с точным именем («GPT 6 Luna (≤ 272K tokens)») смотрим
-        # значение именно из Go Plus-таблицы по тому же имени.
-        self._plus_monthly_by_name: dict[str, str] = {}
-        for row in plus_pricing_table[1:]:
-            if len(row) > self._plus_monthly_idx:
-                self._plus_monthly_by_name[ModelNameMapper.normalize(row[0])] = row[
-                    self._plus_monthly_idx
-                ]
+        missing = [
+            plan
+            for plan in GO_PLAN_KEYS
+            if plan not in requests_tables or plan not in pricing_tables
+        ]
+        if missing:
+            raise RuntimeError(
+                "Нет таблиц запросов/цен для планов «" + ", ".join(missing) + "»"
+                " — структура страницы изменилась"
+            )
         self._descending = descending
-        self._go_by_name = self._index_by_name(self._go_requests, "Go")
-        self._plus_by_name = self._index_by_name(self._plus_requests, "Go Plus")
+        self._request_header = requests_tables[self._BASE_PLAN][0]
+        self._pricing_header = pricing_tables[self._BASE_PLAN][0]
+        self._output_idx = self._pricing_header.index("Output")
+        self._request_idx: dict[str, dict[str, int]] = {}
+        self._requests: dict[str, list[list[str]]] = {}
+        self._requests_by_name: dict[str, dict[str, list[str]]] = {}
+        for plan in GO_PLAN_KEYS:
+            header = requests_tables[plan][0]
+            self._request_idx[plan] = {name: header.index(name) for name in self._REQUEST_COLS}
+            rows = requests_tables[plan][1:]
+            self._requests[plan] = rows
+            self._requests_by_name[plan] = self._index_by_name(rows, GO_PLAN_FULL[plan])
+        self._pricing = pricing_tables[self._BASE_PLAN][1:]
+        self._monthly_idx = {
+            plan: pricing_tables[plan][0].index(self._MONTHLY) for plan in GO_PLAN_KEYS
+        }
+        # Месячный лимит плана ищется по нормализованному имени строки цен.
+        # Нормализация снимает суффикс в скобках, поэтому несколько строк одной
+        # модели (окна токенов, «(50% off)») дают один ключ — побеждает последняя
+        # строка таблицы; сегодня у этих строк месячный лимит одинаковый, при
+        # расходящихся лимитах понадобится точное сопоставление по имени.
+        self._monthly_by_name: dict[str, dict[str, str]] = {
+            plan: {
+                ModelNameMapper.normalize(row[0]): row[self._monthly_idx[plan]]
+                for row in pricing_tables[plan][1:]
+            }
+            for plan in GO_PLAN_KEYS
+        }
         self._pricing_by_name: dict[str, list[list[str]]] = {}
         for row in self._pricing:
             self._pricing_by_name.setdefault(ModelNameMapper.normalize(row[0]), []).append(row)
@@ -369,6 +422,19 @@ class GoLimits:
 
     _UNLIMITED = re.compile(r"\bunlimited\b", re.IGNORECASE)
 
+    _FIRST_NUMBER = re.compile(r"\d[\d \u2009\u00a0,]*\d|\d")
+
+    def _number_of(self, cell: str) -> int | None:
+        """Первое число ячейки (разделители тысяч допустимы), иначе None.
+
+        Берётся именно первое число, а не все цифры ячейки: примечание вроде
+        «31,580 (50% off)» иначе склеилось бы в 315 850.
+        """
+        match = self._FIRST_NUMBER.search(cell)
+        if match is None:
+            return None
+        return int(re.sub(r"[^\d]", "", match.group(0)))
+
     def _month_value(self, row: list[str], month_idx: int) -> tuple[int, int]:
         """Ключ сортировки по числу запросов в месяц.
 
@@ -384,25 +450,25 @@ class GoLimits:
             )
         if self._UNLIMITED.search(cell):
             return (1, 0)
-        digits = re.sub(r"[^\d]", "", cell)
-        if not digits:
+        month = self._number_of(cell)
+        if month is None:
             raise RuntimeError(
                 f"Не удалось прочитать количество запросов в месяц в строке: {row!r}"
             )
-        return (0, int(digits))
+        return (0, month)
 
-    def _ratio(self, go_cell: str, plus_cell: str) -> str:
-        """Кратность месячных запросов Go Plus к Go («3x»).
+    def _ratio(self, go_cell: str, other_cell: str) -> str:
+        """Кратность месячных запросов плана к Go («3x»).
 
-        Число берётся из ячеек обеих планов; «Unlimited» или нечисловая ячейка
+        Число берётся из ячеек обоих планов; «Unlimited» или нечисловая ячейка
         (включая пустую) даёт «-» — кратность не определена. Нецелые значения
         округляются до одного знака («2.5x»).
         """
         go = self._month_value_only(go_cell)
-        plus = self._month_value_only(plus_cell)
-        if go is None or plus is None or go == 0:
+        other = self._month_value_only(other_cell)
+        if go is None or other is None or go == 0:
             return "-"
-        ratio = plus / go
+        ratio = other / go
         if abs(ratio - round(ratio)) < 1e-9:
             return f"{round(ratio)}x"
         return f"{ratio:.1f}x"
@@ -411,8 +477,7 @@ class GoLimits:
         """Число месячных запросов из ячейки; «Unlimited»/нечисловое → None."""
         if self._UNLIMITED.search(cell):
             return None
-        digits = re.sub(r"[^\d]", "", cell)
-        return int(digits) if digits else None
+        return self._number_of(cell)
 
     _FREE = re.compile(r"\bfree\b", re.IGNORECASE)
 
@@ -438,109 +503,160 @@ class GoLimits:
         except decimal.InvalidOperation:
             raise RuntimeError(f"Не удалось прочитать цену Output в строке: {row!r}")
 
-    def sorted_requests(self) -> list[list[str]]:
-        """Строки запросов плана Go, отсортированные по запросам в месяц.
+    def _sorted_requests(self) -> list[list[str]]:
+        """Строки запросов базового плана, отсортированные по запросам в месяц.
 
         Направление задаётся параметром descending: True — убывание,
         False — возрастание.
         """
+        month_idx = self._request_idx[self._BASE_PLAN][self._REQUEST_COLS[2]]
         return sorted(
-            self._go_requests,
-            key=lambda row: self._month_value(row, self._month_idx),
+            self._requests[self._BASE_PLAN],
+            key=lambda row: self._month_value(row, month_idx),
             reverse=self._descending,
         )
 
     def _ordered_keys(self) -> list[str]:
-        """Порядок моделей единой таблицы.
+        """Порядок моделей таблиц Go (един для таблиц лимитов и цен).
 
-        Сначала модели плана Go по запросам в месяц с учётом направления
-        сортировки, затем модели, найденные только в Go Plus, затем строки
-        цен без строк запросов — несовпадающие строки обоих типов идут в конце.
+        Сначала модели базового плана по запросам в месяц с учётом направления
+        сортировки, затем модели остальных планов, найденные только в них,
+        затем строки цен без строк запросов — несовпадающие строки обоих типов
+        идут в конце.
         """
-        keys = [ModelNameMapper.normalize(row[0]) for row in self.sorted_requests()]
-        keys += sorted(key for key in self._plus_by_name if key not in self._go_by_name)
-        keys += sorted(
-            key
-            for key in self._pricing_by_name
-            if key not in self._go_by_name and key not in self._plus_by_name
-        )
-        seen: set[str] = set()
-        unique: list[str] = []
-        for key in keys:
-            if key not in seen:
-                seen.add(key)
-                unique.append(key)
-        return unique
+        keys = [ModelNameMapper.normalize(row[0]) for row in self._sorted_requests()]
+        seen = set(keys)
+        for plan in GO_PLAN_KEYS[1:]:
+            new = sorted(set(self._requests_by_name[plan]) - seen)
+            keys += new
+            seen.update(new)
+        new = sorted(set(self._pricing_by_name) - seen)
+        keys += new
+        seen.update(new)
+        return keys
 
-    def combined_header(self) -> list[str]:
-        """Шапка единой таблицы: запросы по периодам (Go, Go Plus), кратность, цены."""
+    def _fmt(self, value: str) -> str:
+        """Отображение значения: «Unlimited» → «∞» (экономит 8 колонок
+        ширины), целые числа — с разделителем тысяч.
+        """
+        if self._UNLIMITED.search(value):
+            return "∞"
+        return NumberFormatter.with_thousands(value)
+
+    def _requests_name(self, key: str) -> str | None:
+        """Имя модели из строк запросов планов (в порядке следования планов)."""
+        for plan in GO_PLAN_KEYS:
+            row = self._requests_by_name[plan].get(key)
+            if row is not None:
+                return row[0]
+        return None
+
+    def limits_header(self) -> list[str]:
+        """Шапка таблицы лимитов: месячные запросы трёх планов + кратности.
+
+        5-часовой и недельный лимиты на сайте всегда 20% и 50% месячного,
+        поэтому в таблицу не выносятся (компактность) — упомянуты в заголовке
+        секции (см. OpenCodeReport._render_limits).
+        """
+        header = ["Model"]
+        header += [GO_PLAN_SHORT[plan] for plan in GO_PLAN_KEYS]
+        header += [f"{GO_PLAN_SHORT[plan]}/Go" for plan in GO_PLAN_KEYS[1:]]
+        return header
+
+    def limits_colors(self) -> list[str]:
+        """Цвета колонок таблицы лимитов: лимит базового плана — dim yellow."""
         return [
-            "Model",
-            "Go: 5 hours",
-            "Go Plus: 5 hours",
-            "Go: week",
-            "Go Plus: week",
-            "Go: month",
-            "Go Plus: month",
-            "Кратность",
-            *self.pricing_header[1:],
-            self._plus_pricing_header[self._plus_monthly_idx] + " (Go Plus)",
+            "",
+            *(GO_LIMIT_COLOR if plan == self._BASE_PLAN else OTHER_COLOR for plan in GO_PLAN_KEYS),
+            *([OTHER_COLOR] * (len(GO_PLAN_KEYS) - 1)),
         ]
 
-    def combined_rows(self) -> list[list[str]]:
-        """Строки единой таблицы в порядке, заданном _ordered_keys().
+    def limits_rows(self) -> list[list[str]]:
+        """Строки таблицы лимитов в порядке _ordered_keys().
 
-        Колонки запросов группируются по периодам: для каждого периода
-        сначала значения плана Go, затем Go Plus. Колонки запросов
-        повторяются для каждой строки цен одной модели. Monthly limit Go Plus
-        ищется по точному имени строки цен (имя с суффиксом окна токенов).
-        Модель без строк цен получает "-" в колонках цен; модель без строки
-        запросов в одном из планов — "-" в колонках этого плана.
+        Модель без строк запросов в каком-то плане получает «-» в колонках
+        этого плана; кратность также «-», пока нет строк обоих планов.
         """
-        go_empty = ["-"] * (len(self.go_requests_header) - 1)
-        plus_empty = ["-"] * (len(self.plus_requests_header) - 1)
-        pricing_empty = ["-"] * (len(self.pricing_header) - 1) + ["-"]
-
-        result: list[list[str]] = []
+        month = self._REQUEST_COLS[2]
+        rows: list[list[str]] = []
         for key in self._ordered_keys():
-            go_row = self._go_by_name.get(key)
-            plus_row = self._plus_by_name.get(key)
-            go_vals = (
-                [NumberFormatter.with_thousands(c) for c in go_row[1:]] if go_row else go_empty
-            )
-            plus_vals = (
-                [NumberFormatter.with_thousands(c) for c in plus_row[1:]]
-                if plus_row
-                else plus_empty
-            )
-            # По периодам: 5 часов (Go, Go Plus), неделя (Go, Go Plus), месяц.
-            period_vals = [
-                go_vals[0],
-                plus_vals[0],
-                go_vals[1],
-                plus_vals[1],
-                go_vals[2],
-                plus_vals[2],
-            ]
-            go_requests = self._go_by_name.get(key)
-            plus_requests = self._plus_by_name.get(key)
-            ratio = (
-                "-"
-                if go_requests is None or plus_requests is None
-                else self._ratio(go_requests[self._month_idx], plus_requests[self._plus_month_idx])
-            )
-            price_rows = sorted(self._pricing_by_name.get(key, []), key=self._price_value)
-            if price_rows:
-                for price_row in price_rows:
-                    plus_monthly = self._plus_monthly_by_name.get(
-                        ModelNameMapper.normalize(price_row[0]), "-"
+            cells = []
+            for plan in GO_PLAN_KEYS:
+                row = self._requests_by_name[plan].get(key)
+                idx = self._request_idx[plan][month]
+                cells.append(self._fmt(row[idx]) if row is not None else "-")
+            ratios = []
+            for plan in GO_PLAN_KEYS[1:]:
+                go_row = self._requests_by_name[self._BASE_PLAN].get(key)
+                other_row = self._requests_by_name[plan].get(key)
+                ratios.append(
+                    "-"
+                    if go_row is None or other_row is None
+                    else self._ratio(
+                        go_row[self._request_idx[self._BASE_PLAN][month]],
+                        other_row[self._request_idx[plan][month]],
                     )
-                    result.append([price_row[0], *period_vals, ratio, *price_row[1:], plus_monthly])
+                )
+            requests_name = self._requests_name(key)
+            if requests_name is not None:
+                name = requests_name
             else:
-                source = go_row if go_row is not None else plus_row
-                name = source[0] if source is not None else "-"
-                result.append([name, *period_vals, ratio, *pricing_empty])
-        return result
+                # Модели без строк запросов — имя из самого дешёвого окна цен.
+                pricing = self._pricing_by_name.get(key)
+                name = min(pricing, key=self._price_value)[0] if pricing else "-"
+            rows.append([name, *cells, *ratios])
+        return rows
+
+    def pricing_header(self) -> list[str]:
+        """Шапка таблицы цен: цены за 1M токенов + месячный лимит планов.
+
+        Колонка «Monthly limit» таблицы каждого плана переименована в
+        «Лимит <план>» и поднята в конец шапки.
+        """
+        prices = [name for name in self._pricing_header[1:] if name != self._MONTHLY]
+        return ["Model", *prices, *(f"Лимит {GO_PLAN_FULL[plan]}" for plan in GO_PLAN_KEYS)]
+
+    def pricing_colors(self) -> list[str]:
+        """Цвета колонок таблицы цен: месячный лимит базового плана — dim yellow."""
+        prices = len(self._pricing_header) - 2  # без Model и Monthly limit
+        colors = [""] + [OTHER_COLOR] * prices
+        colors += [
+            GO_LIMIT_COLOR if plan == self._BASE_PLAN else OTHER_COLOR for plan in GO_PLAN_KEYS
+        ]
+        return colors
+
+    def pricing_rows(self) -> list[list[str]]:
+        """Строки таблицы цен в порядке _ordered_keys().
+
+        Каждая строка цен (окно токенов, промо) — отдельная строка. Месячный
+        лимит берётся из собственной таблицы базового плана, а для остальных
+        планов — по нормализованному имени строки; без совпадения — «-».
+        """
+        rows: list[list[str]] = []
+        for key in self._ordered_keys():
+            price_rows = sorted(self._pricing_by_name.get(key, []), key=self._price_value)
+            for price_row in price_rows:
+                name = price_row[0]
+                limits = []
+                for plan in GO_PLAN_KEYS:
+                    if plan == self._BASE_PLAN:
+                        limits.append(self._fmt(price_row[self._monthly_idx[plan]]))
+                    else:
+                        limits.append(
+                            self._fmt(
+                                self._monthly_by_name[plan].get(
+                                    ModelNameMapper.normalize(name), "-"
+                                )
+                            )
+                        )
+                # Колонки цен без Monthly limit — он уходит в колонки «Лимит …».
+                body = [
+                    price_row[i]
+                    for i in range(1, len(price_row))
+                    if i != self._monthly_idx[self._BASE_PLAN]
+                ]
+                rows.append([name, *body, *limits])
+        return rows
 
 
 class ZenPricing:
@@ -572,7 +688,8 @@ class ZenPricing:
 
 
 class OpenCodeReport:
-    """Собирает итоговый отчёт: таблица цен Models, затем единая таблица Go и Go Plus."""
+    """Собирает итоговый отчёт: таблица цен Models, затем таблицы лимитов
+    и цен планов Go (Go, Go Plus, Go Teams)."""
 
     COLUMN_SEPARATOR = " | "
     GROUP_SEPARATOR = " || "
@@ -580,19 +697,22 @@ class OpenCodeReport:
     def __init__(self, go_page: str, zen_page: str, use_color: bool = False):
         go_parser = PageParser(go_page)
         zen_parser = PageParser(zen_page)
-        requests_tables = go_parser.find_tables(GO_REQUESTS_HEADERS)
-        pricing_tables = go_parser.find_tables(GO_PRICING_HEADERS)
-        if len(requests_tables) != 2 or len(pricing_tables) != 2:
-            raise RuntimeError(
-                "Ожидались по две таблицы запросов и цен Go"
-                f" (найдено {len(requests_tables)} и {len(pricing_tables)})"
-                " — структура страницы изменилась"
-            )
+        requests_tables = go_parser.find_plan_tables(GO_REQUESTS_HEADERS)
+        pricing_tables = go_parser.find_plan_tables(GO_PRICING_HEADERS)
+        for kind, tables, expected in (
+            ("requests", requests_tables, GO_REQUESTS_HEADERS),
+            ("pricing", pricing_tables, GO_PRICING_HEADERS),
+        ):
+            found = {plan for k, plan in tables if k == kind}
+            if found != set(GO_PLAN_KEYS):
+                raise RuntimeError(
+                    f"Ожидались таблицы {sorted(expected)} по вкладкам планов"
+                    f" {', '.join(GO_PLAN_KEYS)}, найдено: {', '.join(sorted(found)) or 'ничего'}"
+                    " — структура страницы изменилась"
+                )
         self._limits = GoLimits(
-            requests_tables[0],
-            requests_tables[1],
-            pricing_tables[0],
-            pricing_tables[1],
+            {plan: requests_tables[("requests", plan)] for plan in GO_PLAN_KEYS},
+            {plan: pricing_tables[("pricing", plan)] for plan in GO_PLAN_KEYS},
             GO_SORT_DESCENDING,
         )
         self._plan_prices = self._plan_prices_from(go_parser)
@@ -603,50 +723,71 @@ class OpenCodeReport:
     def _plan_prices_from(go_parser: PageParser) -> dict[str, str]:
         """Читает цены тарифов из таблицы «Plan | Price | Included usage».
 
-        Возвращает {"Go": "$10/мес", "Go Plus": "$40/мес"} — подписи для
-        заголовка секции Go. Отсутствие таблицы или одного из планов — это
-        изменившаяся структура страницы, ошибка сообщается вызывающему коду.
+        Возвращает {"Go": "$10/мес", ...} — подписи для заголовка секции Go.
+        Отсутствие таблицы или одного из планов — это изменившаяся структура
+        страницы, ошибка сообщается вызывающему коду.
         """
         rows = go_parser.find_table(PLAN_HEADERS)
         prices = {row[0].strip(): row[1].strip() for row in rows[1:] if len(row) >= 2}
-        missing = [plan for plan in ("Go", "Go Plus") if plan not in prices]
-        if missing:
+        missing = [plan for plan in PLAN_NAMES if plan not in prices]
+        if missing or set(prices) - set(PLAN_NAMES):
             raise RuntimeError(
-                "В таблице тарифов не хватает планов «" + ", ".join(missing) + "»"
-                " — структура страницы изменилась"
+                "В таблице тарифов лишние или недостающие планы («"
+                + ", ".join(missing or sorted(set(prices) - set(PLAN_NAMES)))
+                + "») — структура страницы изменилась"
             )
         return {
-            plan: prices[plan].replace(PLAN_MONTH_SUFFIX, PLAN_MONTH_LABEL)
-            for plan in ("Go", "Go Plus")
+            plan: prices[plan].replace(PLAN_MONTH_SUFFIX, PLAN_MONTH_LABEL) for plan in PLAN_NAMES
         }
 
-    def _separators(self) -> list[str]:
-        """Разделители колонок: групповой между запросами и ценами."""
-        header = self._limits.combined_header()
-        separators = [self.COLUMN_SEPARATOR] * (len(header) - 1)
-        # Ценовая группа = колонки цен Go (len(pricing_header) - 1) плюс
-        # Monthly limit (Go Plus); разделитель стоит перед её первой колонкой.
-        price_columns = len(self._limits.pricing_header)
-        separators[len(header) - price_columns - 1] = self.GROUP_SEPARATOR
+    def _limits_separators(self) -> list[str]:
+        """Разделители таблицы лимитов: групповой перед кратностями."""
+        n = len(self._limits.limits_header())
+        separators = [self.COLUMN_SEPARATOR] * (n - 1)
+        # Граница перед первой колонкой кратности (их len(GO_PLAN_KEYS) - 1).
+        separators[n - (len(GO_PLAN_KEYS) - 1) - 1] = self.GROUP_SEPARATOR
         return separators
 
-    def _render_go(self) -> str:
-        """Возвращает единую таблицу Go и Go Plus с заголовком."""
-        header = self._limits.combined_header()
-        column_colors = [color_for_header(name) for name in header] if self._use_color else None
+    def _pricing_separators(self) -> list[str]:
+        """Разделители таблицы цен: групповой перед колонками месячных лимитов."""
+        n = len(self._limits.pricing_header())
+        separators = [self.COLUMN_SEPARATOR] * (n - 1)
+        separators[n - len(GO_PLAN_KEYS) - 1] = self.GROUP_SEPARATOR
+        return separators
+
+    def _order_title(self) -> str:
+        """Подпись сортировки: направление по параметру GO_SORT_DESCENDING."""
+        return "по убыванию" if GO_SORT_DESCENDING else "по возрастанию"
+
+    def _render_limits(self) -> str:
+        """Возвращает таблицу лимитов запросов трёх планов с заголовком."""
+        header = self._limits.limits_header()
+        colors = self._limits.limits_colors() if self._use_color else None
         table = TableRenderer.render(
             header,
-            self._limits.combined_rows(),
-            separators=self._separators(),
-            column_colors=column_colors,
+            self._limits.limits_rows(),
+            separators=self._limits_separators(),
+            column_colors=colors,
         )
-        order = "по убыванию" if GO_SORT_DESCENDING else "по возрастанию"
+        plans = ", ".join(f"{name} ({self._plan_prices[name]})" for name in PLAN_NAMES)
         title = (
-            f"Go ({self._plan_prices['Go']}) и Go Plus ({self._plan_prices['Go Plus']}):"
-            " лимиты запросов и цены за 1M токенов"
-            f" ({order} запросов в месяц, план Go):"
+            f"Go-планы: {plans}:\n"
+            f"лимиты запросов в месяц ({self._order_title()}, план Go);"
+            " 5-часовой = 20% месячного, недельный = 50%:"
         )
         return f"{title}\n{table}"
+
+    def _render_go_pricing(self) -> str:
+        """Возвращает таблицу цен и месячных лимитов планов с заголовком."""
+        header = self._limits.pricing_header()
+        colors = self._limits.pricing_colors() if self._use_color else None
+        table = TableRenderer.render(
+            header,
+            self._limits.pricing_rows(),
+            separators=self._pricing_separators(),
+            column_colors=colors,
+        )
+        return f"Go-планы: цены за 1M токенов и месячные лимиты (как в таблице выше):\n{table}"
 
     def _render_zen(self) -> str:
         """Возвращает таблицу цен Models с заголовком."""
@@ -659,8 +800,8 @@ class OpenCodeReport:
         return f"{title}\n{TableRenderer.render(self._zen.header, self._zen.sorted_rows(), column_colors=column_colors)}"
 
     def render(self) -> str:
-        """Возвращает полный отчёт: таблица Models, затем единая таблица Go и Go Plus."""
-        return f"{self._render_zen()}\n\n{self._render_go()}"
+        """Возвращает полный отчёт: таблица Models, затем лимиты и цены планов Go."""
+        return f"{self._render_zen()}\n\n{self._render_limits()}\n\n{self._render_go_pricing()}"
 
 
 def main() -> int:
