@@ -2,6 +2,12 @@
 """Отчёт по OpenCode: таблица цен Console Models (бывш. Zen)
 и таблицы лимитов/цен планов Go, Go Plus и Go Teams.
 
+Однофайловый скрипт осознанно НЕ разбивается на модули, даже при превышении
+условного потолка ~600 строк: это одна утилита «вытащить и показать таблицы»,
+разрез по модулям только усложнит копирование/деплой файла на хост с cron.
+Хостом изменения при доработках остаётся копия в /tmp/opencode или правка по
+частям через edit.
+
 Источники: https://opencode.ai/v2/docs/console/models/ , https://opencode.ai/v2/docs/console/go/
 """
 
@@ -552,28 +558,28 @@ class GoLimits:
         return None
 
     def limits_header(self) -> list[str]:
-        """Шапка таблицы лимитов: месячные запросы трёх планов + кратности.
+        """Шапка таблицы лимитов: окна запросов и кратности к Go.
 
-        5-часовой и недельный лимиты на сайте всегда 20% и 50% месячного,
-        поэтому в таблицу не выносятся (компактность) — упомянуты в заголовке
-        секции (см. OpenCodeReport._render_limits).
+        Обычная Go — все три окна (5 ч / неделя / месяц), как и раньше,
+        ничего из данных не убираем (см. задачу). В Go Plus и Go Teams шапка
+        не дробится (экономия ширины), для них — только месячные запросы.
         """
-        header = ["Model"]
-        header += [GO_PLAN_SHORT[plan] for plan in GO_PLAN_KEYS]
+        header = ["Model", "Go: 5 ч", "нед", "мес"]
+        header += [GO_PLAN_SHORT[plan] for plan in GO_PLAN_KEYS[1:]]
         header += [f"{GO_PLAN_SHORT[plan]}/Go" for plan in GO_PLAN_KEYS[1:]]
         return header
 
     def limits_colors(self) -> list[str]:
         """Цвета колонок таблицы лимитов: лимит базового плана — dim yellow."""
-        return [
-            "",
-            *(GO_LIMIT_COLOR if plan == self._BASE_PLAN else OTHER_COLOR for plan in GO_PLAN_KEYS),
-            *([OTHER_COLOR] * (len(GO_PLAN_KEYS) - 1)),
-        ]
+        colors = ["", GO_LIMIT_COLOR, GO_LIMIT_COLOR, GO_LIMIT_COLOR]
+        colors += [OTHER_COLOR] * (len(GO_PLAN_KEYS) - 1)
+        colors += [OTHER_COLOR] * (len(GO_PLAN_KEYS) - 1)
+        return colors
 
     def limits_rows(self) -> list[list[str]]:
         """Строки таблицы лимитов в порядке _ordered_keys().
 
+        Для обычной Go — все три окна; для Go Plus и Go Teams — месяц.
         Модель без строк запросов в каком-то плане получает «-» в колонках
         этого плана; кратность также «-», пока нет строк обоих планов.
         """
@@ -583,8 +589,14 @@ class GoLimits:
             cells = []
             for plan in GO_PLAN_KEYS:
                 row = self._requests_by_name[plan].get(key)
-                idx = self._request_idx[plan][month]
-                cells.append(self._fmt(row[idx]) if row is not None else "-")
+                idx = self._request_idx[plan]
+                if row is None:
+                    cells.extend(["-"] * (3 if plan == self._BASE_PLAN else 1))
+                    continue
+                if plan == self._BASE_PLAN:
+                    cells.extend(self._fmt(row[idx[name]]) for name in self._REQUEST_COLS)
+                else:
+                    cells.append(self._fmt(row[idx[month]]))
             ratios = []
             for plan in GO_PLAN_KEYS[1:]:
                 go_row = self._requests_by_name[self._BASE_PLAN].get(key)
@@ -741,9 +753,11 @@ class OpenCodeReport:
         }
 
     def _limits_separators(self) -> list[str]:
-        """Разделители таблицы лимитов: групповой перед кратностями."""
+        """Разделители таблицы лимитов: групповой после окон Go и перед кратностями."""
         n = len(self._limits.limits_header())
         separators = [self.COLUMN_SEPARATOR] * (n - 1)
+        # Граница после группы окон Go (3 колонки — все _REQUEST_COLS).
+        separators[len(self._limits._REQUEST_COLS)] = self.GROUP_SEPARATOR
         # Граница перед первой колонкой кратности (их len(GO_PLAN_KEYS) - 1).
         separators[n - (len(GO_PLAN_KEYS) - 1) - 1] = self.GROUP_SEPARATOR
         return separators
@@ -754,10 +768,6 @@ class OpenCodeReport:
         separators = [self.COLUMN_SEPARATOR] * (n - 1)
         separators[n - len(GO_PLAN_KEYS) - 1] = self.GROUP_SEPARATOR
         return separators
-
-    def _order_title(self) -> str:
-        """Подпись сортировки: направление по параметру GO_SORT_DESCENDING."""
-        return "по убыванию" if GO_SORT_DESCENDING else "по возрастанию"
 
     def _render_limits(self) -> str:
         """Возвращает таблицу лимитов запросов трёх планов с заголовком."""
@@ -772,8 +782,8 @@ class OpenCodeReport:
         plans = ", ".join(f"{name} ({self._plan_prices[name]})" for name in PLAN_NAMES)
         title = (
             f"Go-планы: {plans}:\n"
-            f"лимиты запросов в месяц ({self._order_title()}, план Go);"
-            " 5-часовой = 20% месячного, недельный = 50%:"
+            "лимиты запросов (по убыванию, план Go; у Go — все окна"
+            " 5 ч / неделя / месяц, у Plus и Teams — месяц):"
         )
         return f"{title}\n{table}"
 
@@ -787,7 +797,7 @@ class OpenCodeReport:
             separators=self._pricing_separators(),
             column_colors=colors,
         )
-        return f"Go-планы: цены за 1M токенов и месячные лимиты (как в таблице выше):\n{table}"
+        return f"Go-планы: цены за 1M токенов и месячные лимиты (порядок строк — таблица лимитов ниже):\n{table}"
 
     def _render_zen(self) -> str:
         """Возвращает таблицу цен Models с заголовком."""
@@ -800,8 +810,11 @@ class OpenCodeReport:
         return f"{title}\n{TableRenderer.render(self._zen.header, self._zen.sorted_rows(), column_colors=column_colors)}"
 
     def render(self) -> str:
-        """Возвращает полный отчёт: таблица Models, затем лимиты и цены планов Go."""
-        return f"{self._render_zen()}\n\n{self._render_limits()}\n\n{self._render_go_pricing()}"
+        """Возвращает полный отчёт: таблица Models, затем цены и лимиты планов Go.
+
+        Порядок секций: Models (Zen) → цены планов Go → лимиты запросов планов.
+        """
+        return f"{self._render_zen()}\n\n{self._render_go_pricing()}\n\n{self._render_limits()}"
 
 
 def main() -> int:
