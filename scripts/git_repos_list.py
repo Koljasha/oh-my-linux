@@ -3,12 +3,12 @@
 
 Использование
 -------------
-    ./list_repos.py github
-    ./list_repos.py gitlab
-    ./list_repos.py bitbucket
-    ./list_repos.py github --json
-    ./list_repos.py gitlab --all        # + проекты групп / репо организаций
-    ./list_repos.py github --env-file ~/.config/list_repos/.env
+    ./git_repos_list.py github
+    ./git_repos_list.py gitlab
+    ./git_repos_list.py bitbucket
+    ./git_repos_list.py github --json
+    ./git_repos_list.py gitlab --all        # + проекты групп / репо организаций
+    ./git_repos_list.py github --env-file ~/.config/git_repos_list/.env
 
 Вывод — таблица: имя, видимость и итог; в шапке видно, использован ли токен:
 
@@ -363,7 +363,7 @@ def _build_json(platform: str, user: str, repos: list[Repo]) -> dict[str, object
 
 def _parse_args(argv: list[str] | None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        prog="list_repos.py",
+        prog="git_repos_list.py",
         description="List repositories of one account on GitHub, GitLab or Bitbucket Cloud.",
         epilog="Settings come from .env (example in the module docstring) or the environment.",
     )
