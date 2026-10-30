@@ -14,6 +14,7 @@
 | `dns_check.py` | Проверяет DNS-резолверы из KB AdGuard: скачивает список через curl, реально резолвит `example.com` и меряет пинг | Python stdlib + `curl`, `dig` или `kdig` |
 | `git_pull_all.sh` | Делает `git pull UPSTREAM BRANCH` в каждом подкаталоге с таким remote | bash + `git` |
 | `git_push_all.sh` | Делает `git push UPSTREAM BRANCH` в каждом подкаталоге с таким remote | bash + `git` |
+| `git_repos_list.py` | Список репозиториев аккаунта на GitHub, GitLab или Bitbucket Cloud: имя, видимость (public/private/internal) и итоговые счётчики; площадка — аргументом, аккаунт и токены — из `.env` | только stdlib Python |
 | `lightroom_rename_images.sh` | Переименовывает `LRM_*.jpeg` по дате съёмки из EXIF в `IMG_YYYYMMDD_HHMMSS.jpeg` | bash + `identify` (ImageMagick) |
 | `mouse_mover_setup.py` | Установщик/менеджер user-сервиса «шевелитель мышки» против AFK: install/start/stop/restart/status/logs/upgrade/converge/remove/run, без аргументов — интерактивное меню по состоянию; install не запускает сервис (запуск через меню или start); ставит venv с pyautogui, user-unit и управляющую копию менеджера (WantedBy default.target в юните оставлен для ручного enable) | только stdlib Python; Python 3.10+, systemd --user, X11/XWayland для pyautogui |
 | `opencode_ollama_cloud_free.sh` | Проверяет все модели `ollama-cloud` в opencode тестовым запросом, выводит таблицу «кто ответил / кому нужен upgrade» | bash + CLI `opencode` |
@@ -44,6 +45,7 @@
 ```bash
 python3 scripts/bookmarks_converter.py --help
 python3 scripts/dns_check.py --help
+python3 scripts/git_repos_list.py --help
 python3 scripts/steam_discount.py --help
 python3 scripts/twitter_del_tweets.py --help
 bash scripts/delete_random_file.sh --help
