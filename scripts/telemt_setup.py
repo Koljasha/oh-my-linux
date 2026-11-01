@@ -175,7 +175,7 @@ IP_PLACEHOLDER = "SERVER_IP"
 
 # Автообновление (systemd-таймер) — Задача B.
 SELF_PATH = "/usr/local/bin/telemt_setup.py"
-SCRIPT_VERSION = "1.2.0"
+SCRIPT_VERSION = "1.3.0"
 RAW_URL = "https://raw.githubusercontent.com/Koljasha/oh-my-linux/refs/heads/master/scripts/telemt_setup.py"
 UPDATE_SERVICE_NAME = "telemt-update.service"
 UPDATE_TIMER_NAME = "telemt-update.timer"
@@ -1780,12 +1780,14 @@ class Upgrade:
             current = b""
             current_path = None
         if current == raw:
-            log("INFO", "скрипт уже актуальной версии")
+            log("INFO", f"скрипт уже актуальной версии (v{SCRIPT_VERSION})")
         else:
             if current_path is not None and current_path == Path(SELF_PATH).resolve():
                 log("INFO", "обновление запущено из целевого пути — замена через атомарный rename")
             r.replace_script(raw)
-            log("INFO", f"скрипт обновлён: {SELF_PATH}")
+            match = re.search(rb'^SCRIPT_VERSION\s*=\s*"([^"]+)"', raw, re.MULTILINE)
+            new_ver = match.group(1).decode("ascii", "replace") if match else "?"
+            log("INFO", f"скрипт обновлён: {SELF_PATH} (v{new_ver})")
         if (
             current_path is not None
             and Path(SELF_PATH).exists()
