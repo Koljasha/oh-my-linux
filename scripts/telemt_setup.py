@@ -175,7 +175,7 @@ IP_PLACEHOLDER = "SERVER_IP"
 
 # Автообновление (systemd-таймер) — Задача B.
 SELF_PATH = "/usr/local/bin/telemt_setup.py"
-SCRIPT_VERSION = "1.3.0"
+SCRIPT_VERSION = "1.4.0"
 RAW_URL = "https://raw.githubusercontent.com/Koljasha/oh-my-linux/refs/heads/master/scripts/telemt_setup.py"
 UPDATE_SERVICE_NAME = "telemt-update.service"
 UPDATE_TIMER_NAME = "telemt-update.timer"
@@ -2257,6 +2257,14 @@ class Menu:
             status = "не установлено"
         return f"telemt_setup v{SCRIPT_VERSION} — {status}"
 
+    @staticmethod
+    def _file_id(path: Path) -> str | None:
+        """sha256 файла или None — детект замены скрипта при upgrade."""
+        try:
+            return hashlib.sha256(path.read_bytes()).hexdigest()
+        except OSError:
+            return None
+
     def run(self) -> int:
         while True:
             state = self.checks.collect()
@@ -2304,8 +2312,16 @@ class Menu:
             if command is None:
                 log("WARN", "неизвестный пункт меню")
                 continue
+            # Снапшоты для автоперезапуска после upgrade (файл могли заменить).
+            snapshot = None
+            if command == "upgrade":
+                snapshot = (
+                    self._file_id(Path(__file__).resolve()),
+                    self._file_id(Path(SELF_PATH)),
+                )
+            rc = None
             try:
-                run_command(command, self.runner, self.checks, self.args)
+                rc = run_command(command, self.runner, self.checks, self.args)
             except Abort as exc:
                 log("WARN", str(exc))
             except (StepError, NetError, VerifyError) as exc:
@@ -2314,6 +2330,22 @@ class Menu:
                 log("ERR", str(exc))
             except KeyboardInterrupt:
                 log("WARN", "прервано")
+            if (
+                command == "upgrade"
+                and rc == EXIT_OK
+                and snapshot is not None
+                and (
+                    self._file_id(Path(__file__).resolve()),
+                    self._file_id(Path(SELF_PATH)),
+                )
+                != snapshot
+            ):
+                # upgrade заменил скрипт, а меню крутится в старом процессе:
+                # перезапускаемся в новую версию (флаги --dry-run/--yes/--quiet
+                # сохраняются через sys.argv, dry-run так и остаётся dry-run).
+                log("INFO", "скрипт обновлён — перезапускаюсь в новой версии…")
+                sys.stdout.flush()
+                os.execv(sys.executable, [sys.executable, SELF_PATH, *sys.argv[1:]])
             pause()
 
 
