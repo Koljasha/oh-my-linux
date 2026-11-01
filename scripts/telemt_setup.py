@@ -916,19 +916,21 @@ class Checks:
         и `allow 5223/tcp comment 'X'` — РАЗНЫЕ правила, и повторный `allow`
         создаёт дубликат. Матчим `5223`, `5223/tcp`, `5223/tcp (комментарий)`.
 
-        Смотрим два источника: `ufw status` (работающие правила; когда ufw
-        неактивен, он пуст) и `ufw show added` (сконфигурированные правила,
-        видны и при неактивном ufw) — иначе каждый converge докладывал бы
-        «изменено», заново добавляя уже записанное правило.
+        Нюанс: правило через application-profile (`ufw allow Telemt-MTProxy`)
+        в plain `ufw status` показывается именем без порта
+        (`Telemt-MTProxy ALLOW Anywhere`), а раскрывается в порты только
+        в `ufw status verbose` (`5223/tcp (Telemt-MTProxy)`). Поэтому смотрим
+        сначала verbose, потом plain, потом `ufw show added` (для неактивного ufw).
         """
-        cp = self._quiet(["ufw", "status"])
         pat = re.compile(rf"^\s*{port}(?:/tcp)?\b", re.IGNORECASE)
-        for line in cp.stdout.splitlines():
-            if "ALLOW" not in line.upper():
-                continue
-            first = line.split("(", 1)[0]  # отрезать " (комментарий)" перед проверкой
-            if pat.search(first):
-                return True
+        for cmd in (["ufw", "status", "verbose"], ["ufw", "status"]):
+            cp = self._quiet(cmd)
+            for line in cp.stdout.splitlines():
+                if "ALLOW" not in line.upper():
+                    continue
+                first = line.split("(", 1)[0]  # отрезать " (комментарий)" перед проверкой
+                if pat.search(first):
+                    return True
         return self._ufw_added_has_port(port)
 
     def _ufw_added_has_port(self, port: int) -> bool:
