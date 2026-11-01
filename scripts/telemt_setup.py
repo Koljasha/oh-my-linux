@@ -909,12 +909,17 @@ class Checks:
         return True, ("Status: active" in cp.stdout)
 
     def ufw_port_allowed(self, port: int) -> bool:
-        """Есть ли в ufw правило allow на порт (по выводу `ufw status`).
+        """Есть ли в ufw правило allow на порт.
 
         Проверяем по номеру порта, а не по точному тексту правила: ufw считает
         комментарий частью идентичности правила, поэтому `allow 5223/tcp`
         и `allow 5223/tcp comment 'X'` — РАЗНЫЕ правила, и повторный `allow`
         создаёт дубликат. Матчим `5223`, `5223/tcp`, `5223/tcp (комментарий)`.
+
+        Смотрим два источника: `ufw status` (работающие правила; когда ufw
+        неактивен, он пуст) и `ufw show added` (сконфигурированные правила,
+        видны и при неактивном ufw) — иначе каждый converge докладывал бы
+        «изменено», заново добавляя уже записанное правило.
         """
         cp = self._quiet(["ufw", "status"])
         pat = re.compile(rf"^\s*{port}(?:/tcp)?\b", re.IGNORECASE)
@@ -923,6 +928,22 @@ class Checks:
                 continue
             first = line.split("(", 1)[0]  # отрезать " (комментарий)" перед проверкой
             if pat.search(first):
+                return True
+        return self._ufw_added_has_port(port)
+
+    def _ufw_added_has_port(self, port: int) -> bool:
+        """Есть ли allow на порт среди сконфигурированных правил (`ufw show added`)."""
+        cp = self._quiet(["ufw", "show", "added"])
+        spec_pat = re.compile(rf"(?:^|\s){port}(?:/tcp)?(?:\s|$)")
+        for line in cp.stdout.splitlines():
+            stripped = line.strip()
+            words = stripped.lower().split()
+            if len(words) < 3 or words[0] != "ufw" or words[1] == "delete":
+                continue
+            if "allow" not in words:
+                continue
+            spec = re.split(r"\bcomment\b", stripped, flags=re.IGNORECASE)[0]
+            if spec_pat.search(spec):
                 return True
         return False
 
