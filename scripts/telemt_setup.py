@@ -673,11 +673,16 @@ class Runner:
         # ambient-набор процесса (man 7 capabilities), и сервис снова теряет
         # CAP_NET_ADMIN → спам conntrack-reconciler'а. Юнит выдаёт обе capability
         # через Ambient, поэтому xattr с бинарника снимаем (best-effort).
+        # Отсутствие file caps — штатная ситуация (чистый бинарник с GitHub),
+        # libcap отвечает "has no capability to remove" (с опечаткой capablity)
+        # и ненулевым кодом: это не ошибка, понижаем до INFO.
         cp = self.run(["setcap", "-r", BIN], check=False, mutates=True)
         if cp.returncode != 0:
-            log(
-                "WARN", f"setcap -r не сработал для {BIN}: {cp.stderr.strip() or cp.stdout.strip()}"
-            )
+            detail = cp.stderr.strip() or cp.stdout.strip()
+            if "to remove" in detail.lower() or "no cap" in detail.lower():
+                log("INFO", f"file capabilities на {BIN} отсутствуют — снимать нечего")
+            else:
+                log("WARN", f"setcap -r не сработал для {BIN}: {detail}")
         return True
 
     def replace_script(self, content: bytes) -> None:
@@ -904,11 +909,20 @@ class Checks:
         return True, ("Status: active" in cp.stdout)
 
     def ufw_port_allowed(self, port: int) -> bool:
-        """Есть ли в ufw активное правило allow <port>/tcp (по выводу `ufw status`)."""
+        """Есть ли в ufw правило allow на порт (по выводу `ufw status`).
+
+        Проверяем по номеру порта, а не по точному тексту правила: ufw считает
+        комментарий частью идентичности правила, поэтому `allow 5223/tcp`
+        и `allow 5223/tcp comment 'X'` — РАЗНЫЕ правила, и повторный `allow`
+        создаёт дубликат. Матчим `5223`, `5223/tcp`, `5223/tcp (комментарий)`.
+        """
         cp = self._quiet(["ufw", "status"])
+        pat = re.compile(rf"^\s*{port}(?:/tcp)?\b", re.IGNORECASE)
         for line in cp.stdout.splitlines():
-            parts = line.split()
-            if parts and parts[0] == f"{port}/tcp" and "ALLOW" in line.upper():
+            if "ALLOW" not in line.upper():
+                continue
+            first = line.split("(", 1)[0]  # отрезать " (комментарий)" перед проверкой
+            if pat.search(first):
                 return True
         return False
 
@@ -1425,7 +1439,13 @@ class Installer:
                     f"Добавьте вручную: sudo ufw allow {self.port}/tcp",
                 )
         elif active:
-            r.run(["ufw", "allow", f"{self.port}/tcp"], mutates=True)
+            if self.checks.ufw_port_allowed(self.port):
+                log(
+                    "INFO",
+                    f"правило ufw allow {self.port}/tcp уже есть — пропуск (проверка по порту)",
+                )
+            else:
+                r.run(["ufw", "allow", f"{self.port}/tcp"], mutates=True)
             loaded = r.run(["modprobe", "xt_recent"], check=False, mutates=True)
             r.write_file(MODULES_RECENT, MODULES_RECENT_CONTENT, mode=0o644, owner="root:root")
             if loaded.returncode != 0:
@@ -1434,7 +1454,13 @@ class Installer:
                 r.edit_before_rules(self.port, "insert")
         else:
             # ufw установлен, но неактивен: правило фиксируем в конфиге, reload не делаем.
-            r.run(["ufw", "allow", f"{self.port}/tcp"], mutates=True)
+            if self.checks.ufw_port_allowed(self.port):
+                log(
+                    "INFO",
+                    f"правило ufw allow {self.port}/tcp уже есть — пропуск (проверка по порту)",
+                )
+            else:
+                r.run(["ufw", "allow", f"{self.port}/tcp"], mutates=True)
             log(
                 "WARN",
                 "ufw неактивен — правило добавлено в конфиг ufw, но не действует; "
