@@ -1529,7 +1529,7 @@ class Updater:
                 # Таймер/--yes: молча выходим без переустановки (важно для автообновления).
                 print(f"telemt update: обновление не требуется (версия {tag})")
                 return
-            if not confirm(f"Версия {tag} уже установлена. Переустановить? [нет]:", False):
+            if not confirm(f"Версия {tag} уже установлена. Переустановить? [да]:", True):
                 print(f"telemt update: обновление не требуется (версия {tag})")
                 return
         with tempfile.TemporaryDirectory(prefix="telemt_setup_") as tmpdir:
@@ -1539,8 +1539,8 @@ class Updater:
             bin_src = self.runner.unpack_binary(tar_path, Path(tmpdir) / "extract")
             # --yes (в т.ч. таймер) никогда не спрашивает; интерактивно — подтверждение.
             if not _YES and not confirm(
-                "Обновление остановит сервис и разорвёт активные подключения. Продолжить? [нет]:",
-                False,
+                "Обновление остановит сервис и разорвёт активные подключения. Продолжить? [да]:",
+                True,
             ):
                 raise Abort("обновление отменено")
             r = self.runner
