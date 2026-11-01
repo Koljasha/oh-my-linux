@@ -127,9 +127,9 @@ lsblk -o "NAME,SIZE,LABEL,MOUNTPOINT,UUID"
 
 ```text
 # <file system>             <mount point>  <type>  <options>        <dump>  <pass>
-UUID=7488d026-ea24-4c24-9618-3d54d0dee8db /              ext4    defaults,noatime 0 1
-UUID=81174079-1ed8-4986-9269-b614e120856a none           swap    defaults          0 0
-UUID="01D09BCBA9456C70"               /mnt/storage   ntfs    rw,relatime       0 0
+UUID=11111111-2222-4333-8444-555555555555 /              ext4    defaults,noatime 0 1
+UUID=66666666-7777-4888-9999-000000000000 none           swap    defaults          0 0
+UUID="AAAABBBBCCCCDDDD"               /mnt/storage   ntfs    rw,relatime       0 0
 ```
 
 Пример для Linux-разделов:
@@ -138,13 +138,13 @@ UUID="01D09BCBA9456C70"               /mnt/storage   ntfs    rw,relatime       0
 # <file system> <dir> <type> <options> <dump> <pass>
 
 # /dev/nvme0n1p1 LABEL=Arch
-UUID=f3a3fdc6-ab9c-4633-9bfd-030766b079c1 / ext4 rw,relatime 0 1
+UUID=11111111-2222-4333-8444-555555555555 / ext4 rw,relatime 0 1
 
 # swapfile
 /swapfile none swap defaults 0 0
 
 # /dev/sda4 LABEL=Storage
-UUID=c6ab23b5-1b6d-4c3f-8488-6efee0144e54 /mnt/storage/ ext4 rw,relatime 0 2
+UUID=66666666-7777-4888-9999-000000000000 /mnt/storage/ ext4 rw,relatime 0 2
 ```
 
 ## 8. chroot в другой Linux
