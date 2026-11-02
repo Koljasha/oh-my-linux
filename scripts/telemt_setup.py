@@ -2709,7 +2709,7 @@ if __name__ == "__main__":
 #     printf '5223\nwww.apple.com\ny\ny\n' | ./telemt_setup.py --dry-run install
 #     printf '8443\nwww.apple.com\ny\ny\n' | ./telemt_setup.py --dry-run install
 #     ./telemt_setup.py --dry-run --yes install
-#     printf 'n\n' | ./telemt_setup.py --dry-run install   # отказ от таймера
+#     printf '\n\nn\ny\n' | ./telemt_setup.py --dry-run install   # дефолты, отказ от таймера
 #     ./telemt_setup.py --dry-run --yes --quiet update
 #     ./telemt_setup.py --dry-run upgrade      # не установлен -> exit 1
 #     printf 'y\n' | ./telemt_setup.py --dry-run upgrade   # install-состояние: fetch+sanity+converge
@@ -2718,13 +2718,18 @@ if __name__ == "__main__":
 #     ./telemt_setup.py --dry-run info; printf 'q\n' | ./telemt_setup.py --dry-run menu
 # ---------------------------------------------------------------------------
 # ИНВАРИАНТЫ DRY-RUN: Runner — единственная точка outward-эффектов; ветвление
-#   только внутри Runner и ОС-гейта; мутации пишут зеркало tmp_mirror (mkdtemp,
-#   удаляется в cleanup); никаких "if dry_run" в Installer/Updater/Remover/Menu.
+#   по dry_run — только внутри Runner и ОС-гейта; мутации пишут зеркало tmp_mirror
+#   (mkdtemp, удаляется в cleanup); pre-existing read-only dry_note/r.dry_run-
+#   чтения не трогать; новых мутационных веток вне Runner не добавлять.
 #   Исключение: Upgrade.run — в dry-run subprocess converge не запускается,
 #   вместо него вызывается Converger в текущем процессе (требование задачи).
 # НЕ ТРОГАТЬ (безопасность): redact_secret_line (секрет не печатать); маркеры
 #   MARK_BEGIN/MARK_END и вставку после якорной conntrack-строки; exit-коды
 #   0/1/2/3/4/130; `--yes` НЕ подтверждает remove (Q5 default=нет); ufw reload
 #   ровно один раз (install — в edit_before_rules, remove — в конце; converge —
-#   накопительно, один раз при изменениях).
+#   накопительно, один раз при изменениях; set-port — replace, один раз).
+# КОНФИГ: запись только через with_upstreams(config_template(...), сырой_текущий)
+#   (Converger/PortChanger/DomainChanger-норма; голый config_template сносит
+#   [[upstreams]]). DEFAULT_PORT (дефолт установщика) и MSS_PORT_SOFT (знание
+#   о telemt) независимы — не сливать. Меню при установленном: set-port 4-й.
 # ===========================================================================
