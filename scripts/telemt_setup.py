@@ -216,7 +216,7 @@ IP_PLACEHOLDER = "SERVER_IP"
 
 # Автообновление (systemd-таймер) — Задача B.
 SELF_PATH = "/usr/local/bin/telemt_setup.py"
-SCRIPT_VERSION = "1.5.1"
+SCRIPT_VERSION = "1.5.2"
 RAW_URL = "https://raw.githubusercontent.com/Koljasha/oh-my-linux/refs/heads/master/scripts/telemt_setup.py"
 UPDATE_SERVICE_NAME = "telemt-update.service"
 UPDATE_TIMER_NAME = "telemt-update.timer"
@@ -2581,8 +2581,8 @@ class Menu:
             if state.installed:
                 items = [
                     ("Информация", "info"),
-                    ("Сменить домен-маску", "set-domain"),
                     ("Показать ссылку", "link"),
+                    ("Сменить домен-маску", "set-domain"),
                     ("Сменить порт", "set-port"),
                     ("Обновить telemt (бинарник)", "update"),
                     ("Обновить скрипт и конфиги", "upgrade"),
