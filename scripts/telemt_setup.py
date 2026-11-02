@@ -33,7 +33,7 @@
     sudo python3 telemt_setup.py install               # интерактивная установка
     sudo python3 telemt_setup.py install --port 5223 --domain www.apple.com
     sudo python3 telemt_setup.py --dry-run install     # план без изменений в системе
-    printf '5223\nwww.apple.com\ny\n' | sudo python3 telemt_setup.py install
+    printf '5223\nwww.apple.com\ny\ny\n' | sudo python3 telemt_setup.py install  # порт, домен, таймер=да, сводка=да
     sudo python3 telemt_setup.py info
     sudo python3 telemt_setup.py link
     sudo python3 telemt_setup.py set-domain --domain www.cloudflare.com
@@ -100,10 +100,14 @@
         After=network-online.target
         [Service]
         User=<ПОЛЬЗОВАТЕЛЬ>
-        ExecStart=/usr/bin/ssh -D localhost:1080 -NT <ПОЛЬЗОВАТЕЛЬ>@<ХОСТ_ВТОРОГО_VPS>
+        ExecStart=/usr/bin/ssh -i <ПУТЬ_К_КЛЮЧУ> -D localhost:1080 -NT -o ServerAliveInterval=15 -o ServerAliveCountMax=3 -o ExitOnForwardFailure=yes -o BatchMode=yes <ПОЛЬЗОВАТЕЛЬ>@<ХОСТ_ВТОРОГО_VPS>
         Restart=always
         [Install]
         WantedBy=multi-user.target
+    Keepalive (ServerAlive*) детектирует мёртвый туннель и даёт Restart=always его
+    поднять; BatchMode запрещает интерактивный запрос пароля под systemd;
+    ExitOnForwardFailure — быстрый выход, если порт 1080 занят. При нестандартном
+    SSH-порте добавить `-p <ПОРТ>` к команде (в рабочем варианте порт дефолтный).
     Сниппет в /etc/telemt/telemt.toml (дописать руками после сгенерированного
     блока; адрес — локальная петля, порт 1080):
         [[upstreams]]
