@@ -1199,6 +1199,24 @@ def config_template(port: int, domain: str, secret: str) -> str:
     )
 
 
+def extract_upstreams_block(raw_text: str) -> str:
+    """Вырезать ручные [[upstreams]]-блоки из сырого текста конфига (verbatim)."""
+    lines = raw_text.splitlines(keepends=True)
+    out: list[str] = []
+    capturing = False
+    for line in lines:
+        stripped = line.strip()
+        if re.match(r"^\[\[upstreams\]\]\s*(#.*)?$", stripped):
+            capturing = True
+            out.append(line)
+            continue
+        if capturing and re.match(r"^\[", stripped):
+            capturing = False
+        if capturing:
+            out.append(line)
+    return "".join(out)
+
+
 def unit_template() -> str:
     return (
         "[Unit]\n"
@@ -1618,8 +1636,17 @@ class Converger:
         unit_changed = False
         service_restart = False
 
-        # Шаг 1. Конфиг
+        # Шаг 1. Конфиг (ручные [[upstreams]] сохраняются verbatim)
+        try:
+            raw_cfg = Path(CFG).read_text(encoding="utf-8")
+        except OSError:
+            raw_cfg = ""
+        upstreams_block = extract_upstreams_block(raw_cfg)
         desired_cfg = config_template(port, domain, secret)
+        if upstreams_block:
+            desired_cfg += upstreams_block
+            if not desired_cfg.endswith("\n"):
+                desired_cfg += "\n"
         if self._differs(CFG, desired_cfg):
             r.backup_file(CFG)
             r.write_file(CFG, desired_cfg, mode=0o640, owner=f"root:{SERVICE_USER}")
