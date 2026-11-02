@@ -19,7 +19,7 @@
         upgrade      обновление САМОГО СКРИПТА с RAW_URL + перегенерация конфигов/юнитов
                      (в конце вызывает converge); один вопрос в начале, --yes пропускает
         converge     служебная: перегенерировать конфиг/юниты/ufw/sysctl по текущим
-                     шаблонам, перезапустить сервис при изменениях (вызывает upgrade)
+                     шаблонам, перезапустить сервис при изменениях (вызывается из upgrade)
         restart      перезапуск сервиса telemt (таймер не трогает)
         set-domain   смена домена-маски, рестарт, новая ссылка (профиль client_mss не меняет)
         set-port     смена порта прокси, рестарт, новая ссылка
@@ -1991,8 +1991,32 @@ class PortChanger:
         desired = with_upstreams(config_template(new_port, domain, secret), raw_cfg)
         self.runner.write_file(CFG, desired, mode=0o640, owner=f"root:{SERVICE_USER}")
         log("INFO", f"порт изменён: {port} -> {new_port}")
-        if not self.checks.ufw_port_allowed(new_port):
-            self.runner.run(["ufw", "allow", f"{new_port}/tcp"], mutates=True)
+        present, active = self.checks.ufw_state()
+        if not present:
+            if self.checks.firewalld_active():
+                log(
+                    "WARN",
+                    "обнаружен firewalld — добавьте порт вручную: "
+                    f"firewall-cmd --permanent --add-port={new_port}/tcp && firewall-cmd --reload",
+                )
+            else:
+                log(
+                    "WARN",
+                    "ufw не установлен — правило и rate-limit не применяются. "
+                    f"Добавьте вручную: sudo ufw allow {new_port}/tcp",
+                )
+        else:
+            if not self.checks.ufw_port_allowed(new_port):
+                self.runner.run(["ufw", "allow", f"{new_port}/tcp"], mutates=True)
+            if not active:
+                self.runner.edit_before_rules(new_port, "replace", reload=False)
+                log(
+                    "WARN",
+                    "ufw неактивен — правило и before.rules записаны, но не действуют; "
+                    "включите: sudo ufw enable",
+                )
+            else:
+                self.runner.edit_before_rules(new_port, "replace")
         print(
             c(
                 C_ERR,
@@ -2000,7 +2024,6 @@ class PortChanger:
                 f"удалите вручную: sudo ufw --force delete allow {port}/tcp",
             )
         )
-        self.runner.edit_before_rules(new_port, "replace")
         self.runner.run(["systemctl", "restart", SERVICE], mutates=True)
         ip = resolve_ip()
         print(build_link(ip, new_port, secret, domain))
@@ -2305,18 +2328,18 @@ def cmd_set_domain(runner: Runner, checks: Checks, args) -> int:
 
 
 def cmd_set_port(runner: Runner, checks: Checks, args) -> int:
+    state = checks.collect()
     if args.port is not None:
         ok, _v, err = validate_port(str(args.port))
         if not ok:
             raise ArgError(f"--port: {err}")
-        if not checks.port_free(args.port):
+        if args.port != state.port and not checks.port_free(args.port):
             raise ArgError(
                 f"--port: порт {args.port} занят ({checks.port_owner(args.port) or 'процесс неизвестен'})"
             )
         eph = _ephemeral_warning(args.port)
         if eph:
             log("WARN", eph)
-    state = checks.collect()
     if not state.installed:
         log("WARN", f"{SERVICE} не установлен — смена порта невозможна")
         return EXIT_ERR
