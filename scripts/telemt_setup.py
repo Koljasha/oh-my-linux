@@ -22,6 +22,7 @@
                      шаблонам, перезапустить сервис при изменениях (вызывает upgrade)
         restart      перезапуск сервиса telemt (таймер не трогает)
         set-domain   смена домена-маски, рестарт, новая ссылка (профиль client_mss не меняет)
+        set-port     смена порта прокси, рестарт, новая ссылка
         link         печать клиентской ссылки tg://proxy?...
         info         статус, версия, порт, домен, client_mss, ufw, таймер, конфиг
         remove       полный демонтаж (по умолчанию НЕ подтверждается через --yes)
@@ -36,6 +37,7 @@
     sudo python3 telemt_setup.py info
     sudo python3 telemt_setup.py link
     sudo python3 telemt_setup.py set-domain --domain www.cloudflare.com
+    sudo python3 telemt_setup.py set-port --port 8443
     sudo python3 telemt_setup.py update --yes --quiet
     sudo python3 telemt_setup.py upgrade
     sudo python3 telemt_setup.py converge --yes
@@ -175,7 +177,7 @@ IP_PLACEHOLDER = "SERVER_IP"
 
 # Автообновление (systemd-таймер) — Задача B.
 SELF_PATH = "/usr/local/bin/telemt_setup.py"
-SCRIPT_VERSION = "1.4.1"
+SCRIPT_VERSION = "1.5.0"
 RAW_URL = "https://raw.githubusercontent.com/Koljasha/oh-my-linux/refs/heads/master/scripts/telemt_setup.py"
 UPDATE_SERVICE_NAME = "telemt-update.service"
 UPDATE_TIMER_NAME = "telemt-update.timer"
@@ -736,9 +738,11 @@ class Runner:
         return backup
 
     def edit_before_rules(self, port: int, op: str, *, reload: bool = True) -> None:
-        """Правка /etc/ufw/before.rules: вставка/удаление блока по маркерам.
+        """Правка /etc/ufw/before.rules: вставка/удаление/замена блока по маркерам.
 
         reload=False (ufw неактивен) — файл правится, но `ufw reload` не вызывается.
+        replace — замена порто-специфичного блока одним проходом: один бэкап,
+        одно чтение/запись и не более одного `ufw reload` (по параметру reload).
         """
         path = Path(BEFORE_RULES)
         if not path.exists():
@@ -785,6 +789,30 @@ class Runner:
                 return
             del lines[begin : end + 1]
             new_text = "\n".join(lines) + "\n"
+        elif op == "replace":
+            begin = end = None
+            for idx, line in enumerate(lines):
+                if MARK_BEGIN in line:
+                    begin = idx
+                elif MARK_END in line and begin is not None:
+                    end = idx
+                    break
+            if begin is not None and end is not None:
+                del lines[begin : end + 1]
+            anchor = None
+            for idx, line in enumerate(lines):
+                if "ufw-before-input" in line and "RELATED,ESTABLISHED" in line:
+                    anchor = idx
+                    break
+            if anchor is None:
+                log(
+                    "WARN",
+                    "якорная строка conntrack не найдена — замена блока rate-limit пропущена",
+                )
+                return
+            block = self._rate_limit_block(port)
+            lines.insert(anchor + 1, block.rstrip("\n"))
+            new_text = "\n".join(lines) + "\n"
         else:
             raise StepError(f"неизвестная операция правки before.rules: {op}")
 
@@ -794,6 +822,13 @@ class Runner:
             log("DRY", f"бэкап {BEFORE_RULES} -> {backup}")
             if op == "insert":
                 log("DRY", f"вставка в {BEFORE_RULES} после якорной строки conntrack:")
+                for line in self._rate_limit_block(port).splitlines():
+                    log("DRY", "    " + line)
+            elif op == "replace":
+                log(
+                    "DRY",
+                    f"замена блока {MARK_BEGIN} … {MARK_END} в {BEFORE_RULES} на порт {port}:",
+                )
                 for line in self._rate_limit_block(port).splitlines():
                     log("DRY", "    " + line)
             else:
@@ -1878,6 +1913,55 @@ class DomainChanger:
 
 
 # ---------------------------------------------------------------------------
+# PortChanger
+# ---------------------------------------------------------------------------
+class PortChanger:
+    def __init__(self, runner: Runner, checks: Checks, state: State):
+        self.runner = runner
+        self.checks = checks
+        self.state = state
+
+    def change(self, new_port: int) -> None:
+        port, domain, secret = self.checks.read_config()
+        if port is None or domain is None or secret is None:
+            log("ERR", f"конфиг {CFG} не читается — смена порта невозможна без потери секрета")
+            raise Abort("смена порта отменена")
+        if new_port == port:
+            log("INFO", f"порт не изменился ({port}) — ничего не делаем")
+            return
+        if not confirm(
+            "Смена порта изменит конфиг и перезапустит сервис (активные клиенты отключатся). Продолжить? [нет]:",
+            False,
+        ):
+            raise Abort("смена порта отменена")
+        try:
+            raw_cfg = Path(CFG).read_text(encoding="utf-8")
+        except OSError:
+            raw_cfg = ""
+        upstreams_block = extract_upstreams_block(raw_cfg)
+        desired = config_template(new_port, domain, secret)
+        if upstreams_block:
+            desired += upstreams_block
+            if not desired.endswith("\n"):
+                desired += "\n"
+        self.runner.write_file(CFG, desired, mode=0o640, owner=f"root:{SERVICE_USER}")
+        log("INFO", f"порт изменён: {port} -> {new_port}")
+        if not self.checks.ufw_port_allowed(new_port):
+            self.runner.run(["ufw", "allow", f"{new_port}/tcp"], mutates=True)
+        print(
+            c(
+                C_ERR,
+                f"Старое правило ufw allow {port}/tcp не удалено автоматически — "
+                f"удалите вручную: sudo ufw --force delete allow {port}/tcp",
+            )
+        )
+        self.runner.edit_before_rules(new_port, "replace")
+        self.runner.run(["systemctl", "restart", SERVICE], mutates=True)
+        ip = resolve_ip()
+        print(build_link(ip, new_port, secret, domain))
+
+
+# ---------------------------------------------------------------------------
 # Remover
 # ---------------------------------------------------------------------------
 class Remover:
@@ -2175,6 +2259,45 @@ def cmd_set_domain(runner: Runner, checks: Checks, args) -> int:
     return EXIT_OK
 
 
+def cmd_set_port(runner: Runner, checks: Checks, args) -> int:
+    if args.port is not None:
+        ok, _v, err = validate_port(str(args.port))
+        if not ok:
+            raise ArgError(f"--port: {err}")
+        if not checks.port_free(args.port):
+            raise ArgError(
+                f"--port: порт {args.port} занят ({checks.port_owner(args.port) or 'процесс неизвестен'})"
+            )
+        eph = _ephemeral_warning(args.port)
+        if eph:
+            log("WARN", eph)
+    state = checks.collect()
+    if not state.installed:
+        log("WARN", f"{SERVICE} не установлен — смена порта невозможна")
+        return EXIT_ERR
+    default_port = args.port if args.port is not None else (state.port or DEFAULT_PORT)
+
+    def _port_validator(value: str) -> tuple[bool, int | None, str | None]:
+        ok, port, err = validate_port(value)
+        if not ok or port is None:
+            return False, None, err
+        if port != state.port and not checks.port_free(port):
+            owner = checks.port_owner(port) or "процесс неизвестен"
+            return False, None, f"порт {port} занят ({owner})"
+        warning = _port_warning(port)
+        if warning:
+            log("WARN", warning)
+        eph = _ephemeral_warning(port)
+        if eph:
+            log("WARN", eph)
+        return True, port, None
+
+    port = ask(f"Порт прокси [{default_port}]:", default_port, _port_validator)
+    assert isinstance(port, int)
+    PortChanger(runner, checks, state).change(port)
+    return EXIT_OK
+
+
 def cmd_link(runner: Runner, checks: Checks, _args) -> int:
     state = checks.collect()
     if not state.installed:
@@ -2258,6 +2381,7 @@ COMMANDS = {
     "converge": cmd_converge,
     "restart": cmd_restart,
     "set-domain": cmd_set_domain,
+    "set-port": cmd_set_port,
     "link": cmd_link,
     "info": cmd_info,
     "remove": cmd_remove,
@@ -2306,6 +2430,7 @@ class Menu:
                     ("Информация", "info"),
                     ("Сменить домен-маску", "set-domain"),
                     ("Показать ссылку", "link"),
+                    ("Сменить порт", "set-port"),
                     ("Обновить telemt (бинарник)", "update"),
                     ("Обновить скрипт и конфиги", "upgrade"),
                     ("Перезапустить сервис", "restart"),
@@ -2422,6 +2547,7 @@ def build_argparse() -> argparse.ArgumentParser:
         ("converge", "служебная: перегенерировать конфиг/юниты по текущим шаблонам"),
         ("restart", "перезапустить сервис telemt"),
         ("set-domain", "сменить домен-маску"),
+        ("set-port", "сменить порт прокси"),
         ("link", "показать клиентскую ссылку"),
         ("info", "информация о состоянии"),
         ("remove", "полный демонтаж"),
