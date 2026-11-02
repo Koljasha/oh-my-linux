@@ -31,17 +31,16 @@
 ПРИМЕРЫ
     sudo python3 telemt_setup.py                       # меню
     sudo python3 telemt_setup.py install               # интерактивная установка
-    sudo python3 telemt_setup.py install --port 5223 --domain www.apple.com
+    sudo python3 telemt_setup.py install --port 5223 --domain www.apple.com  # установка без вопросов о них
     sudo python3 telemt_setup.py --dry-run install     # план без изменений в системе
-    printf '5223\nwww.apple.com\ny\ny\n' | sudo python3 telemt_setup.py install  # порт, домен, таймер=да, сводка=да
-    sudo python3 telemt_setup.py info
-    sudo python3 telemt_setup.py link
-    sudo python3 telemt_setup.py set-domain --domain www.cloudflare.com
-    sudo python3 telemt_setup.py set-port --port 8443
-    sudo python3 telemt_setup.py update --yes --quiet
-    sudo python3 telemt_setup.py upgrade
-    sudo python3 telemt_setup.py converge --yes
-    sudo python3 telemt_setup.py remove
+    sudo python3 telemt_setup.py info                  # статус системы
+    sudo python3 telemt_setup.py link                  # показать ссылку
+    sudo python3 telemt_setup.py set-domain --domain www.cloudflare.com  # смена домена
+    sudo python3 telemt_setup.py set-port --port 8443  # смена порта
+    sudo python3 telemt_setup.py update --yes --quiet  # бинарник без вопросов
+    sudo python3 telemt_setup.py upgrade               # скрипт+конфиги
+    sudo python3 telemt_setup.py converge --yes        # служебная сверка с шаблонами
+    sudo python3 telemt_setup.py remove                # демонтаж с подтверждением
 
 АВТООБНОВЛЕНИЕ (systemd-таймер)
     При install (вопрос «Установить автообновление по расписанию (03:00 ночи)?», дефолт «да»)
@@ -100,7 +99,12 @@
         After=network-online.target
         [Service]
         User=<ПОЛЬЗОВАТЕЛЬ>
-        ExecStart=/usr/bin/ssh -i <ПУТЬ_К_КЛЮЧУ> -D localhost:1080 -NT -o ServerAliveInterval=15 -o ServerAliveCountMax=3 -o ExitOnForwardFailure=yes -o BatchMode=yes <ПОЛЬЗОВАТЕЛЬ>@<ХОСТ_ВТОРОГО_VPS>
+        ExecStart=/usr/bin/ssh -i <ПУТЬ_К_КЛЮЧУ> \
+            -D localhost:1080 \
+            -NT \
+            -o ServerAliveInterval=15 -o ServerAliveCountMax=3 \
+            -o ExitOnForwardFailure=yes -o BatchMode=yes \
+            <ПОЛЬЗОВАТЕЛЬ>@<ХОСТ_ВТОРОГО_VPS>
         Restart=always
         [Install]
         WantedBy=multi-user.target
