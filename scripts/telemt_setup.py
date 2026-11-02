@@ -1283,6 +1283,18 @@ def extract_upstreams_block(raw_text: str) -> str:
     return "".join(out)
 
 
+def with_upstreams(base_cfg: str, raw_text: str) -> str:
+    """Приклеить ручные [[upstreams]] из сырого конфига к сгенерированному (verbatim).
+
+    Пустой блок → base_cfg как есть. Иначе ровно одна пустая строка-разделитель
+    и ровно один trailing \\n.
+    """
+    block = extract_upstreams_block(raw_text)
+    if not block:
+        return base_cfg
+    return base_cfg.rstrip("\n") + "\n\n" + (block if block.endswith("\n") else block + "\n")
+
+
 def unit_template() -> str:
     return (
         "[Unit]\n"
@@ -1707,12 +1719,7 @@ class Converger:
             raw_cfg = Path(CFG).read_text(encoding="utf-8")
         except OSError:
             raw_cfg = ""
-        upstreams_block = extract_upstreams_block(raw_cfg)
-        desired_cfg = config_template(port, domain, secret)
-        if upstreams_block:
-            desired_cfg += upstreams_block
-            if not desired_cfg.endswith("\n"):
-                desired_cfg += "\n"
+        desired_cfg = with_upstreams(config_template(port, domain, secret), raw_cfg)
         if self._differs(CFG, desired_cfg):
             r.backup_file(CFG)
             r.write_file(CFG, desired_cfg, mode=0o640, owner=f"root:{SERVICE_USER}")
@@ -1915,6 +1922,7 @@ class DomainChanger:
 
     def change(self, new_domain: str) -> None:
         port, _old_domain, secret = self.checks.read_config()
+        fallback = False
         if port is None or secret is None:
             log("WARN", "конфиг не читается (отсутствует или битый TOML)")
             if not confirm(
@@ -1924,15 +1932,22 @@ class DomainChanger:
                 raise Abort("смена домена отменена")
             port = DEFAULT_PORT
             secret = os.urandom(16).hex()
+            fallback = True
             self.runner.dry_note("секрет перегенерирован (значение не печатается)")
         if not confirm(
             "Смена домена изменит конфиг и перезапустит сервис (активные клиенты отключатся). Продолжить? [нет]:",
             False,
         ):
             raise Abort("смена домена отменена")
-        self.runner.write_file(
-            CFG, config_template(port, new_domain, secret), mode=0o640, owner=f"root:{SERVICE_USER}"
-        )
+        if fallback:
+            desired = config_template(port, new_domain, secret)
+        else:
+            try:
+                raw_cfg = Path(CFG).read_text(encoding="utf-8")
+            except OSError:
+                raw_cfg = ""
+            desired = with_upstreams(config_template(port, new_domain, secret), raw_cfg)
+        self.runner.write_file(CFG, desired, mode=0o640, owner=f"root:{SERVICE_USER}")
         log("INFO", f"домен-маска изменена на {new_domain}")
         self.runner.run(["systemctl", "restart", SERVICE], mutates=True)
         if self.checks.tlsfront_exists(new_domain):
@@ -1969,12 +1984,7 @@ class PortChanger:
             raw_cfg = Path(CFG).read_text(encoding="utf-8")
         except OSError:
             raw_cfg = ""
-        upstreams_block = extract_upstreams_block(raw_cfg)
-        desired = config_template(new_port, domain, secret)
-        if upstreams_block:
-            desired += upstreams_block
-            if not desired.endswith("\n"):
-                desired += "\n"
+        desired = with_upstreams(config_template(new_port, domain, secret), raw_cfg)
         self.runner.write_file(CFG, desired, mode=0o640, owner=f"root:{SERVICE_USER}")
         log("INFO", f"порт изменён: {port} -> {new_port}")
         if not self.checks.ufw_port_allowed(new_port):
