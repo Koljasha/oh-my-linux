@@ -216,7 +216,7 @@ IP_PLACEHOLDER = "SERVER_IP"
 
 # Автообновление (systemd-таймер) — Задача B.
 SELF_PATH = "/usr/local/bin/telemt_setup.py"
-SCRIPT_VERSION = "1.5.0"
+SCRIPT_VERSION = "1.5.1"
 RAW_URL = "https://raw.githubusercontent.com/Koljasha/oh-my-linux/refs/heads/master/scripts/telemt_setup.py"
 UPDATE_SERVICE_NAME = "telemt-update.service"
 UPDATE_TIMER_NAME = "telemt-update.timer"
@@ -1289,6 +1289,63 @@ def extract_upstreams_block(raw_text: str) -> str:
         if capturing:
             out.append(line)
     return "".join(out)
+
+
+_UPSTREAM_KV_RE = re.compile(r"^\s*([A-Za-z0-9_]+)\s*=\s*(.+?)\s*$")
+
+
+def upstreams_display(raw_cfg: str) -> list[str]:
+    """Краткие сводки ручных [[upstreams]]-блоков для info (без секретов).
+
+    Каждый блок → одна строка вида ``socks5 127.0.0.1:1080, enabled``.
+    Значения ключей url/password/secret/token/key никогда не печатаются;
+    для shadowsocks-URL показывается только endpoint (часть после последнего
+    ``@``, host:port), без ``@`` — ``<redacted>``. Пусто → [].
+    """
+    block_text = extract_upstreams_block(raw_cfg or "")
+    if not block_text.strip():
+        return []
+    blocks: list[dict[str, str]] = []
+    current: dict[str, str] | None = None
+    for line in block_text.splitlines():
+        if re.match(r"^\s*\[\[upstreams\]\]\s*(#.*)?$", line.strip()):
+            current = {}
+            blocks.append(current)
+            continue
+        if current is None:
+            continue
+        match = _UPSTREAM_KV_RE.match(line)
+        if not match:
+            continue
+        key = match.group(1).lower()
+        value = match.group(2).strip()
+        if value.startswith(('"', "'")):
+            quote = value[0]
+            end = value.find(quote, 1)
+            value = value[1:end] if end != -1 else value[1:]
+        else:
+            value = value.split("#", 1)[0].strip()
+        current[key] = value
+    summaries: list[str] = []
+    for kv in blocks:
+        utype = kv.get("type", "unknown") or "unknown"
+        if utype.lower() == "shadowsocks" and "url" in kv:
+            raw_url = kv["url"]
+            if "@" in raw_url:
+                endpoint = re.split(r"[/?#\s]", raw_url.rsplit("@", 1)[-1].strip(), 1)[0]
+                endpoint = endpoint if endpoint else "<redacted>"
+            else:
+                endpoint = "<redacted>"
+        elif "address" in kv:
+            endpoint = kv["address"]
+        elif "interface" in kv:
+            endpoint = kv["interface"]
+        else:
+            endpoint = "..."
+        enabled = kv.get("enabled", "true").strip().lower().strip("\"'")
+        status = "disabled" if enabled in ("false", "0", "no", "off", "disabled") else "enabled"
+        summaries.append(f"{utype} {endpoint}, {status}")
+    return summaries
 
 
 def with_upstreams(base_cfg: str, raw_text: str) -> str:
@@ -2412,6 +2469,30 @@ def cmd_info(runner: Runner, checks: Checks, _args) -> int:
         f"{'active' if state.ufw_active else 'inactive'}"
     )
     print(f"  блок в before.rules: {'есть' if state.before_rules_block else 'нет'}")
+    try:
+        raw_cfg = Path(CFG).read_text(encoding="utf-8")
+    except OSError:
+        raw_cfg = ""
+    summaries = upstreams_display(raw_cfg)
+    if not summaries:
+        print("  апстримы        : нет (прямой egress)")
+    else:
+        for index, summary in enumerate(summaries, start=1):
+            suffix = ""
+            found = re.search(r"([A-Za-z0-9_.\-]+):(\d{1,5})\b", summary)
+            if found:
+                host, port_text = found.group(1), found.group(2)
+                try:
+                    target_port = int(port_text)
+                    if 1 <= target_port <= 65535:
+                        with socket.create_connection((host, target_port), timeout=3):
+                            pass
+                        suffix = ", доступен"
+                    else:
+                        suffix = ", недоступен"
+                except Exception:  # noqa: BLE001 — info не падает никогда, любой сбой = недоступен
+                    suffix = ", недоступен"
+            print(f"  апстрим {index}        : {summary}{suffix}")
     print(f"  sysctl-файл     : {'есть' if state.sysctl_file else 'нет'}")
     mods = ", ".join(state.module_files) if state.module_files else "нет"
     print(f"  modules-load    : {mods}")
@@ -2515,15 +2596,14 @@ class Menu:
                 ]
             for number, (label, _cmd) in enumerate(items, start=1):
                 print(f" {number}) {label}")
-            exit_number = len(items) + 1
-            print(f" {exit_number}) Выход")
+            print(" 0) Выход")
             sys.stdout.write(c(C_INFO, "Выбор:") + " ")
             sys.stdout.flush()
             line = sys.stdin.readline()
             if line == "":
                 return EXIT_OK
             choice = line.strip().lower()
-            if choice in ("", str(exit_number), "q", "quit", "exit", "выход"):
+            if choice in ("", "0", "q", "quit", "exit", "выход"):
                 return EXIT_OK
             command = next(
                 (
