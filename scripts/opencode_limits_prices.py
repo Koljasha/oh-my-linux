@@ -8,7 +8,7 @@
 Хостом изменения при доработках остаётся копия в /tmp/opencode или правка по
 частям через edit.
 
-Источники: https://opencode.ai/v2/docs/console/models/ , https://opencode.ai/v2/docs/console/go/
+Источники: https://opencode.ai/docs/console/models/ , https://opencode.ai/docs/console/go/
 """
 
 import decimal
@@ -18,8 +18,8 @@ import sys
 from html.parser import HTMLParser
 from urllib.request import Request, urlopen
 
-URL_GO = "https://opencode.ai/v2/docs/console/go/"
-URL_MODELS = "https://opencode.ai/v2/docs/console/models/"
+URL_GO = "https://opencode.ai/docs/console/go/"
+URL_MODELS = "https://opencode.ai/docs/console/models/"
 URL_ZEN = URL_MODELS  # алиас для совместимости: страница Zen переехала на Console Models
 
 # Таблицы ищутся по шапке: собираются все таблицы, чьи колонки включают весь

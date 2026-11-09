@@ -9,8 +9,8 @@ state.json + Telegram), разрез на модули только усложн
 (константы → env/log → fetch/парсинг → diff/сообщение → state/main).
 
 Скрипт периодически (cron) проверяет:
-https://opencode.ai/v2/docs/console/go/
-https://opencode.ai/v2/docs/console/models/
+https://opencode.ai/docs/console/go/
+https://opencode.ai/docs/console/models/
 хранит снапшот в state.json и при изменениях
 (появление/пропажа моделей, смена Free → платная, изменение лимитов, цен,
 месячного лимита, устаревание) шлёт уведомление в Telegram.
@@ -55,9 +55,9 @@ HTTP_TIMEOUT = 30
 DEFAULT_UA = "Mozilla/5.0 (X11; Linux x86_64) opencode-price-monitor/1.0"
 
 PAGES = {
-    "Go": "https://opencode.ai/v2/docs/console/go/",
+    "Go": "https://opencode.ai/docs/console/go/",
     # Ключ "Zen" оставлен ради совместимости state.json; страница переехала на Console Models.
-    "Zen": "https://opencode.ai/v2/docs/console/models/",
+    "Zen": "https://opencode.ai/docs/console/models/",
 }
 
 ZEN_HEADERS = {"Model", "Cached Read"}
